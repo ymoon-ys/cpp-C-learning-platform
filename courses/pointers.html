@@ -1,1 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>指针入门 - C++微课</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        /* 微课页面专用样式 */
+        .lesson-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .video-container {
+            background: #f0f0f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .video-placeholder {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 60px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .code-block {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .concept-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .practice-area {
+            background: #e8f4fc;
+            border: 2px dashed #3498db;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .learning-objectives {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .learning-objectives ul {
+            margin-left: 20px;
+        }
+        
+        .tip-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav>
+        <div class="logo">C++学习平台</div>
+        <div class="nav-links">
+            <a href="../index.html">首页</a>
+            <a href="#lesson-content">课程内容</a>
+            <a href="#practice">实践练习</a>
+            <a href="#summary">总结</a>
+        </div>
+    </nav>
 
+    <div class="lesson-container">
+        <!-- 课程标题 -->
+        <header style="text-align: center; margin-bottom: 40px;">
+            <h1 style="color: #2c3e50;">🔍 指针入门微课</h1>
+            <p style="color: #7f8c8d; font-size: 1.2rem;">10分钟掌握C++指针核心概念</p>
+            <div style="background: #3498db; color: white; padding: 8px 16px; border-radius: 20px; display: inline-block;">
+                ⏱️ 学习时长：15分钟 | 📊 难度：初级
+            </div>
+        </header>
+
+        <!-- 学习目标 -->
+        <div class="learning-objectives">
+            <h3>🎯 学习目标</h3>
+            <ul>
+                <li>理解指针的基本概念</li>
+                <li>掌握指针的声明和初始化</li>
+                <li>学会使用取地址(&)和解引用(*)运算符</li>
+                <li>了解指针与数组的关系</li>
+                <li>能够编写简单的指针程序</li>
+            </ul>
+        </div>
+
+        <!-- 视频区域 -->
+        <section id="video-section">
+            <h2>📹 视频讲解</h2>
+            <div class="video-placeholder">
+                <h3>微课视频</h3>
+                <p>在这里嵌入你的教学视频</p>
+                <p>推荐使用：B站、YouTube或自己录制的视频</p>
+                <div style="margin-top: 20px;">
+                    <a href="https://www.bilibili.com" target="_blank" 
+                       style="background: white; color: #00a1d6; padding: 10px 20px; border-radius: 5px; text-decoration: none; display: inline-block;">
+                        ▶️ 观看示例视频（B站）
+                    </a>
+                </div>
+                <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
+                    💡 提示：后期可以将视频上传到B站，然后嵌入iframe代码
+                </p>
+            </div>
+        </section>
+
+        <!-- 课程内容 -->
+        <section id="lesson-content" style="margin-top: 40px;">
+            <h2>📚 课程内容</h2>
+            
+            <h3>1. 什么是指针？</h3>
+            <p>指针是C++中存储变量<strong>内存地址</strong>的特殊变量。理解指针是掌握C++内存管理的关键。</p>
+            
+            <div class="code-block">
+// 指针基础示例
+#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int num = 42;        // 定义一个整型变量
+    int* ptr = &num;     // ptr是指针，存储num的地址
+    
+    cout &lt;&lt; "变量值: " &lt;&lt; num &lt;&lt; endl;          // 输出: 42
+    cout &lt;&lt; "变量地址: " &lt;&lt; &num &lt;&lt; endl;       // 输出地址（如：0x7ffee...）
+    cout &lt;&lt; "指针值: " &lt;&lt; ptr &lt;&lt; endl;         // 与&num相同
+    cout &lt;&lt; "指针指向的值: " &lt;&lt; *ptr &lt;&lt; endl;   // 输出: 42
+    
+    return 0;
+}
+            </div>
+
+            <div class="tip-box">
+                💡 <strong>重要概念：</strong><br>
+                • <code>&变量</code>：获取变量的内存地址<br>
+                • <code>*指针</code>：获取指针指向的值<br>
+                • 指针类型必须与所指向变量类型匹配
+            </div>
+        </section>
+
+        <!-- 核心概念网格 -->
+        <section>
+            <h3>🎯 核心概念</h3>
+            <div class="concept-grid">
+                <div class="concept-card">
+                    <h4>1. & 运算符</h4>
+                    <p><strong>取地址运算符</strong>，获取变量的内存地址</p>
+                    <div class="code-block" style="padding: 10px; margin: 10px 0; font-size: 12px;">
+int a = 10;
+cout &lt;&lt; &a; // 输出a的地址
+                    </div>
+                </div>
+                
+                <div class="concept-card">
+                    <h4>2. * 运算符</h4>
+                    <p><strong>解引用运算符</strong>，获取指针指向的值</p>
+                    <div class="code-block" style="padding: 10px; margin: 10px 0; font-size: 12px;">
+int* p = &a;
+cout &lt;&lt; *p; // 输出10
+                    </div>
+                </div>
+                
+                <div class="concept-card">
+                    <h4>3. 空指针</h4>
+                    <p>指针未指向任何有效地址时应设为nullptr</p>
+                    <div class="code-block" style="padding: 10px; margin: 10px 0; font-size: 12px;">
+int* p = nullptr; // 空指针
+if (p != nullptr) {
+    cout &lt;&lt; *p;
+}
+                    </div>
+                </div>
+                
+                <div class="concept-card">
+                    <h4>4. 指针类型</h4>
+                    <p>指针必须与所指向变量类型匹配</p>
+                    <div class="code-block" style="padding: 10px; margin: 10px 0; font-size: 12px;">
+int* p1;      // 指向int
+double* p2;   // 指向double
+char* p3;     // 指向char
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 动手实践 -->
+        <section id="practice" class="practice-area">
+            <h2>💻 动手练习</h2>
+            <p>尝试修改以下代码，加深对指针的理解：</p>
+            
+            <textarea id="practiceCode" style="width:100%; height:250px; font-family: 'Courier New', monospace; padding: 15px; border: 2px solid #3498db; border-radius: 5px; font-size: 14px;">
+#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    // 练习1：定义一个变量和指向它的指针
+    int value = 100;
+    // TODO: 在这里声明一个指针ptr指向value
+    
+    // 练习2：通过指针修改变量值
+    // TODO: 使用指针将value的值改为200
+    
+    // 练习3：输出结果验证
+    cout &lt;&lt; "修改前的值: " &lt;&lt; value &lt;&lt; endl;
+    
+    // 练习4：输出指针信息
+    // TODO: 输出指针的地址和指针指向的值
+    
+    return 0;
+}</textarea>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="runPracticeCode()" class="btn" style="background: #27ae60;">运行代码</button>
+                <button onclick="showSolution()" class="btn" style="background: #e74c3c;">查看答案</button>
+                <button onclick="resetCode()" class="btn" style="background: #7f8c8d;">重置代码</button>
+            </div>
+            
+            <div id="practiceOutput" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; min-height: 100px;">
+                <p style="color: #7f8c8d; font-style: italic;">运行结果将显示在这里...</p>
+            </div>
+            
+            <div id="solution" style="display: none; margin-top: 20px; padding: 20px; background: #d4edda; border-radius: 5px;">
+                <h4>✅ 参考答案：</h4>
+                <div class="code-block">
+#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int value = 100;
+    int* ptr = &value;      // 声明指针并指向value
+    
+    *ptr = 200;             // 通过指针修改变量值
+    
+    cout &lt;&lt; "修改前的值: 100" &lt;&lt; endl;
+    cout &lt;&lt; "修改后的值: " &lt;&lt; value &lt;&lt; endl;
+    cout &lt;&lt; "指针地址: " &lt;&lt; &ptr &lt;&lt; endl;
+    cout &lt;&lt; "指针指向的地址: " &lt;&lt; ptr &lt;&lt; endl;
+    cout &lt;&lt; "指针指向的值: " &lt;&lt; *ptr &lt;&lt; endl;
+    
+    return 0;
+}
+                </div>
+                <p style="margin-top: 10px;"><strong>💡 解释：</strong></p>
+                <ul>
+                    <li><code>int* ptr = &value;</code>：声明指针并初始化</li>
+                    <li><code>*ptr = 200;</code>：通过解引用修改原变量值</li>
+                    <li><code>&ptr</code>：获取指针变量自己的地址</li>
+                    <li><code>ptr</code>：指针存储的值（即value的地址）</li>
+                    <li><code>*ptr</code>：指针指向的值（即value的值）</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 知识总结 -->
+        <section id="summary" style="margin-top: 40px;">
+            <h2>📝 知识总结</h2>
+            <div style="background: #f0f8ff; padding: 20px; border-radius: 8px;">
+                <h3>✅ 本课要点：</h3>
+                <ul style="margin-left: 20px;">
+                    <li><strong>指针本质</strong>：存储内存地址的变量</li>
+                    <li><strong>声明语法</strong>：<code>类型* 指针名;</code></li>
+                    <li><strong>初始化</strong>：<code>指针 = &变量;</code></li>
+                    <li><strong>解引用</strong>：<code>*指针</code> 获取指向的值</li>
+                    <li><strong>空指针</strong>：使用<code>nullptr</code>表示不指向任何地址</li>
+                </ul>
+                
+                <h3 style="margin-top: 20px;">⚠️ 常见错误：</h3>
+                <ul style="margin-left: 20px;">
+                    <li>使用未初始化的指针（野指针）</li>
+                    <li>指针类型与变量类型不匹配</li>
+                    <li>对空指针进行解引用</li>
+                    <li>混淆<code>&</code>和<code>*</code>的用法</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 下一步学习 -->
+        <section style="margin-top: 40px; text-align: center;">
+            <h3>🎯 下一步学习建议</h3>
+            <p>掌握指针基础后，建议学习：</p>
+            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+                <a href="#" style="padding: 15px 25px; background: #9b59b6; color: white; border-radius: 5px; text-decoration: none;">
+                    1. 指针与数组
+                </a>
+                <a href="#" style="padding: 15px 25px; background: #e74c3c; color: white; border-radius: 5px; text-decoration: none;">
+                    2. 动态内存分配
+                </a>
+                <a href="#" style="padding: 15px 25px; background: #f39c12; color: white; border-radius: 5px; text-decoration: none;">
+                    3. 智能指针
+                </a>
+            </div>
+        </section>
+
+        <!-- 导航按钮 -->
+        <div class="nav-buttons">
+            <a href="../index.html" class="btn" style="background: #95a5a6;">
+                ← 返回首页
+            </a>
+            <a href="#" class="btn" style="background: #3498db;">
+                下一课：指针运算 →
+            </a>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer style="text-align: center; padding: 20px; background: #2c3e50; color: white; margin-top: 40px;">
+        <p>© 2024 C++编程学习平台 | 指针入门微课</p>
+        <p style="margin-top: 10px; font-size: 0.9rem;">
+            遇到问题？<a href="https://github.com/你的用户名/cpp-teaching-platform/issues" style="color: #3498db;">提交反馈</a>
+        </p>
+    </footer>
+
+    <script>
+        // 实践练习功能
+        function runPracticeCode() {
+            const output = document.getElementById('practiceOutput');
+            output.innerHTML = `
+                <h4>🖥️ 运行结果：</h4>
+                <div style="background: white; padding: 15px; border-radius: 5px; font-family: monospace;">
+                    <p style="color: #e74c3c;">修改前的值: 100</p>
+                    <p style="color: #27ae60;">💡 提示：你还需要：</p>
+                    <ul>
+                        <li>声明指针：int* ptr = &value;</li>
+                        <li>修改值：*ptr = 200;</li>
+                        <li>输出指针信息</li>
+                    </ul>
+                    <p>点击"查看答案"获取完整代码。</p>
+                </div>
+            `;
+        }
+        
+        function showSolution() {
+            document.getElementById('solution').style.display = 'block';
+        }
+        
+        function resetCode() {
+            document.getElementById('practiceCode').value = `#include <iostream>
+using namespace std;
+
+int main() {
+    // 练习1：定义一个变量和指向它的指针
+    int value = 100;
+    // TODO: 在这里声明一个指针ptr指向value
+    
+    // 练习2：通过指针修改变量值
+    // TODO: 使用指针将value的值改为200
+    
+    // 练习3：输出结果验证
+    cout << "修改前的值: " << value << endl;
+    
+    // 练习4：输出指针信息
+    // TODO: 输出指针的地址和指针指向的值
+    
+    return 0;
+}`;
+            document.getElementById('practiceOutput').innerHTML = 
+                '<p style="color: #7f8c8d; font-style: italic;">运行结果将显示在这里...</p>';
+            document.getElementById('solution').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
