@@ -1,51 +1,227 @@
-<!-- 更新 index.html 的主体结构 -->
-<div class="main-container">
-    <!-- 左侧边栏：学习仪表盘 -->
-    <aside class="dashboard-sidebar">
-        <div class="sidebar-card">
-            <h3>📅 今日计划</h3>
-            <ul class="todo-list">
-                <li>完成“指针入门”练习</li>
-                <li>复习“内存管理”视频</li>
-            </ul>
-        </div>
-        <div class="sidebar-card">
-            <h3>🚀 继续学习</h3>
-            <div class="continue-course">
-                <p><strong>指针入门</strong></p>
-                <div class="progress-bar">
-                    <div class="progress" style="width: 65%;"></div>
-                </div>
-                <span>已学 65%</span>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++编程学习平台</title>
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="style.css">
+    <!-- 可选：引入图标库 (如Font Awesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 这里可以放一些只属于本页面的特殊样式 */
+        .stats-highlight {
+            color: #3498db;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- 1. 顶部导航栏 -->
+    <header class="site-header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <i class="fas fa-code"></i> C++学习平台
+            </a>
+            <nav class="main-nav">
+                <a href="index.html"><i class="fas fa-home"></i> 首页</a>
+                <a href="#course-center"><i class="fas fa-book-open"></i> 课程中心</a>
+                <a href="#ai-lab"><i class="fas fa-robot"></i> AI辅导</a>
+                <a href="#personal"><i class="fas fa-user-circle"></i> 我的学习</a>
+            </nav>
+            <div class="header-actions">
+                <a href="#" class="btn-notification"><i class="fas fa-bell"></i></a>
             </div>
         </div>
-    </aside>
+    </header>
 
-    <!-- 右侧主内容区 -->
-    <main class="course-main">
-        <section class="course-header">
-            <h1>我的C++课程</h1>
-            <p>已发布 <span class="highlight">3</span> 门课程</p>
-        </section>
-
-        <!-- 课程卡片网格 -->
-        <div class="course-grid">
-            <article class="course-card">
-                <div class="card-header">
-                    <span class="card-tag">📍 核心基础</span>
-                    <div class="card-progress">65%</div>
+    <!-- 2. 主内容区（侧边栏 + 主面板） -->
+    <div class="main-container">
+        <!-- 2.1 左侧边栏：学习仪表盘 -->
+        <aside class="dashboard-sidebar">
+            <div class="user-quickview">
+                <div class="user-avatar">
+                    <i class="fas fa-user-graduate"></i>
                 </div>
-                <h3 class="card-title">指针入门</h3>
-                <p class="card-desc">理解指针核心概念，掌握基本操作。</p>
-                <div class="card-footer">
-                    <a href="courses/pointers.html" class="btn-primary">继续学习</a>
-                    <div class="meta-info">
-                        <span>⏱️ 15分钟</span>
-                        <span>📊 初级</span>
+                <h3>学习者</h3>
+                <p>今日已学习 <span class="stats-highlight">45</span> 分钟</p>
+            </div>
+
+            <div class="sidebar-card">
+                <h3><i class="fas fa-tasks"></i> 今日计划</h3>
+                <ul class="todo-list">
+                    <li><i class="far fa-circle"></i> 完成“指针入门”练习</li>
+                    <li><i class="far fa-circle"></i> 复习“内存管理”视频</li>
+                    <li><i class="far fa-circle"></i> 预习“函数”章节</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-card">
+                <h3><i class="fas fa-rocket"></i> 继续学习</h3>
+                <div class="continue-course">
+                    <p><strong>指针入门</strong></p>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 65%;"></div>
+                    </div>
+                    <span>已学 65%</span>
+                    <a href="courses/pointers.html" class="btn-continue">继续</a>
+                </div>
+            </div>
+
+            <div class="sidebar-card quick-tools">
+                <h3><i class="fas fa-bolt"></i> 快捷工具</h3>
+                <a href="#ai-lab" class="tool-link"><i class="fas fa-robot"></i> AI助手</a>
+                <a href="#" class="tool-link"><i class="fas fa-play-circle"></i> 代码运行</a>
+                <a href="#" class="tool-link"><i class="fas fa-question-circle"></i> 问题讨论</a>
+            </div>
+        </aside>
+
+        <!-- 2.2 右侧主面板 -->
+        <main class="course-main">
+            <!-- 欢迎横幅 -->
+            <section class="welcome-banner">
+                <h1>欢迎回来！</h1>
+                <p>这是你的个性化C++学习空间。今天要学习什么？</p>
+                <div class="banner-actions">
+                    <a href="#course-center" class="btn btn-primary"><i class="fas fa-play"></i> 继续学习</a>
+                    <a href="#" class="btn btn-outline"><i class="fas fa-plus"></i> 探索新课</a>
+                </div>
+            </section>
+
+            <!-- 课程网格 -->
+            <section id="course-center" class="course-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-th-large"></i> 我的课程</h2>
+                    <div class="view-options">
+                        <span class="active">列表视图</span>
+                        <span>网格视图</span>
                     </div>
                 </div>
-            </article>
-            <!-- 可以复制更多 course-card 用于其他课程 -->
+
+                <div class="course-grid">
+                    <!-- 课程卡片 1 -->
+                    <article class="course-card">
+                        <div class="card-header">
+                            <span class="card-tag beginner"><i class="fas fa-star"></i> 核心基础</span>
+                            <div class="card-progress">65%</div>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title">指针入门</h3>
+                            <p class="card-desc">理解指针核心概念，掌握基本操作。</p>
+                            <div class="card-meta">
+                                <span><i class="far fa-clock"></i> 15分钟</span>
+                                <span><i class="fas fa-signal"></i> 初级</span>
+                                <span><i class="far fa-file-code"></i> 3个练习</span>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <a href="courses/pointers.html" class="btn btn-card">进入课程</a>
+                            <div class="instructor">
+                                <i class="fas fa-chalkboard-teacher"></i> 张老师
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- 课程卡片 2 -->
+                    <article class="course-card">
+                        <div class="card-header">
+                            <span class="card-tag beginner"><i class="fas fa-star"></i> 核心基础</span>
+                            <div class="card-progress">30%</div>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title">变量与数据类型</h3>
+                            <p class="card-desc">学习如何声明变量，理解基本数据类型。</p>
+                            <div class="card-meta">
+                                <span><i class="far fa-clock"></i> 12分钟</span>
+                                <span><i class="fas fa-signal"></i> 初级</span>
+                                <span><i class="far fa-file-code"></i> 2个练习</span>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <a href="courses/variables.html" class="btn btn-card">进入课程</a>
+                            <div class="instructor">
+                                <i class="fas fa-chalkboard-teacher"></i> 李老师
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- 课程卡片 3 (即将上线) -->
+                    <article class="course-card upcoming">
+                        <div class="card-header">
+                            <span class="card-tag intermediate"><i class="fas fa-chart-line"></i> 进阶提升</span>
+                            <div class="card-status">即将上线</div>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title">内存管理</h3>
+                            <p class="card-desc">new/delete原理，避免内存泄漏。</p>
+                            <div class="card-meta">
+                                <span><i class="far fa-clock"></i> 18分钟</span>
+                                <span><i class="fas fa-signal"></i> 中级</span>
+                                <span><i class="far fa-file-code"></i> 4个练习</span>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-card" disabled>敬请期待</button>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- AI实验室区域 -->
+            <section id="ai-lab" class="ai-lab-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-robot"></i> AI编程助手</h2>
+                    <p>遇到问题？让AI帮你分析代码</p>
+                </div>
+                <div class="ai-container">
+                    <div class="code-input-area">
+                        <h4><i class="fas fa-keyboard"></i> 输入你的C++代码</h4>
+                        <textarea id="codeInput" placeholder="#include <iostream>
+using namespace std;
+
+int main() {
+    // 在这里输入你的代码...
+    cout << \"Hello, C++!\" << endl;
+    return 0;
+}"></textarea>
+                        <button onclick="analyzeCode()" class="btn btn-primary btn-analyze">
+                            <i class="fas fa-magic"></i> AI分析代码
+                        </button>
+                    </div>
+                    <div class="ai-output-area">
+                        <h4><i class="fas fa-comment-dots"></i> AI分析结果</h4>
+                        <div id="aiOutput" class="ai-output">
+                            <p class="placeholder">点击“AI分析代码”按钮，获取智能反馈...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 3. 页脚 -->
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-code"></i> C++学习平台
+            </div>
+            <div class="footer-links">
+                <a href="#">关于我们</a>
+                <a href="#">帮助中心</a>
+                <a href="#">用户协议</a>
+                <a href="#">隐私政策</a>
+            </div>
+            <div class="footer-copyright">
+                <p>© 2024 C++编程学习平台. 通过GitHub Pages部署. 仅供学习交流使用.</p>
+                <p class="github-link">
+                    <i class="fab fa-github"></i>
+                    <a href="https://github.com/yMoon-ys/cpp-C-learning-platform">查看项目源码</a>
+                </p>
+            </div>
         </div>
-    </main>
-</div>
+    </footer>
+
+    <!-- 4. 引入JavaScript文件 -->
+    <script src="script.js"></script>
+</body>
+</html>
