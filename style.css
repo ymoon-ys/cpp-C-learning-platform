@@ -1,46 +1,114 @@
-/* 全局样式 */
+/* 1. 定义色彩体系 */
 :root {
-    --primary: #3498db;
-    --secondary: #2c3e50;
-    --accent: #e74c3c;
-    --light: #ecf0f1;
-    --dark: #2c3e50;
+    --primary-blue: #3498db;       /* 主蓝色，用于按钮、重点 */
+    --light-blue: #e8f4fc;         /* 浅蓝色，用于卡片背景、高亮 */
+    --dark-blue: #2c3e50;          /* 深蓝色，用于导航栏、标题 */
+    --background-gray: #f5f7fa;    /* 背景灰色 */
+    --text-dark: #333333;          /* 正文深色 */
+    --text-light: #666666;         /* 辅助文本浅色 */
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
+/* 2. 设置页面基础 */
 body {
-    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background-color: #f8f9fa;
+    font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+    background-color: var(--background-gray);
+    color: var(--text-dark);
+    margin: 0;
 }
 
-/* 导航样式（如果以后添加导航栏） */
-.navbar {
-    background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    padding: 1rem 2rem;
+/* 3. 设计顶部导航栏（固定） */
+.site-header {
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1000;
+    padding: 0 2rem;
+}
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+}
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--dark-blue);
+    text-decoration: none;
+}
+.main-nav a {
+    margin-left: 2rem;
+    color: var(--text-dark);
+    text-decoration: none;
+    font-weight: 500;
+}
+.main-nav a:hover {
+    color: var(--primary-blue);
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-    .hero h1 {
-        font-size: 2rem;
-    }
-    
-    .features {
-        grid-template-columns: 1fr;
-    }
-    
-    .course-list {
-        grid-template-columns: 1fr;
-    }
+/* 4. 创建主内容容器 */
+.main-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 250px 1fr; /* 侧边栏 + 主内容 */
+    gap: 25px;
+}
+/* 对应的CSS样式（添加到 style.css） */
+/* 5. 侧边栏样式 */
+.dashboard-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.sidebar-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* 6. 课程卡片网格 */
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+.course-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+.card-progress {
+    background: var(--light-blue);
+    color: var(--primary-blue);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+.btn-primary {
+    background: var(--primary-blue);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    text-align: center;
+    display: inline-block;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
 }
