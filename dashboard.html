@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>学习仪表盘 · C++学习平台</title>
+    <title>仪表盘 · C++学习平台</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- 整个布局采用flex，左侧固定，右侧自适应 -->
     <div class="dashboard">
         <!-- 左侧导航栏（紫底） -->
         <aside class="sidebar">
@@ -19,37 +18,37 @@
             <!-- 学习天数卡片 -->
             <div class="days-card">
                 <div class="days-number">已连续学习</div>
-                <div class="days-count">12<span>天</span></div>
+                <div class="days-count" id="daysCount">17<span>天</span></div>
                 <div class="days-motto">继续加油</div>
             </div>
 
-            <!-- 导航菜单（6个模块，全部可交互） -->
+            <!-- 导航菜单（所有链接都已更新） -->
             <nav class="sidebar-nav">
-                <a href="dashboard.html" class="nav-item active" data-page="dashboard">
+                <a href="dashboard.html" class="nav-item active">
                     <span class="nav-icon">📊</span>
                     <span class="nav-text">仪表盘</span>
                 </a>
-                <a href="#" class="nav-item" data-page="courses">
+                <a href="courses.html" class="nav-item">
                     <span class="nav-icon">📚</span>
                     <span class="nav-text">课程</span>
                 </a>
-                <a href="#" class="nav-item" data-page="practice">
+                <a href="practice.html" class="nav-item">
                     <span class="nav-icon">✏️</span>
                     <span class="nav-text">练习</span>
                 </a>
-                <a href="#" class="nav-item" data-page="sandbox">
+                <a href="sandbox.html" class="nav-item">
                     <span class="nav-icon">🛠️</span>
                     <span class="nav-text">自由调试</span>
                 </a>
-                <a href="#" class="nav-item" data-page="ai">
+                <a href="ai-assistant.html" class="nav-item">
                     <span class="nav-icon">🤖</span>
                     <span class="nav-text">AI助手</span>
                 </a>
-                <a href="#" class="nav-item" data-page="discussion">
+                <a href="discussion.html" class="nav-item">
                     <span class="nav-icon">💬</span>
                     <span class="nav-text">讨论</span>
                 </a>
-                <a href="#" class="nav-item" data-page="settings">
+                <a href="settings.html" class="nav-item">
                     <span class="nav-icon">⚙️</span>
                     <span class="nav-text">设置</span>
                 </a>
@@ -60,20 +59,20 @@
                 <div class="user-info">
                     <div class="user-avatar">👤</div>
                     <div class="user-detail">
-                        <div class="user-name">张三</div>
-                        <div class="user-role">计算机科学与技术 · 大二</div>
+                        <div class="user-name">0631250124</div>
+                        <div class="user-role">数据科学与大数据技术</div>
                     </div>
                 </div>
                 <a href="index.html" class="logout-btn">退出</a>
             </div>
         </aside>
 
-        <!-- 右侧主内容区（白底） -->
-        <main class="main-content" id="mainContent">
+        <!-- 右侧主内容区 -->
+        <main class="main-content">
             <!-- 顶部蓝色区域 -->
             <div class="top-blue-banner">
                 <div class="welcome-text">
-                    <h1>下午好，张三</h1>
+                    <h1>下午好，0631250124</h1>
                     <p>今天也要坚持学习哦 · 上次学到「指针与数组」</p>
                 </div>
                 <div class="top-actions">
@@ -82,15 +81,16 @@
                 </div>
             </div>
 
-            <!-- 动态内容区域（通过JS切换） -->
-            <div id="contentArea">
-                <!-- 默认显示仪表盘内容 -->
+            <!-- 内容区域 -->
+            <div style="padding: 30px 40px;">
+                <!-- 我的课程模块 -->
                 <div class="content-module">
                     <div class="module-header">
-                        <h2>📌 我的课程</h2>
-                        <a href="#" class="view-all">查看全部 →</a>
+                        <h2>📚 我的课程</h2>
+                        <a href="courses.html" class="view-all">查看全部 →</a>
                     </div>
                     <div class="course-grid">
+                        <!-- 课程卡片 1 -->
                         <div class="course-card">
                             <div class="course-tag">进行中</div>
                             <h3>指针入门</h3>
@@ -99,8 +99,9 @@
                                 <span>进度 65%</span>
                                 <div class="progress-bar"><div style="width:65%"></div></div>
                             </div>
-                            <button class="btn-small">继续学习</button>
+                            <a href="courses/pointers.html" class="btn-small">继续学习</a>
                         </div>
+                        <!-- 课程卡片 2 -->
                         <div class="course-card">
                             <div class="course-tag">进行中</div>
                             <h3>变量与数据类型</h3>
@@ -109,8 +110,9 @@
                                 <span>进度 30%</span>
                                 <div class="progress-bar"><div style="width:30%"></div></div>
                             </div>
-                            <button class="btn-small">继续学习</button>
+                            <a href="#" class="btn-small">继续学习</a>
                         </div>
+                        <!-- 课程卡片 3 -->
                         <div class="course-card">
                             <div class="course-tag">未开始</div>
                             <h3>内存管理</h3>
@@ -119,15 +121,16 @@
                                 <span>进度 0%</span>
                                 <div class="progress-bar"><div style="width:0%"></div></div>
                             </div>
-                            <button class="btn-small">开始学习</button>
+                            <a href="#" class="btn-small">开始学习</a>
                         </div>
                     </div>
                 </div>
 
+                <!-- 今日待办模块 -->
                 <div class="content-module">
                     <div class="module-header">
                         <h2>📋 今日待办</h2>
-                        <a href="#" class="view-all">全部任务 →</a>
+                        <a href="practice.html" class="view-all">全部任务 →</a>
                     </div>
                     <ul class="todo-list">
                         <li class="todo-item">
