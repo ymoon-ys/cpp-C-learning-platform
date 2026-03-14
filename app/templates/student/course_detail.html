@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.title }} - C++学习平台{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                {% if course.cover %}
+                <img src="/{{ course.cover }}" class="card-img-top" alt="{{ course.title }}" style="height: 300px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <i class="fas fa-book fa-5x text-muted"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h2>{{ course.title }}</h2>
+                    <p class="text-muted">{{ course.description }}</p>
+                    <div class="mb-3">
+                        <span class="badge bg-primary">{{ course.category }}</span>
+                        <span class="badge bg-success">已发布</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> 课程章节</h5>
+                </div>
+                <div class="card-body">
+                    {% if chapters %}
+                    {% for chapter in chapters %}
+                    <div class="mb-4">
+                        <div class="chapter-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px;">
+                            <h6 class="chapter-title mb-0">
+                                <i class="fas fa-folder text-primary"></i> {{ chapter.title }}
+                            </h6>
+                            <span class="badge bg-primary">{{ chapter.lessons|length }} 小节</span>
+                        </div>
+                        {% if chapter.lessons %}
+                        <div class="lessons-list" style="margin-left: 10px;">
+                            {% for lesson in chapter.lessons %}
+                            <a href="{{ url_for('student.lesson_detail', lesson_id=lesson.id) }}" class="d-block lesson-item {{ 'completed' if lesson.completed else '' }}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; margin-bottom: 8px; background: white; border: 1px solid #e9ecef; border-radius: 8px; text-decoration: none; transition: all 0.3s ease;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: {{ '#28a745' if lesson.completed else '#007bff' }}; color: white;">
+                                        <i class="fas {{ 'fa-check' if lesson.completed else 'fa-play' }} fa-sm"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 500; color: #343a40;">{{ lesson.title }}</div>
+                                        {% if lesson.duration %}
+                                        <div style="font-size: 12px; color: #6c757d;">{{ lesson.duration }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="badge bg-{{ 'success' if lesson.completed else 'info' }} text-white" style="font-size: 11px;">
+                                        {% if lesson.content_type == 'video' %}视频
+                                        {% elif lesson.content_type == 'document' %}文档
+                                        {% elif lesson.content_type == 'image' %}图片
+                                        {% else %}其他
+                                        {% endif %}
+                                    </span>
+                                    <i class="fas fa-chevron-right text-muted"></i>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-3" style="background: #f8f9fa; border-radius: 8px; margin-top: 10px;">
+                            <p class="text-muted mb-0">暂无课程内容</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center py-5" style="background: #f8f9fa; border-radius: 8px;">
+                        <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">暂无章节</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-file-alt"></i> 课程资料</h6>
+                </div>
+                <div class="card-body">
+                    {% if materials %}
+                    <ul class="list-group list-group-flush">
+                        {% for material in materials %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('course.download_material', material_id=material.id) }}" class="text-decoration-none">
+                                <i class="fas fa-download"></i> {{ material.title }}
+                            </a>
+                            <span class="badge bg-secondary">{{ material.file_type }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted text-center">暂无资料</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-comments"></i> 讨论区</h6>
+                </div>
+                <div class="card-body">
+                    {% if discussions %}
+                    <div class="list-group list-group-flush">
+                        {% for discussion in discussions %}
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <h6 class="mb-1">{{ discussion.title }}</h6>
+                            <p class="mb-1 text-muted small">{{ discussion.content[:50] }}...</p>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">暂无讨论</p>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('student.create_discussion', course_id=course.id) }}" class="mt-3">
+                        <div class="mb-2">
+                            <input type="text" class="form-control form-control-sm" name="title" placeholder="讨论标题" required>
+                        </div>
+                        <div class="mb-2">
+                            <textarea class="form-control form-control-sm" name="content" rows="2" placeholder="讨论内容" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-paper-plane"></i> 发布讨论
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-star"></i> 课程评价</h6>
+                </div>
+                <div class="card-body">
+                    {% if reviews %}
+                    <div class="list-group list-group-flush">
+                        {% for review in reviews %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="mb-1">用户{{ review.user_id }}</h6>
+                                <div>
+                                    {% for i in range(1, 6) %}
+                                    <i class="fas fa-star {{ 'text-warning' if i <= review.rating else 'text-muted' }}"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <p class="mb-1 text-muted small">{{ review.content }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">暂无评价</p>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('student.create_review', course_id=course.id) }}" class="mt-3">
+                        <div class="mb-2">
+                            <label class="form-label small">评分</label>
+                            <select class="form-select form-select-sm" name="rating">
+                                <option value="5">⭐⭐⭐⭐⭐</option>
+                                <option value="4">⭐⭐⭐⭐</option>
+                                <option value="3">⭐⭐⭐</option>
+                                <option value="2">⭐⭐</option>
+                                <option value="1">⭐</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <textarea class="form-control form-control-sm" name="content" rows="2" placeholder="评价内容" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-paper-plane"></i> 提交评价
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'ai_assistant_include.html' %}
+
+{% endblock %}

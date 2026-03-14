@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI助手 - C++学习平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .ai-assistant-full-page {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .ai-assistant-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ai-assistant-header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .ai-assistant-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .ai-main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .ai-code-panel {
+            flex: 1;
+            background-color: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .ai-code-panel h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .ai-code-content {
+            flex: 1;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .ai-text-panel {
+            flex: 1;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .ai-text-panel h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .ai-chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .ai-chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .ai-message {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .ai-message.user {
+            align-items: flex-end;
+        }
+        
+        .ai-message.ai {
+            align-items: flex-start;
+        }
+        
+        .ai-message-content {
+            max-width: 85%;
+            padding: 16px 20px;
+            border-radius: 16px;
+            font-size: 16px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+        
+        .ai-message.user .ai-message-content {
+            background-color: #667eea;
+            color: white;
+            border-radius: 16px 16px 0 16px;
+        }
+        
+        .ai-message.ai .ai-message-content {
+            background-color: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-radius: 16px 16px 16px 0;
+        }
+        
+        .ai-message-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 8px;
+        }
+        
+        .ai-message.user .ai-message-time {
+            text-align: right;
+        }
+        
+        .ai-message.ai .ai-message-time {
+            text-align: left;
+        }
+        
+        .ai-input-area {
+            padding: 30px;
+            background-color: white;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .ai-input-options {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .ai-option-btn {
+            padding: 10px 20px;
+            border: 1px solid #e0e0e0;
+            background-color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-option-btn:hover {
+            background-color: #f8f9fa;
+            border-color: #667eea;
+        }
+        
+        .ai-option-btn.active {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .ai-textarea {
+            width: 100%;
+            min-height: 120px;
+            max-height: 300px;
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        
+        .ai-textarea::placeholder {
+            color: #999;
+        }
+        
+        .ai-image-preview {
+            position: relative;
+            display: inline-block;
+            margin-top: 15px;
+        }
+        
+        .ai-image-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .ai-image-preview .ai-remove-image {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ai-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            gap: 15px;
+        }
+        
+        .ai-model-selector-inline {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .ai-model-selector-inline label {
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .ai-model-selector-inline select {
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+            cursor: pointer;
+            min-width: 120px;
+        }
+        
+        .ai-model-selector-inline select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        
+        .ai-upload-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-upload-btn:hover {
+            background-color: #e9ecef;
+            border-color: #667eea;
+        }
+        
+        .ai-upload-btn input {
+            display: none;
+        }
+        
+        .ai-send-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+        }
+        
+        .ai-send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .ai-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+        
+        .ai-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .ai-code-block {
+            background-color: #f4f4f4;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        
+        .ai-code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .ai-welcome-message {
+            background-color: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .ai-welcome-message h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: #667eea;
+            font-size: 18px;
+        }
+        
+        .ai-welcome-message ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .ai-welcome-message li {
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        @media (max-width: 768px) {
+            .ai-assistant-header {
+                padding: 15px 20px;
+            }
+            
+            .ai-assistant-header h2 {
+                font-size: 20px;
+            }
+            
+            .ai-model-selector {
+                padding: 15px 20px;
+            }
+            
+            .ai-chat-history {
+                padding: 20px;
+            }
+            
+            .ai-input-area {
+                padding: 20px;
+            }
+            
+            .ai-message-content {
+                font-size: 14px;
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>C++学习平台</h1>
+        </div>
+        <div class="header-right">
+            <div class="greeting">
+                <p>下午好，{{ current_user.username }}</p>
+                <p class="sub-greeting">今天也要坚持学习，上次登录：3月15日(周四)</p>
+            </div>
+            <div class="user-icon">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
+                <span class="notification">1</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="learning-stats">
+                    <p class="days">已连续学习</p>
+                    <p class="number">8天</p>
+                    <p class="streak">继续加油</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{{ url_for('student.dashboard') }}">我的课程</a></li>
+                    <li><a href="{{ url_for('student.practice') }}">练习</a></li>
+                    <li class="active"><a href="{{ url_for('ai_assistant.index') }}">AI助手</a></li>
+                    <li><a href="{{ url_for('community.community_page') }}">社区</a></li>
+                    <li><a href="{{ url_for('student.settings') }}">设置</a></li>
+                    <li><a href="{{ url_for('auth.logout') }}">退出登录</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content ai-assistant-content">
+            <div class="ai-assistant-container">
+                <div class="ai-assistant-full-page">
+                    <div class="ai-assistant-header">
+                        <h2>AI编程助手</h2>
+                        <div class="ai-assistant-info">
+                            <span class="model-status">当前模型: Gemini</span>
+                        </div>
+                    </div>
+                    
+                    <div class="ai-assistant-body">
+                        <div class="ai-main-container">
+                            <div class="ai-code-panel">
+                                <h3>代码输出</h3>
+                                <div class="ai-code-content" id="aiCodeContent">
+                                    <p>AI生成的代码将显示在这里...</p>
+                                </div>
+                            </div>
+                            
+                            <div class="ai-text-panel">
+                                <h3>文字解答</h3>
+                                <div class="ai-chat-container">
+                                    <div class="ai-chat-history" id="aiChatHistory">
+                                        <div class="ai-welcome-message">
+                                            <h3>你好！我是你的C++编程助手</h3>
+                                            <p>我可以帮助你：</p>
+                                            <ul>
+                                                <li>分析代码中的问题和错误</li>
+                                                <li>提供解题思路和方法</li>
+                                                <li>解释C++知识点和概念</li>
+                                                <li>指导你完成编程练习</li>
+                                                <li>帮助你理解算法和数据结构</li>
+                                            </ul>
+                                            <p>请输入你的问题，我会尽力帮助你！</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="ai-input-area">
+                                        <div class="ai-input-options">
+                                            <button class="ai-option-btn active" id="aiTextBtn">文本</button>
+                                            <button class="ai-option-btn" id="aiCodeBtn">代码</button>
+                                            <button class="ai-option-btn" id="aiImageBtn">图片</button>
+                                        </div>
+                                        <textarea class="ai-textarea" id="aiInput" placeholder="输入你的问题..."></textarea>
+                                        <div class="ai-image-preview" id="aiImagePreview" style="display: none;">
+                                            <img id="aiPreviewImg" src="" alt="预览">
+                                            <button class="ai-remove-image" id="aiRemoveImage">&times;</button>
+                                        </div>
+                                        <div class="ai-actions">
+                            <div class="ai-model-selector-inline">
+                                <label for="aiModelSelect">选择AI模型：</label>
+                                <select id="aiModelSelect">
+                                    <option value="auto">Auto</option>
+                                    <option value="deepseek">Deepseek</option>
+                                    <option value="doubao">豆包</option>
+                                </select>
+                            </div>
+                            <label class="ai-upload-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                上传图片
+                                <input type="file" id="aiImageInput" accept="image/*">
+                            </label>
+                            <button class="ai-send-btn" id="aiSendBtn">发送</button>
+                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const aiChatHistory = document.getElementById('aiChatHistory');
+            const aiSendBtn = document.getElementById('aiSendBtn');
+            const aiInput = document.getElementById('aiInput');
+            const aiModelSelect = document.getElementById('aiModelSelect');
+            const aiTextBtn = document.getElementById('aiTextBtn');
+            const aiCodeBtn = document.getElementById('aiCodeBtn');
+            const aiImageBtn = document.getElementById('aiImageBtn');
+            const aiImageInput = document.getElementById('aiImageInput');
+            const aiImagePreview = document.getElementById('aiImagePreview');
+            const aiPreviewImg = document.getElementById('aiPreviewImg');
+            const aiRemoveImage = document.getElementById('aiRemoveImage');
+            const aiCodeContent = document.getElementById('aiCodeContent');
+            
+            let currentInputType = 'text';
+            let uploadedImageData = null;
+            
+            aiTextBtn.addEventListener('click', function() {
+                setInputType('text');
+            });
+            
+            aiCodeBtn.addEventListener('click', function() {
+                setInputType('code');
+            });
+            
+            aiImageBtn.addEventListener('click', function() {
+                setInputType('image');
+            });
+            
+            function setInputType(type) {
+                currentInputType = type;
+                aiTextBtn.classList.remove('active');
+                aiCodeBtn.classList.remove('active');
+                aiImageBtn.classList.remove('active');
+                
+                if (type === 'text') {
+                    aiTextBtn.classList.add('active');
+                    aiInput.placeholder = '输入你的问题...';
+                } else if (type === 'code') {
+                    aiCodeBtn.classList.add('active');
+                    aiInput.placeholder = '粘贴你的代码...';
+                } else if (type === 'image') {
+                    aiImageBtn.classList.add('active');
+                    aiInput.placeholder = '描述图片中的问题...';
+                }
+            }
+            
+            aiImageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        uploadedImageData = event.target.result.split(',')[1];
+                        aiPreviewImg.src = event.target.result;
+                        aiImagePreview.style.display = 'inline-block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            aiRemoveImage.addEventListener('click', function() {
+                uploadedImageData = null;
+                aiImagePreview.style.display = 'none';
+                aiImageInput.value = '';
+            });
+            
+            aiSendBtn.addEventListener('click', sendMessage);
+            
+            aiInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            async function sendMessage() {
+                const question = aiInput.value.trim();
+                if (!question && !uploadedImageData) {
+                    alert('请输入问题或上传图片');
+                    return;
+                }
+                
+                const model = aiModelSelect.value;
+                const hasCode = currentInputType === 'code';
+                const hasImage = uploadedImageData !== null;
+                
+                addUserMessage(question);
+                
+                aiInput.value = '';
+                aiSendBtn.disabled = true;
+                
+                showLoading();
+                
+                try {
+                    const response = await fetch('/ai/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            question: question,
+                            model: model,
+                            problem_id: null,
+                            type: currentInputType,
+                            has_code: hasCode,
+                            has_image: hasImage,
+                            image: uploadedImageData
+                        })
+                    });
+                    
+                    removeLoading();
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        addAIMessage(data.answer);
+                    } else {
+                        const error = await response.json();
+                        addAIMessage('抱歉，AI服务暂时不可用：' + (error.error || '未知错误'));
+                    }
+                } catch (error) {
+                    removeLoading();
+                    addAIMessage('抱歉，网络连接失败，请稍后重试');
+                }
+                
+                aiSendBtn.disabled = false;
+            }
+            
+            function addUserMessage(content) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'ai-message user';
+                
+                let messageContent = content;
+                if (currentInputType === 'code') {
+                    messageContent = '<div class="ai-code-block"><pre>' + escapeHtml(content) + '</pre></div>';
+                }
+                
+                messageDiv.innerHTML = `
+                    <div class="ai-message-content">${messageContent}</div>
+                    <div class="ai-message-time">刚刚</div>
+                `;
+                
+                aiChatHistory.appendChild(messageDiv);
+                aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+            }
+            
+            function addAIMessage(content) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'ai-message ai';
+                
+                const { textContent, codeContent } = extractCode(content);
+                const formattedContent = formatMessage(textContent);
+                
+                messageDiv.innerHTML = `
+                    <div class="ai-message-content">${formattedContent}</div>
+                    <div class="ai-message-time">刚刚</div>
+                `;
+                
+                aiChatHistory.appendChild(messageDiv);
+                aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+                
+                // 更新代码面板
+                if (codeContent) {
+                    aiCodeContent.innerHTML = codeContent;
+                } else {
+                    aiCodeContent.innerHTML = '<p>AI生成的代码将显示在这里...</p>';
+                }
+            }
+            
+            function extractCode(content) {
+                const codeRegex = /```cpp\n([\s\S]*?)```/g;
+                const generalCodeRegex = /```([\s\S]*?)```/g;
+                
+                let textContent = content;
+                let codeContent = '';
+                
+                // 提取C++代码
+                const cppMatches = content.matchAll(codeRegex);
+                for (const match of cppMatches) {
+                    codeContent += match[1] + '\n';
+                    textContent = textContent.replace(match[0], '');
+                }
+                
+                // 如果没有C++代码，提取通用代码
+                if (!codeContent) {
+                    const generalMatches = content.matchAll(generalCodeRegex);
+                    for (const match of generalMatches) {
+                        codeContent += match[1] + '\n';
+                        textContent = textContent.replace(match[0], '');
+                    }
+                }
+                
+                return { textContent, codeContent };
+            }
+            
+            function showLoading() {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'ai-message ai';
+                loadingDiv.id = 'aiLoadingMessage';
+                loadingDiv.innerHTML = `
+                    <div class="ai-message-content">
+                        <div class="ai-loading">
+                            <div class="ai-loading-spinner"></div>
+                        </div>
+                    </div>
+                `;
+                aiChatHistory.appendChild(loadingDiv);
+                aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+            }
+            
+            function removeLoading() {
+                const loadingMessage = document.getElementById('aiLoadingMessage');
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                }
+            }
+            
+            function formatMessage(content) {
+                let formatted = escapeHtml(content);
+                
+                formatted = formatted.replace(/```cpp\n([\s\S]*?)```/g, '<div class="ai-code-block"><pre>$1</pre></div>');
+                formatted = formatted.replace(/```([\s\S]*?)```/g, '<div class="ai-code-block"><pre>$1</pre></div>');
+                formatted = formatted.replace(/\n/g, '<br>');
+                
+                return formatted;
+            }
+            
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        });
+    </script>
+</body>
+</html>

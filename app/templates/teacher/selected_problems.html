@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的选题 - C++学习平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .selected-container {
+            padding: 20px;
+        }
+        .selected-header {
+            margin-bottom: 20px;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+        }
+        .nav-links a {
+            margin-right: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .nav-links a.active {
+            font-weight: bold;
+        }
+        .selected-table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .selected-table th, .selected-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .selected-table th {
+            background: #f8f9fa;
+            font-weight: 500;
+        }
+        .selected-table tr:hover {
+            background: #f8f9fa;
+        }
+        .difficulty-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .difficulty-easy { background: #d4edda; color: #155724; }
+        .difficulty-medium { background: #fff3cd; color: #856404; }
+        .difficulty-hard { background: #f8d7da; color: #721c24; }
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #6c757d;
+            color: #6c757d;
+        }
+        .btn-outline:hover {
+            background: #6c757d;
+            color: white;
+        }
+        .visibility-info {
+            font-size: 12px;
+            color: #666;
+        }
+        .visibility-info span {
+            display: block;
+        }
+        .notes-preview {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .no-data a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .no-data a:hover {
+            text-decoration: underline;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+        }
+        .modal-header {
+            margin-bottom: 20px;
+        }
+        .modal-header h3 {
+            margin: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>C++学习平台</h1>
+        </div>
+        <div class="header-right">
+            <div class="greeting">
+                <p>上午好，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
+                <p class="sub-greeting">教师后台</p>
+            </div>
+            <div class="user-icon">
+                {% if current_user.avatar %}
+                <img src="{{ current_user.avatar }}" alt="用户头像">
+                {% else %}
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="learning-stats">
+                    <p class="days">教师</p>
+                    <p class="number">后台</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/teacher/dashboard">仪表盘</a></li>
+                    <li><a href="/teacher/problems">题库浏览</a></li>
+                    <li class="active"><a href="/teacher/problems/selected">我的选题</a></li>
+                    <li><a href="/teacher/assignments">题目布置</a></li>
+                    <li><a href="/teacher/settings">设置</a></li>
+                    <li><a href="/logout">退出登录</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <div class="selected-container">
+                <div class="selected-header">
+                    <h2>我的选题</h2>
+                    <p>管理您为学生选择的题目，设置可见时间</p>
+                </div>
+                
+                <div class="nav-links">
+                    <a href="{{ url_for('teacher.problem_bank') }}">题库浏览</a>
+                    <a href="{{ url_for('teacher.selected_problems') }}" class="active">我的选题 ({{ selected_list|length }})</a>
+                </div>
+                
+                {% if selected_list %}
+                <table class="selected-table">
+                    <thead>
+                        <tr>
+                            <th>题目ID</th>
+                            <th>题目名称</th>
+                            <th>难度</th>
+                            <th>来源</th>
+                            <th>可见时间</th>
+                            <th>备注</th>
+                            <th>选择时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for selected in selected_list %}
+                        <tr>
+                            <td>{{ selected.problem_id }}</td>
+                            <td>
+                                {% if selected.problem %}
+                                <a href="{{ url_for('teacher.problem_detail', problem_id=selected.problem_id) }}">{{ selected.problem.title }}</a>
+                                {% else %}
+                                题目已删除
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if selected.problem %}
+                                <span class="difficulty-badge difficulty-{{ selected.problem.difficulty }}">
+                                    {{ get_difficulty_icon(selected.problem.difficulty) }} {{ get_difficulty_label(selected.problem.difficulty) }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ selected.problem.source if selected.problem and selected.problem.source else '-' }}</td>
+                            <td class="visibility-info">
+                                {% if selected.visible_start or selected.visible_end %}
+                                {% if selected.visible_start %}开始: {{ selected.visible_start }}{% endif %}
+                                {% if selected.visible_end %}结束: {{ selected.visible_end }}{% endif %}
+                                {% else %}
+                                始终可见
+                                {% endif %}
+                            </td>
+                            <td class="notes-preview" title="{{ selected.notes }}">
+                                {{ selected.notes[:30] + '...' if selected.notes and selected.notes|length > 30 else (selected.notes or '-') }}
+                            </td>
+                            <td>{{ selected.selected_at }}</td>
+                            <td>
+                                <button class="btn btn-primary" onclick="openEditModal({{ selected.id }}, '{{ selected.visible_start or '' }}', '{{ selected.visible_end or '' }}', '{{ selected.notes or '' }}')">编辑</button>
+                                <form action="{{ url_for('teacher.unselect_problem', problem_id=selected.problem_id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('确定要取消选择吗？');">取消选择</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="no-data">
+                    <p>您还没有选择任何题目</p>
+                    <p>前往 <a href="{{ url_for('teacher.problem_bank') }}">题库浏览</a> 选择题目</p>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+    
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑选题设置</h3>
+            </div>
+            <form id="editForm" method="POST">
+                <div class="form-group">
+                    <label>可见开始时间</label>
+                    <input type="datetime-local" name="visible_start" id="edit_visible_start">
+                </div>
+                <div class="form-group">
+                    <label>可见结束时间</label>
+                    <input type="datetime-local" name="visible_end" id="edit_visible_end">
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea name="notes" id="edit_notes" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeEditModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function openEditModal(selectedId, visibleStart, visibleEnd, notes) {
+            document.getElementById('editForm').action = '/teacher/problems/selected/' + selectedId + '/edit';
+            document.getElementById('edit_visible_start').value = visibleStart ? visibleStart.replace(' ', 'T') : '';
+            document.getElementById('edit_visible_end').value = visibleEnd ? visibleEnd.replace(' ', 'T') : '';
+            document.getElementById('edit_notes').value = notes;
+            document.getElementById('editModal').classList.add('active');
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+        
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html>

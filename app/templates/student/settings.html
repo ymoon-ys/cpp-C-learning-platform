@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 - C++学习平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>C++学习平台</h1>
+        </div>
+        <div class="header-right">
+            <div class="greeting">
+                <p>{{ greeting }}，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
+                <p class="sub-greeting">今天也要坚持学习，上次登录：{{ week_day }}</p>
+            </div>
+            <div class="user-icon">
+                {% if current_user.avatar %}
+                <img src="{{ current_user.avatar }}" alt="用户头像">
+                {% else %}
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
+                {% endif %}
+                <span class="notification">1</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="learning-stats">
+                    <p class="days">已连续学习</p>
+                    <p class="number">{{ consecutive_days }}天</p>
+                    <p class="streak">继续加油</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{{ url_for('student.dashboard') }}">我的课程</a></li>
+                    <li><a href="{{ url_for('student.practice') }}">练习</a></li>
+                    <li><a href="{{ url_for('ai_assistant.index') }}">AI助手</a></li>
+                    <li><a href="{{ url_for('community.community_page') }}">社区</a></li>
+                    <li class="active"><a href="{{ url_for('student.settings') }}">设置</a></li>
+                    <li><a href="{{ url_for('auth.logout') }}">退出登录</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content settings-content">
+            <div class="settings-container">
+                <div class="settings-header">
+                    <h2>账户设置</h2>
+                    <p>管理您的账户信息和安全设置</p>
+                </div>
+
+                <div class="settings-layout">
+                    <div class="left-section">
+                        <div class="settings-header-section">
+                            <h3>设置选项</h3>
+                        </div>
+                        <div class="settings-tabs">
+                            <button class="tab-btn active" data-tab="profile">基本资料</button>
+                            <button class="tab-btn" data-tab="security">账户安全</button>
+                            <button class="tab-btn" data-tab="privacy">账户注销</button>
+                        </div>
+
+                        <div class="tab-content active" id="profile">
+                            <form class="profile-form" id="profileForm" action="{{ url_for('student.update_profile') }}" method="POST" enctype="multipart/form-data">
+                                <div class="avatar-section">
+                                    <div class="current-avatar">
+                                        {% if current_user.avatar %}
+                                        <img src="{{ current_user.avatar }}" alt="当前头像">
+                                        {% else %}
+                                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=minimalist%20user%20avatar%20icon%20with%20white%20background%20simple%20clean&image_size=square" alt="当前头像">
+                                        {% endif %}
+                                    </div>
+                                    <div class="upload-options">
+                                        <input type="file" id="avatar" name="avatar" accept="image/*">
+                                        <label for="avatar">更换头像</label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="nickname">昵称</label>
+                                    <input type="text" id="nickname" name="nickname" placeholder="请输入昵称" value="{{ current_user.nickname if current_user.nickname else current_user.username }}">
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="submit" class="save-btn">保存修改</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="tab-content" id="security">
+                            <form class="security-form" id="securityForm" action="{{ url_for('student.update_password') }}" method="POST">
+                                <div class="form-group">
+                                    <label for="currentPassword">当前密码</label>
+                                    <input type="password" id="currentPassword" name="currentPassword" placeholder="请输入当前密码">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newPassword">新密码</label>
+                                    <input type="password" id="newPassword" name="newPassword" placeholder="请输入新密码">
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirmPassword">确认密码</label>
+                                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="请再次输入新密码">
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="save-btn">修改密码</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="tab-content" id="privacy">
+                            <div class="privacy-settings">
+                                <div class="warning-text">
+                                    <p>警告：注销账户是不可逆操作，您的所有数据将被永久删除。</p>
+                                </div>
+                                <div class="account-actions">
+                                    <form action="{{ url_for('student.delete_account') }}" method="POST" id="deleteAccountForm">
+                                        <button type="button" class="delete-account-btn" id="deleteAccountBtn">注销账户</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="right-section">
+                        <div class="account-info-header">
+                            <h3>账户信息</h3>
+                        </div>
+                        <div class="account-info-section">
+                            <div class="info-card">
+                                <div class="info-item">
+                                    <span class="info-label">用户角色：</span>
+                                    <span class="info-value">学生</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">注册时间：</span>
+                                    <span class="info-value">{{ registration_time }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">上次登录：</span>
+                                    <span class="info-value">{{ last_login }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">学习天数：</span>
+                                    <span class="info-value">{{ learning_days }}天</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="help-header">
+                            <h3>帮助与支持</h3>
+                        </div>
+                        <div class="help-section">
+                            <div class="help-card">
+                                <div class="help-item">
+                                    <h4>忘记密码？</h4>
+                                    <p>如果您忘记了密码，请联系管理员重置。</p>
+                                </div>
+                                <div class="help-item">
+                                    <h4>账户问题？</h4>
+                                    <p>如有任何账户相关问题，请发送邮件至 support@cpplearning.com</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>确认注销</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>您确定要注销您的账户吗？此操作不可恢复，所有数据将被删除。</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelDelete">取消</button>
+                <button id="confirmDelete">确认注销</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="/static/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+            const deleteModal = document.getElementById('deleteModal');
+            const closeModal = document.querySelector('.close-modal');
+            const cancelDelete = document.getElementById('cancelDelete');
+            const confirmDelete = document.getElementById('confirmDelete');
+            const deleteAccountForm = document.getElementById('deleteAccountForm');
+            
+            if (deleteAccountBtn) {
+                deleteAccountBtn.addEventListener('click', function() {
+                    deleteModal.style.display = 'block';
+                });
+            }
+            
+            if (closeModal) {
+                closeModal.addEventListener('click', function() {
+                    deleteModal.style.display = 'none';
+                });
+            }
+            
+            if (cancelDelete) {
+                cancelDelete.addEventListener('click', function() {
+                    deleteModal.style.display = 'none';
+                });
+            }
+            
+            if (confirmDelete) {
+                confirmDelete.addEventListener('click', function() {
+                    if (deleteAccountForm) {
+                        deleteAccountForm.submit();
+                    }
+                });
+            }
+            
+            window.addEventListener('click', function(e) {
+                if (e.target === deleteModal) {
+                    deleteModal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

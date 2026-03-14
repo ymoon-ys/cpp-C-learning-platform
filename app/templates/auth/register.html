@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - C++学习平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+        }
+        .flash-message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+        }
+        .flash-message.success {
+            background-color: #4caf50;
+            color: white;
+        }
+        .flash-message.error {
+            background-color: #f44336;
+            color: white;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="login-body">
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="flash-message {{ 'success' if category == 'success' else 'error' }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+    
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>C++学习平台</h1>
+                <p>欢迎注册新账户</p>
+            </div>
+            <form class="login-form" method="POST" action="{{ url_for('auth.register') }}">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">邮箱</label>
+                    <input type="email" id="email" name="email" placeholder="请输入邮箱" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">确认密码</label>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="请再次输入密码" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">角色</label>
+                    <select id="role" name="role" class="form-control">
+                        <option value="student">学生</option>
+                        <option value="teacher">教师</option>
+                    </select>
+                </div>
+                <button type="submit" class="login-btn">注册</button>
+                <div class="register-link">
+                    <p>已有账户？<a href="{{ url_for('auth.login') }}">立即登录</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>

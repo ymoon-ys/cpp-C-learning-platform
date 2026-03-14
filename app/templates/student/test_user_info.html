@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户信息测试</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>用户信息测试页面</h1>
+    
+    <div class="user-info">
+        <h2>当前用户信息</h2>
+        <ul>
+            <li>ID: {{ current_user.id }}</li>
+            <li>用户名: {{ current_user.username }}</li>
+            <li>昵称: {{ current_user.nickname }}</li>
+            <li>邮箱: {{ current_user.email }}</li>
+            <li>角色: {{ current_user.role }}</li>
+            <li>头像: {{ current_user.avatar }}</li>
+            <li>创建时间: {{ current_user.created_at }}</li>
+            <li>更新时间: {{ current_user.updated_at }}</li>
+        </ul>
+    </div>
+    
+    <div class="user-icon">
+        {% if current_user.avatar %}
+        <img src="{{ current_user.avatar }}" alt="用户头像" style="width: 100px; height: 100px;">
+        {% else %}
+        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像" style="width: 100px; height: 100px;">
+        {% endif %}
+    </div>
+    
+    <div class="greeting">
+        <p>下午好，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
+    </div>
+    
+    <a href="{{ url_for('student.settings') }}">前往设置页面</a>
+    <a href="{{ url_for('auth.logout') }}">退出登录</a>
+</body>
+</html>
