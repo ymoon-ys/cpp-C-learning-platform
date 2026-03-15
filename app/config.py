@@ -16,6 +16,38 @@ class Config:
     
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     
+    SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    
+    JSON_SORT_KEYS = False
+    JSONIFY_PRETTYPRINT_REGULAR = False
+    
     @staticmethod
     def init_app(app):
         pass
+
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+    TESTING = False
+
+
+class ProductionConfig(Config):
+    DEBUG = False
+    TESTING = False
+    SESSION_COOKIE_SECURE = True
+
+
+class TestingConfig(Config):
+    DEBUG = True
+    TESTING = True
+    WTF_CSRF_ENABLED = False
+
+
+config = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'testing': TestingConfig,
+    'default': DevelopmentConfig
+}

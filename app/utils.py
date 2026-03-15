@@ -185,24 +185,37 @@ def validate_file_upload(file, allowed_extensions=None):
     """
     验证文件上传
     """
+    from werkzeug.utils import secure_filename
+    
     if not file or not file.filename:
         return False, '请选择文件'
     
+    filename = secure_filename(file.filename)
+    if not filename:
+        return False, '文件名包含非法字符'
+    
     if allowed_extensions:
-        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
         if file_ext not in allowed_extensions:
             return False, f'不支持的文件类型，支持的类型：{", ".join(allowed_extensions)}'
     
     return True, None
 
-def save_uploaded_file(file, upload_folder, prefix=''):
+def save_uploaded_file(file, upload_folder, prefix='', allowed_extensions=None):
     """
     保存上传的文件
     """
     from flask import current_app
+    from werkzeug.utils import secure_filename
     import os
     
-    filename = f"{prefix}{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
+    is_valid, error = validate_file_upload(file, allowed_extensions)
+    if not is_valid:
+        raise ValueError(error)
+    
+    filename = secure_filename(file.filename)
+    filename = f"{prefix}{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+    
     os.makedirs(upload_folder, exist_ok=True)
     file_path = os.path.join(upload_folder, filename)
     file.save(file_path)
@@ -399,3 +412,18 @@ def get_import_template_csv():
     获取CSV导入模板
     """
     return 'title,description,input_format,output_format,sample_input,sample_output,difficulty,category,tags,time_limit,memory_limit,source,source_id,source_url,hint\n"两数之和","给定两个整数a和b，计算它们的和。","输入两个整数a和b","输出a+b的值","1 2","3","easy","基础算法","模拟,入门",1,256,"洛谷","B2001","https://www.luogu.com.cn/problem/B2001","使用加法运算符即可"'
+
+def ensure_url_path(path):
+    """
+    确保路径有正确的前导斜杠用于URL
+    """
+    if not path:
+        return ''
+    path = str(path).strip()
+    if not path:
+        return ''
+    if path.startswith('/'):
+        return path
+    if path.startswith('uploads/'):
+        return '/' + path
+    return '/' + path

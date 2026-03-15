@@ -6,6 +6,7 @@
     <title>编辑课程 - {{ course.title }} - C++学习平台</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/translations/zh-cn.js"></script>
     <style>
         * {
             margin: 0;
@@ -541,7 +542,8 @@
                         <div class="lesson-list">
                             {% if chapter.lessons %}
                             {% for lesson in chapter.lessons %}
-                            <div class="lesson-item {% if loop.first and chapter.loop.first %}active{% endif %}" data-lesson-id="{{ lesson.id }}" onclick="selectLesson({{ lesson.id }})">
+                            {% set is_first_lesson = loop.first and chapter.id == chapters[0].id %}
+                            <div class="lesson-item {% if is_first_lesson %}active{% endif %}" data-lesson-id="{{ lesson.id }}" onclick="selectLesson({{ lesson.id }})">
                                 <span class="lesson-title">{{ lesson.title }}</span>
                                 <div class="lesson-actions">
                                     <button class="lesson-action-btn" onclick="event.stopPropagation(); showEditLessonModal({{ lesson.id }}, '{{ lesson.title }}')">
@@ -708,7 +710,10 @@
                             ]
                         },
                         simpleUpload: {
-                            uploadUrl: '{{ url_for("teacher.upload_editor_image") }}'
+                            uploadUrl: '{{ url_for("teacher.upload_editor_image") }}',
+                            headers: {
+                                'X-CSRF-Token': '{{ csrf_token() if csrf_token else "" }}'
+                            }
                         }
                     })
                     .then(newEditor => {
@@ -716,12 +721,112 @@
                         editor.model.document.on('change:data', () => {
                             scheduleAutoSave();
                         });
+                        
+                        // 添加自定义按钮到工具栏
+                        setTimeout(() => {
+                            addCustomButtons(editor);
+                        }, 500);
                     })
                     .catch(error => {
                         console.error('编辑器初始化失败:', error);
                     });
             }
         });
+        
+        // 添加自定义按钮
+        function addCustomButtons(editor) {
+            const toolbar = document.querySelector('.ck-toolbar');
+            if (!toolbar) return;
+            
+            // 插入视频按钮
+            const videoBtn = document.createElement('button');
+            videoBtn.innerHTML = '<span>🎬 视频</span>';
+            videoBtn.title = '插入视频';
+            videoBtn.style.cssText = 'background: none; border: 1px solid #ccc; border-radius: 3px; padding: 4px 8px; cursor: pointer; font-size: 13px; margin: 0 2px;';
+            videoBtn.onclick = function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'video/*';
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const formData = new FormData();
+                        formData.append('video', file);
+                        try {
+                            const response = await fetch('{{ url_for("teacher.upload_video") }}', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const result = await response.json();
+                            if (result.success) {
+                                const videoHTML = `<figure class="media" style="text-align: center; margin: 15px 0;"><video controls style="max-width: 100%; max-height: 500px;"><source src="${result.url}" type="video/mp4">您的浏览器不支持视频播放。</video><figcaption style="margin-top: 8px; font-size: 13px; color: #666;">${result.filename}</figcaption></figure><p></p>`;
+                                editor.setData(editor.getData() + videoHTML);
+                            } else {
+                                alert('上传失败: ' + result.error);
+                            }
+                        } catch (err) {
+                            alert('上传失败');
+                        }
+                    }
+                };
+                input.click();
+            };
+            
+            // 插入文档按钮
+            const docBtn = document.createElement('button');
+            docBtn.innerHTML = '<span>📄 文档</span>';
+            docBtn.title = '插入文档';
+            docBtn.style.cssText = 'background: none; border: 1px solid #ccc; border-radius: 3px; padding: 4px 8px; cursor: pointer; font-size: 13px; margin: 0 2px;';
+            docBtn.onclick = function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt';
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const formData = new FormData();
+                        formData.append('document', file);
+                        try {
+                            const response = await fetch('{{ url_for("teacher.upload_document") }}', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const result = await response.json();
+                            if (result.success) {
+                                const docIcon = getFileIcon(result.filename);
+                                const docHTML = `<div style="padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; margin: 10px 0; background: #f8f9fa;">
+                                    <p style="margin: 0;">${docIcon} <a href="${result.url}" target="_blank">${result.filename}</a></p>
+                                </div><p></p>`;
+                                editor.setData(editor.getData() + docHTML);
+                            } else {
+                                alert('上传失败: ' + result.error);
+                            }
+                        } catch (err) {
+                            alert('上传失败');
+                        }
+                    }
+                };
+                input.click();
+            };
+            
+            // 将按钮添加到工具栏
+            const toolbarItems = toolbar.querySelector('.ck-toolbar__items');
+            if (toolbarItems) {
+                toolbarItems.appendChild(videoBtn);
+                toolbarItems.appendChild(docBtn);
+            }
+        }
+        
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            let icon = '📄';
+            if (ext === 'pdf') icon = '📕';
+            else if (['doc', 'docx'].includes(ext)) icon = '📘';
+            else if (['xls', 'xlsx'].includes(ext)) icon = '📗';
+            else if (['ppt', 'pptx'].includes(ext)) icon = '📙';
+            else if (ext === 'txt') icon = '📝';
+            return icon;
+        }
         
         // 切换章节展开/收起
         function toggleChapter(chapterId) {

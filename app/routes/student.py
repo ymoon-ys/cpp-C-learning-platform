@@ -61,7 +61,11 @@ def course_detail(course_id):
     # 获取评价
     reviews = db.find_all('reviews', {'course_id': course_id})
     
-    return render_template('student/course_detail.html', course=course, chapters=chapters, materials=materials, discussions=discussions, reviews=reviews)
+    # 计算学习进度
+    total_lessons = sum(len(chapter['lessons']) for chapter in chapters)
+    completed_lessons = sum(len([l for l in chapter['lessons'] if l.get('completed')]) for chapter in chapters)
+    
+    return render_template('student/course_detail.html', course=course, chapters=chapters, materials=materials, discussions=discussions, reviews=reviews, total_lessons=total_lessons, completed_lessons=completed_lessons)
 
 @student_bp.route('/lessons/<int:lesson_id>')
 @login_required
@@ -137,6 +141,8 @@ def lesson_detail(lesson_id):
 @login_required
 def complete_lesson(lesson_id):
     from flask import current_app
+    from app.services.learning_progress_service import LearningProgressService
+    
     db = current_app.db
     lesson = db.find_by_id('lessons', lesson_id)
     
@@ -144,26 +150,17 @@ def complete_lesson(lesson_id):
         flash('课程内容不存在', 'error')
         return redirect(url_for('student.dashboard'))
     
-    progress = db.find_by_field('learning_progress', 'user_id', current_user.id)
-    progress = [p for p in progress if int(p.get('lesson_id', 0)) == lesson_id]
+    chapter = db.find_by_id('chapters', lesson['chapter_id'])
+    course = db.find_by_id('courses', chapter['course_id'])
     
-    if progress:
-        progress_data = {
-            'status': 'completed',
-            'completed_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        db.update('learning_progress', progress[0]['id'], progress_data)
-    else:
-        progress_data = {
-            'user_id': current_user.id,
-            'lesson_id': lesson_id,
-            'status': 'completed',
-            'completed_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        db.insert('learning_progress', progress_data)
+    LearningProgressService.complete_lesson(
+        user_id=current_user.id,
+        lesson_id=lesson_id,
+        course_id=course['id'],
+        chapter_id=chapter['id']
+    )
     
     flash('课程学习完成', 'success')
-    chapter = db.find_by_id('chapters', lesson['chapter_id'])
     return redirect(url_for('student.lesson_detail', lesson_id=lesson_id))
 
 @student_bp.route('/lessons/<int:lesson_id>/discussions/create', methods=['POST'])
@@ -280,7 +277,10 @@ def update_profile():
     from app.models import User
     from flask import current_app
     from datetime import datetime
+    from werkzeug.utils import secure_filename
     import os
+    
+    ALLOWED_AVATAR_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     
     nickname = request.form.get('nickname')
     avatar = request.files.get('avatar')
@@ -295,7 +295,17 @@ def update_profile():
         update_data['nickname'] = nickname
     
     if avatar and avatar.filename:
-        filename = f"avatar_{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{avatar.filename}"
+        filename = secure_filename(avatar.filename)
+        if not filename:
+            flash('文件名包含非法字符', 'error')
+            return redirect(url_for('student.settings'))
+        
+        file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+        if file_ext not in ALLOWED_AVATAR_EXTENSIONS:
+            flash('不支持的文件类型，仅支持 PNG、JPG、GIF、WEBP 格式', 'error')
+            return redirect(url_for('student.settings'))
+        
+        filename = f"avatar_{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
         upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'avatars')
         os.makedirs(upload_path, exist_ok=True)
         avatar.save(os.path.join(upload_path, filename))

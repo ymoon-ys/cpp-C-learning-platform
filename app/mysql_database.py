@@ -510,3 +510,56 @@ class MySQLDatabase:
         except Exception as e:
             print(f'❌ 统计 {table_name} 记录时出错: {e}')
             return 0
+    
+    def find_by_ids(self, table_name: str, ids: List[int]) -> List[Dict[str, Any]]:
+        """批量查询：根据多个ID获取记录"""
+        if not ids:
+            return []
+        
+        conn = self.get_connection()
+        if not conn:
+            return []
+        
+        try:
+            placeholders = ','.join(['%s'] * len(ids))
+            sql = f"SELECT * FROM {table_name} WHERE id IN ({placeholders})"
+            
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute(sql, ids)
+            rows = cursor.fetchall()
+            cursor.close()
+            for i, row in enumerate(rows):
+                rows[i] = self._convert_datetime_to_string(row)
+            return rows
+        except Exception as e:
+            print(f'❌ 批量查询 {table_name} 记录时出错: {e}')
+            return []
+    
+    def batch_insert(self, table_name: str, data_list: List[Dict[str, Any]]) -> int:
+        """批量插入记录"""
+        if not data_list:
+            return 0
+        
+        conn = self.get_connection()
+        if not conn:
+            return 0
+        
+        try:
+            cursor = conn.cursor()
+            
+            columns = list(data_list[0].keys())
+            placeholders = ','.join(['%s'] * len(columns))
+            sql = f"INSERT INTO {table_name} ({','.join(columns)}) VALUES ({placeholders})"
+            
+            for data in data_list:
+                values = [data.get(col) for col in columns]
+                cursor.execute(sql, values)
+            
+            conn.commit()
+            inserted_count = cursor.rowcount
+            cursor.close()
+            print(f'✅ 批量插入 {table_name} 记录: {inserted_count} 条')
+            return inserted_count
+        except Exception as e:
+            print(f'❌ 批量插入 {table_name} 记录时出错: {e}')
+            return 0

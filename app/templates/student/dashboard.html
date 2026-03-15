@@ -62,16 +62,24 @@
                 </div>
                 <div class="courses-grid">
                     {% for course in courses %}
-                    <div class="course-card">
+                    <a href="{{ url_for('student.course_detail', course_id=course.id) }}" class="course-card" style="text-decoration: none; color: inherit;">
                         <div class="course-icon">
-                            {% if course.cover_image %}
-                            <img src="{{ course.cover_image }}" alt="{{ course.title }}">
+                            {% if course.cover %}
+                            {% set cover_path = course.cover %}
+                            {% if cover_path.startswith('/uploads/') %}
+                            {% set cover_path = cover_path %}
+                            {% elif cover_path.startswith('uploads/') %}
+                            {% set cover_path = '/' + cover_path %}
+                            {% else %}
+                            {% set cover_path = '/uploads/' + cover_path %}
+                            {% endif %}
+                            <img src="{{ cover_path }}" alt="{{ course.title }}">
                             {% else %}
                             <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt={{ course.title }}%20icon%20green%20simple&image_size=square" alt="{{ course.title }}">
                             {% endif %}
                         </div>
                         <p class="course-name">{{ course.title }}</p>
-                    </div>
+                    </a>
                     {% endfor %}
                     {% if not courses %}
                     <div class="no-courses">

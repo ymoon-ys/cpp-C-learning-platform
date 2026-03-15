@@ -54,6 +54,7 @@
                 <p>欢迎注册新账户</p>
             </div>
             <form class="login-form" method="POST" action="{{ url_for('auth.register') }}">
+                {{ form.hidden_tag() }}
                 <div class="form-group">
                     <label for="username">用户名</label>
                     <input type="text" id="username" name="username" placeholder="请输入用户名" required>

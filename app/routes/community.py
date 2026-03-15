@@ -18,25 +18,29 @@ community_bp = Blueprint('community', __name__)
 
 def save_uploaded_image(file, folder='community'):
     """保存上传的图片"""
+    from werkzeug.utils import secure_filename
+    
+    ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+    
     if not file or file.filename == '':
         return None
     
-    # 生成唯一文件名
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+    filename = secure_filename(file.filename)
+    if not filename:
+        return None
+    
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
         return None
     
     filename = f"{folder}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{current_user.id}{ext}"
     
-    # 确保上传目录存在
     upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], folder)
     os.makedirs(upload_folder, exist_ok=True)
     
-    # 保存文件
     file_path = os.path.join(upload_folder, filename)
     file.save(file_path)
     
-    # 返回相对路径 - 修正路径格式
     return f"/uploads/{folder}/{filename}"
 
 
@@ -88,7 +92,9 @@ def get_discussions():
             if d.get('images'):
                 try:
                     images = json.loads(d.get('images'))
-                except:
+                except (json.JSONDecodeError, TypeError, ValueError) as e:
+                    import logging
+                    logging.warning(f"Failed to parse images JSON: {e}")
                     images = []
             
             result.append({
@@ -139,7 +145,9 @@ def get_discussion_detail(discussion_id):
         if d.get('images'):
             try:
                 images = json.loads(d.get('images'))
-            except:
+            except (json.JSONDecodeError, TypeError, ValueError) as e:
+                import logging
+                logging.warning(f"Failed to parse images JSON: {e}")
                 images = []
         
         discussion = {
@@ -564,7 +572,9 @@ def teacher_discussions():
             if d.get('images'):
                 try:
                     images = json.loads(d.get('images'))
-                except:
+                except (json.JSONDecodeError, TypeError, ValueError) as e:
+                    import logging
+                    logging.warning(f"Failed to parse images JSON: {e}")
                     images = []
             
             result.append({
@@ -932,7 +942,9 @@ def get_my_discussions():
             if d.get('images'):
                 try:
                     images = json.loads(d.get('images'))
-                except:
+                except (json.JSONDecodeError, TypeError, ValueError) as e:
+                    import logging
+                    logging.warning(f"Failed to parse images JSON: {e}")
                     images = []
             
             result.append({
@@ -981,7 +993,9 @@ def get_my_replies():
                 if d.get('images'):
                     try:
                         images = json.loads(d.get('images'))
-                    except:
+                    except (json.JSONDecodeError, TypeError, ValueError) as e:
+                        import logging
+                        logging.warning(f"Failed to parse images JSON: {e}")
                         images = []
                 
                 result.append({

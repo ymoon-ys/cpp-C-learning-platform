@@ -60,6 +60,7 @@
                 <p>欢迎回来，请登录您的账户</p>
             </div>
             <form class="login-form" id="loginForm" method="POST" action="{{ url_for('auth.login') }}">
+                {{ form.hidden_tag() }}
                 <div class="form-group">
                     <label for="username">用户名</label>
                     <input type="text" id="username" name="username" placeholder="请输入用户名" required>

@@ -1,9 +1,12 @@
 from flask import Blueprint, redirect, url_for, flash, request, current_app, send_from_directory
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 
 course_bp = Blueprint('course', __name__, url_prefix='/course')
+
+ALLOWED_MATERIAL_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md', 'png', 'jpg', 'jpeg', 'gif', 'zip', 'rar'}
 
 @course_bp.route('/<int:course_id>/materials/upload', methods=['POST'])
 @login_required
@@ -27,8 +30,17 @@ def upload_material(course_id):
         flash('请选择要上传的文件', 'error')
         return redirect(url_for('student.dashboard'))
     
-    filename = f"material_{datetime.now().strftime('%Y%m%d%H%M%S')}_{material_file.filename}"
-    file_type = material_file.filename.rsplit('.', 1)[1].lower() if '.' in material_file.filename else ''
+    filename = secure_filename(material_file.filename)
+    if not filename:
+        flash('文件名包含非法字符', 'error')
+        return redirect(url_for('student.dashboard'))
+    
+    file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    if file_ext not in ALLOWED_MATERIAL_EXTENSIONS:
+        flash('不支持的文件类型', 'error')
+        return redirect(url_for('student.dashboard'))
+    
+    filename = f"material_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
     
     os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], 'materials'), exist_ok=True)
     material_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], 'materials', filename))
@@ -37,7 +49,7 @@ def upload_material(course_id):
         'course_id': course_id,
         'title': title,
         'file_url': f"uploads/materials/{filename}",
-        'type': file_type,
+        'type': file_ext,
         'uploader_id': current_user.id
     }
     
@@ -49,6 +61,7 @@ def upload_material(course_id):
 @login_required
 def download_material(material_id):
     from flask import current_app
+    from werkzeug.utils import secure_filename
     db = current_app.db
     material = db.find_by_id('materials', material_id)
     
@@ -57,6 +70,9 @@ def download_material(material_id):
         return redirect(url_for('student.dashboard'))
     
     file_url = material['file_url']
-    filename = file_url.split('/')[-1]
+    safe_filename = secure_filename(file_url.split('/')[-1])
+    if not safe_filename:
+        flash('无效的文件名', 'error')
+        return redirect(url_for('student.dashboard'))
     
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], file_url, as_attachment=True, download_name=filename)
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], file_url, as_attachment=True, download_name=safe_filename)

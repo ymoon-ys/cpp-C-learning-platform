@@ -1,15 +1,28 @@
 import os
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, render_template, request, flash
 from flask_login import LoginManager
+from flask_caching import Cache
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from app.config import Config
 from app.mysql_database import MySQLDatabase
 from app.models import User
 from dotenv import load_dotenv
+from app.exceptions import BusinessException
 
 # 加载.env文件
 load_dotenv()
 
 login_manager = LoginManager()
+
+# 配置缓存
+cache = Cache()
+
+# 配置速率限制
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -18,6 +31,14 @@ def load_user(user_id):
 def create_app(config_class=Config):
     app = Flask(__name__, static_folder=config_class.STATIC_FOLDER, static_url_path='/static')
     app.config.from_object(config_class)
+    
+    # 配置缓存
+    app.config['CACHE_TYPE'] = 'SimpleCache'
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
+    cache.init_app(app)
+    
+    # 配置速率限制
+    limiter.init_app(app)
     
     # 在create_app函数中创建MySQLDatabase实例
     db = MySQLDatabase(
@@ -33,6 +54,36 @@ def create_app(config_class=Config):
     login_manager.login_message = '请先登录'
     
     Config.init_app(app)
+    
+    from app.utils import ensure_url_path
+    app.add_template_filter(ensure_url_path, 'ensure_url_path')
+    
+    @app.errorhandler(BusinessException)
+    def handle_business_exception(error):
+        """处理业务异常"""
+        if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+            return {'error': error.message}, error.status_code
+        flash(error.message, 'error')
+        return redirect(request.referrer or url_for('auth.login'))
+    
+    @app.errorhandler(404)
+    def page_not_found(error):
+        """处理404错误"""
+        return render_template('errors/404.html'), 404
+    
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        """处理500错误"""
+        return render_template('errors/500.html'), 500
+    
+    @app.after_request
+    def add_security_headers(response):
+        """添加安全HTTP头"""
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        return response
     
     from app.routes.auth import auth_bp
     from app.routes.admin import admin_bp
@@ -61,10 +112,33 @@ def create_app(config_class=Config):
     def logout_redirect():
         return redirect(url_for('auth.logout'))
     
-    # 提供上传文件的静态访问
     from flask import send_from_directory
+    from werkzeug.utils import secure_filename
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
+        if '..' in filename:
+            return 'Invalid filename', 400
+        import os
+        print(f'\n=== 上传文件调试 ===')
+        print(f'请求的 filename: {filename}')
+        print(f'UPLOAD_FOLDER: {app.config["UPLOAD_FOLDER"]}')
+        
+        # 尝试直接拼接
+        full_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        print(f'完整路径 1: {full_path}')
+        print(f'存在吗: {os.path.exists(full_path)}')
+        
+        # 如果不行，检查是否有多余的 uploads/
+        if filename.startswith('uploads/'):
+            filename2 = filename[8:]
+            full_path2 = os.path.join(app.config['UPLOAD_FOLDER'], filename2)
+            print(f'完整路径 2: {full_path2}')
+            print(f'存在吗: {os.path.exists(full_path2)}')
+            if os.path.exists(full_path2):
+                print(f'使用路径 2')
+                return send_from_directory(app.config['UPLOAD_FOLDER'], filename2)
+        
+        print(f'使用路径 1')
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
     
     # 初始化默认用户

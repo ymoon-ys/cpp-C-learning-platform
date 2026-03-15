@@ -5,10 +5,87 @@ import subprocess
 import tempfile
 import os
 from datetime import datetime
+from typing import Optional, List, Dict, Any, TypeVar, Type
+from flask import current_app
 
-class User(UserMixin):
-    def __init__(self, id=None, username=None, email=None, password_hash=None, role='student', created_at=None, updated_at=None, nickname=None, avatar=None):
+T = TypeVar('T', bound='BaseModel')
+
+
+class BaseModel:
+    """基础模型类，封装通用的数据库操作"""
+
+    table_name: str = ""
+
+    def __init__(self, id: Optional[int] = None):
         self.id = id
+
+    def save(self: T) -> T:
+        """保存或更新记录"""
+        db = current_app.db
+        data = self._to_dict()
+
+        if self.id:
+            db.update(self.table_name, self.id, data)
+        else:
+            self.id = db.insert(self.table_name, data)
+        return self
+
+    def delete(self) -> bool:
+        """删除记录"""
+        if not self.id:
+            return False
+        db = current_app.db
+        return db.delete(self.table_name, self.id)
+
+    @classmethod
+    def get_by_id(cls: Type[T], record_id: int) -> Optional[T]:
+        """根据ID获取记录"""
+        db = current_app.db
+        data = db.find_by_id(cls.table_name, record_id)
+        if data:
+            return cls._from_dict(data)
+        return None
+
+    @classmethod
+    def get_all(cls: Type[T]) -> List[T]:
+        """获取所有记录"""
+        db = current_app.db
+        data = db.read_table(cls.table_name)
+        return [cls._from_dict(item) for item in data]
+
+    @classmethod
+    def get_by_field(cls: Type[T], field_name: str, field_value: Any) -> List[T]:
+        """根据字段获取记录"""
+        db = current_app.db
+        data = db.find_by_field(cls.table_name, field_name, field_value)
+        return [cls._from_dict(item) for item in data]
+
+    def _to_dict(self) -> Dict[str, Any]:
+        """转换为字典，子类需要重写"""
+        return {'id': self.id} if self.id else {}
+
+    @classmethod
+    def _from_dict(cls: Type[T], data: Dict[str, Any]) -> T:
+        """从字典创建实例，子类需要重写"""
+        return cls(id=data.get('id'))
+
+    @staticmethod
+    def _convert_datetime(value: Any) -> Optional[str]:
+        """转换datetime对象为字符串"""
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.strftime('%Y-%m-%d %H:%M:%S')
+        if hasattr(value, 'strftime'):
+            return value.strftime('%Y-%m-%d %H:%M:%S')
+        return str(value)
+
+
+class User(UserMixin, BaseModel):
+    table_name = 'users'
+    
+    def __init__(self, id=None, username=None, email=None, password_hash=None, role='student', created_at=None, updated_at=None, nickname=None, avatar=None):
+        super().__init__(id)
         self.username = username
         self.email = email
         self.password_hash = password_hash
@@ -18,42 +95,58 @@ class User(UserMixin):
         self.nickname = nickname if nickname else username
         self.avatar = avatar
     
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-    
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-    
-    def get_id(self):
-        return str(self.id)
-    
-    def save(self):
-        from flask import current_app
-        from datetime import datetime
-        db = current_app.db
+    def _to_dict(self):
         data = {
             'username': self.username,
             'email': self.email,
             'password_hash': self.password_hash,
             'role': self.role,
-            'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
-        
+        if self.id:
+            data['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         if self.nickname:
             data['nickname'] = self.nickname
         if self.avatar:
             data['avatar'] = self.avatar
+        return data
+    
+    @classmethod
+    def _from_dict(cls, data):
+        created_at = cls._convert_datetime(data.get('created_at'))
+        updated_at = cls._convert_datetime(data.get('updated_at'))
+        return cls(
+            id=data.get('id'),
+            username=data.get('username'),
+            email=data.get('email'),
+            password_hash=data.get('password_hash'),
+            role=data.get('role'),
+            created_at=created_at,
+            updated_at=updated_at,
+            nickname=data.get('nickname'),
+            avatar=data.get('avatar')
+        )
+    
+    def save(self):
+        from flask import current_app
+        db = current_app.db
+        data = self._to_dict()
         
         if self.id:
             db.update('users', self.id, data)
         else:
-            # 新用户，添加创建时间
-            data['created_at'] = data['updated_at']
+            data['created_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            data['updated_at'] = data['created_at']
             if not self.nickname:
                 data['nickname'] = self.username
             self.id = db.insert('users', data)
         
         return self
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
     
     @staticmethod
     def get_by_id(user_id):
@@ -61,148 +154,29 @@ class User(UserMixin):
         db = current_app.db
         data = db.find_by_id('users', user_id)
         if data:
-            # 处理datetime对象
-            created_at = data.get('created_at')
-            if created_at:
-                try:
-                    if hasattr(created_at, 'strftime'):
-                        created_at = created_at.strftime('%Y-%m-%d %H:%M:%S')
-                except:
-                    pass
-            
-            updated_at = data.get('updated_at')
-            if updated_at:
-                try:
-                    if hasattr(updated_at, 'strftime'):
-                        updated_at = updated_at.strftime('%Y-%m-%d %H:%M:%S')
-                except:
-                    pass
-            
-            return User(
-                id=data.get('id'),
-                username=data.get('username'),
-                email=data.get('email'),
-                password_hash=data.get('password_hash'),
-                role=data.get('role'),
-                created_at=created_at,
-                updated_at=updated_at,
-                nickname=data.get('nickname'),
-                avatar=data.get('avatar')
-            )
+            return User._from_dict(data)
         return None
     
     @staticmethod
     def get_by_email(email):
         from flask import current_app
         db = current_app.db
-        data = db.find_by_field('users', 'email', email)
-        if data:
-            user_data = data[0]
-            # 处理datetime对象
-            created_at = user_data.get('created_at')
-            if created_at:
-                try:
-                    if hasattr(created_at, 'strftime'):
-                        created_at = created_at.strftime('%Y-%m-%d %H:%M:%S')
-                except:
-                    pass
-            
-            updated_at = user_data.get('updated_at')
-            if updated_at:
-                try:
-                    if hasattr(updated_at, 'strftime'):
-                        updated_at = updated_at.strftime('%Y-%m-%d %H:%M:%S')
-                except:
-                    pass
-            
-            return User(
-                id=user_data.get('id'),
-                username=user_data.get('username'),
-                email=user_data.get('email'),
-                password_hash=user_data.get('password_hash'),
-                role=user_data.get('role'),
-                created_at=created_at,
-                updated_at=updated_at,
-                nickname=user_data.get('nickname'),
-                avatar=user_data.get('avatar')
-            )
-        return None
+        users = db.find_by_field('users', 'email', email)
+        return User._from_dict(users[0]) if users else None
     
     @staticmethod
     def get_by_username(username):
         from flask import current_app
         db = current_app.db
-        data = db.find_by_field('users', 'username', username)
-        if data:
-            user_data = data[0]
-            # 处理datetime对象
-            created_at = user_data.get('created_at')
-            if created_at:
-                try:
-                    if hasattr(created_at, 'strftime'):
-                        created_at = created_at.strftime('%Y-%m-%d %H:%M:%S')
-                except:
-                    pass
-            
-            updated_at = user_data.get('updated_at')
-            if updated_at:
-                try:
-                    if hasattr(updated_at, 'strftime'):
-                        updated_at = updated_at.strftime('%Y-%m-%d %H:%M:%S')
-                except:
-                    pass
-            
-            return User(
-                id=user_data.get('id'),
-                username=user_data.get('username'),
-                email=user_data.get('email'),
-                password_hash=user_data.get('password_hash'),
-                role=user_data.get('role'),
-                created_at=created_at,
-                updated_at=updated_at,
-                nickname=user_data.get('nickname'),
-                avatar=user_data.get('avatar')
-            )
-        return None
+        users = db.find_by_field('users', 'username', username)
+        return User._from_dict(users[0]) if users else None
     
     @staticmethod
     def get_all():
         from flask import current_app
         db = current_app.db
         data = db.read_table('users')
-        print(f'从数据库读取到 {len(data)} 个用户')
-        for i, user_data in enumerate(data):
-            print(f'用户 {i+1}: ID={user_data.get("id")}, 用户名={user_data.get("username")}, 邮箱={user_data.get("email")}, 角色={user_data.get("role")}')
-        users = []
-        for user_data in data:
-            # 处理datetime对象
-            created_at = user_data.get('created_at')
-            if created_at:
-                try:
-                    if hasattr(created_at, 'strftime'):
-                        created_at = created_at.strftime('%Y-%m-%d %H:%M:%S')
-                except:
-                    pass
-            
-            updated_at = user_data.get('updated_at')
-            if updated_at:
-                try:
-                    if hasattr(updated_at, 'strftime'):
-                        updated_at = updated_at.strftime('%Y-%m-%d %H:%M:%S')
-                except:
-                    pass
-            
-            users.append(User(
-                id=user_data.get('id'),
-                username=user_data.get('username'),
-                email=user_data.get('email'),
-                password_hash=user_data.get('password_hash'),
-                role=user_data.get('role'),
-                created_at=created_at,
-                updated_at=updated_at
-            ))
-        print(f'转换为User对象后: {len(users)} 个用户')
-        return users
+        return [User._from_dict(item) for item in data]
     
     def is_authenticated(self):
         return True
@@ -216,80 +190,47 @@ class User(UserMixin):
     def get_id(self):
         return str(self.id)
 
-class ProblemCategory:
+class ProblemCategory(BaseModel):
+    table_name = 'problem_categories'
+    
     def __init__(self, id=None, name=None, parent_id=None, description=None):
-        self.id = id
+        super().__init__(id)
         self.name = name
         self.parent_id = parent_id
         self.description = description
     
-    def save(self):
-        from flask import current_app
-        db = current_app.db
-        data = {
+    def _to_dict(self):
+        return {
             'name': self.name,
             'parent_id': self.parent_id,
             'description': self.description
         }
-        
-        if self.id:
-            db.update('problem_categories', self.id, data)
-        else:
-            self.id = db.insert('problem_categories', data)
-        
-        return self
     
-    @staticmethod
-    def get_by_id(category_id):
-        from flask import current_app
-        db = current_app.db
-        data = db.find_by_id('problem_categories', category_id)
-        if data:
-            return ProblemCategory(
-                id=data['id'],
-                name=data['name'],
-                parent_id=data['parent_id'],
-                description=data['description']
-            )
-        return None
-    
-    @staticmethod
-    def get_all():
-        from flask import current_app
-        db = current_app.db
-        data = db.read_table('problem_categories')
-        categories = []
-        for category_data in data:
-            categories.append(ProblemCategory(
-                id=category_data['id'],
-                name=category_data['name'],
-                parent_id=category_data['parent_id'],
-                description=category_data['description']
-            ))
-        return categories
+    @classmethod
+    def _from_dict(cls, data):
+        return cls(
+            id=data.get('id'),
+            name=data.get('name'),
+            parent_id=data.get('parent_id'),
+            description=data.get('description')
+        )
     
     @staticmethod
     def get_by_parent_id(parent_id):
         from flask import current_app
         db = current_app.db
         data = db.find_by_field('problem_categories', 'parent_id', parent_id)
-        categories = []
-        for category_data in data:
-            categories.append(ProblemCategory(
-                id=category_data['id'],
-                name=category_data['name'],
-                parent_id=category_data['parent_id'],
-                description=category_data['description']
-            ))
-        return categories
+        return [ProblemCategory._from_dict(item) for item in data]
 
-class Problem:
+class Problem(BaseModel):
+    table_name = 'problems'
+    
     def __init__(self, id=None, title=None, description=None, input_format=None, 
                  output_format=None, sample_input=None, sample_output=None, 
                  difficulty=None, category_id=None, time_limit=1, memory_limit=256,
                  test_cases=None, source=None, source_id=None, source_url=None,
                  is_public=0, tags=None, hint=None):
-        self.id = id
+        super().__init__(id)
         self.title = title
         self.description = description
         self.input_format = input_format
@@ -307,11 +248,10 @@ class Problem:
         self.is_public = is_public
         self.tags = tags
         self.hint = hint
+        self.category = None
     
-    def save(self):
-        from flask import current_app
-        db = current_app.db
-        data = {
+    def _to_dict(self):
+        return {
             'title': self.title,
             'description': self.description,
             'input_format': self.input_format,
@@ -330,210 +270,93 @@ class Problem:
             'tags': self.tags,
             'hint': self.hint
         }
+    
+    @classmethod
+    def _from_dict(cls, data):
+        test_cases = []
+        if data.get('test_cases'):
+            try:
+                test_cases = json.loads(data['test_cases'])
+            except (json.JSONDecodeError, TypeError, ValueError) as e:
+                import logging
+                logging.warning(f"Failed to parse test_cases: {e}")
+                test_cases = []
         
-        if self.id:
-            db.update('problems', self.id, data)
-        else:
-            self.id = db.insert('problems', data)
+        problem = cls(
+            id=data.get('id'),
+            title=data.get('title'),
+            description=data.get('description'),
+            input_format=data.get('input_format'),
+            output_format=data.get('output_format'),
+            sample_input=data.get('sample_input'),
+            sample_output=data.get('sample_output'),
+            difficulty=data.get('difficulty'),
+            category_id=data.get('category_id'),
+            time_limit=data.get('time_limit', 1),
+            memory_limit=data.get('memory_limit', 256),
+            test_cases=test_cases,
+            source=data.get('source'),
+            source_id=data.get('source_id'),
+            source_url=data.get('source_url'),
+            is_public=data.get('is_public', 0),
+            tags=data.get('tags'),
+            hint=data.get('hint')
+        )
         
-        return self
+        categories = ProblemCategory.get_all()
+        category_map = {cat.id: cat.name for cat in categories}
+        problem.category = category_map.get(data.get('category_id'), '')
+        return problem
     
     @staticmethod
-    def get_by_id(problem_id):
+    def _get_with_category(field_name, field_value):
         from flask import current_app
         db = current_app.db
-        data = db.find_by_id('problems', problem_id)
-        if data:
-            return Problem(
-                id=data['id'],
-                title=data['title'],
-                description=data['description'],
-                input_format=data['input_format'],
-                output_format=data['output_format'],
-                sample_input=data['sample_input'],
-                sample_output=data['sample_output'],
-                difficulty=data['difficulty'],
-                category_id=data['category_id'],
-                time_limit=data['time_limit'],
-                memory_limit=data['memory_limit'],
-                test_cases=json.loads(data['test_cases']) if data.get('test_cases') else [],
-                source=data.get('source'),
-                source_id=data.get('source_id'),
-                source_url=data.get('source_url'),
-                is_public=data.get('is_public', 0),
-                tags=data.get('tags'),
-                hint=data.get('hint')
-            )
-        return None
+        data = db.find_by_field('problems', field_name, field_value)
+        problems = [Problem._from_dict(item) for item in data]
+        categories = ProblemCategory.get_all()
+        category_map = {cat.id: cat.name for cat in categories}
+        
+        for problem in problems:
+            problem.category = category_map.get(problem.category_id, '')
+        return problems
     
     @staticmethod
     def get_all():
         from flask import current_app
         db = current_app.db
         data = db.read_table('problems')
-        problems = []
-        
-        # 预加载所有分类，用于映射 category_id 到 category 名称
+        problems = [Problem._from_dict(item) for item in data]
         categories = ProblemCategory.get_all()
         category_map = {cat.id: cat.name for cat in categories}
         
-        for problem_data in data:
-            problem = Problem(
-                id=problem_data['id'],
-                title=problem_data['title'],
-                description=problem_data['description'],
-                input_format=problem_data['input_format'],
-                output_format=problem_data['output_format'],
-                sample_input=problem_data['sample_input'],
-                sample_output=problem_data['sample_output'],
-                difficulty=problem_data['difficulty'],
-                category_id=problem_data['category_id'],
-                time_limit=problem_data['time_limit'],
-                memory_limit=problem_data['memory_limit'],
-                test_cases=json.loads(problem_data['test_cases']) if problem_data.get('test_cases') else [],
-                source=problem_data.get('source'),
-                source_id=problem_data.get('source_id'),
-                source_url=problem_data.get('source_url'),
-                is_public=problem_data.get('is_public', 0),
-                tags=problem_data.get('tags'),
-                hint=problem_data.get('hint')
-            )
-            # 添加 category 属性
-            problem.category = category_map.get(problem_data['category_id'], '')
-            problems.append(problem)
+        for problem in problems:
+            problem.category = category_map.get(problem.category_id, '')
         return problems
     
     @staticmethod
     def get_by_category(category_id):
-        from flask import current_app
-        db = current_app.db
-        data = db.find_by_field('problems', 'category_id', category_id)
-        problems = []
-        
-        # 预加载所有分类，用于映射 category_id 到 category 名称
-        categories = ProblemCategory.get_all()
-        category_map = {cat.id: cat.name for cat in categories}
-        
-        for problem_data in data:
-            problem = Problem(
-                id=problem_data['id'],
-                title=problem_data['title'],
-                description=problem_data['description'],
-                input_format=problem_data['input_format'],
-                output_format=problem_data['output_format'],
-                sample_input=problem_data['sample_input'],
-                sample_output=problem_data['sample_output'],
-                difficulty=problem_data['difficulty'],
-                category_id=problem_data['category_id'],
-                time_limit=problem_data['time_limit'],
-                memory_limit=problem_data['memory_limit'],
-                test_cases=json.loads(problem_data['test_cases']) if problem_data.get('test_cases') else [],
-                source=problem_data.get('source'),
-                source_id=problem_data.get('source_id'),
-                source_url=problem_data.get('source_url'),
-                is_public=problem_data.get('is_public', 0),
-                tags=problem_data.get('tags'),
-                hint=problem_data.get('hint')
-            )
-            # 添加 category 属性
-            problem.category = category_map.get(problem_data['category_id'], '')
-            problems.append(problem)
-        return problems
+        return Problem._get_with_category('category_id', category_id)
     
     @staticmethod
     def get_by_difficulty(difficulty):
-        from flask import current_app
-        db = current_app.db
-        data = db.find_by_field('problems', 'difficulty', difficulty)
-        problems = []
-        
-        # 预加载所有分类，用于映射 category_id 到 category 名称
-        categories = ProblemCategory.get_all()
-        category_map = {cat.id: cat.name for cat in categories}
-        
-        for problem_data in data:
-            problem = Problem(
-                id=problem_data['id'],
-                title=problem_data['title'],
-                description=problem_data['description'],
-                input_format=problem_data['input_format'],
-                output_format=problem_data['output_format'],
-                sample_input=problem_data['sample_input'],
-                sample_output=problem_data['sample_output'],
-                difficulty=problem_data['difficulty'],
-                category_id=problem_data['category_id'],
-                time_limit=problem_data['time_limit'],
-                memory_limit=problem_data['memory_limit'],
-                test_cases=json.loads(problem_data['test_cases']) if problem_data.get('test_cases') else [],
-                source=problem_data.get('source'),
-                source_id=problem_data.get('source_id'),
-                source_url=problem_data.get('source_url'),
-                is_public=problem_data.get('is_public', 0),
-                tags=problem_data.get('tags'),
-                hint=problem_data.get('hint')
-            )
-            # 添加 category 属性
-            problem.category = category_map.get(problem_data['category_id'], '')
-            problems.append(problem)
-        return problems
+        return Problem._get_with_category('difficulty', difficulty)
     
     @staticmethod
     def get_by_source(source):
-        from flask import current_app
-        db = current_app.db
-        data = db.find_by_field('problems', 'source', source)
-        problems = []
-        
-        # 预加载所有分类，用于映射 category_id 到 category 名称
-        categories = ProblemCategory.get_all()
-        category_map = {cat.id: cat.name for cat in categories}
-        
-        for problem_data in data:
-            problem = Problem(
-                id=problem_data['id'],
-                title=problem_data['title'],
-                description=problem_data['description'],
-                input_format=problem_data['input_format'],
-                output_format=problem_data['output_format'],
-                sample_input=problem_data['sample_input'],
-                sample_output=problem_data['sample_output'],
-                difficulty=problem_data['difficulty'],
-                category_id=problem_data['category_id'],
-                time_limit=problem_data['time_limit'],
-                memory_limit=problem_data['memory_limit'],
-                test_cases=json.loads(problem_data['test_cases']) if problem_data.get('test_cases') else [],
-                source=problem_data.get('source'),
-                source_id=problem_data.get('source_id'),
-                source_url=problem_data.get('source_url'),
-                is_public=problem_data.get('is_public', 0),
-                tags=problem_data.get('tags'),
-                hint=problem_data.get('hint')
-            )
-            # 添加 category 属性
-            problem.category = category_map.get(problem_data['category_id'], '')
-            problems.append(problem)
-        return problems
+        return Problem._get_with_category('source', source)
     
     @staticmethod
     def exists(title, source=None, source_id=None):
-        """
-        检查题目是否已存在
-        基于标题、来源和来源ID进行判断
-        """
         from flask import current_app
         db = current_app.db
-        
-        # 首先检查相同标题的题目
         all_problems = db.read_table('problems')
         for problem in all_problems:
-            # 如果标题相同
             if problem['title'] == title:
-                # 如果有来源和来源ID，检查是否匹配
                 if source and source_id:
                     if problem.get('source') == source and problem.get('source_id') == source_id:
                         return True
                 else:
-                    # 如果没有来源信息，只根据标题判断
                     return True
         return False
 
@@ -620,7 +443,70 @@ class Submission:
             ))
         return submissions
 
-def evaluate_code(code, test_cases, time_limit=1, memory_limit=256):
+
+def _cleanup_temp_files(*files):
+    """清理临时文件"""
+    for file_path in files:
+        try:
+            if file_path and os.path.exists(file_path):
+                os.unlink(file_path)
+        except Exception:
+            pass
+
+
+def _compile_code(source_file_path: str) -> tuple:
+    """
+    编译代码
+    :return: (成功标志, 可执行文件路径, 错误信息)
+    """
+    executable_path = source_file_path.replace('.cpp', '.exe')
+    
+    compile_result = subprocess.run(
+        ['g++', source_file_path, '-o', executable_path, '-O2'],
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+    
+    if compile_result.returncode != 0:
+        _cleanup_temp_files(source_file_path)
+        return (False, None, compile_result.stderr)
+    
+    return (True, executable_path, None)
+
+
+def _run_test_case(executable_path: str, input_data: str, time_limit: int) -> tuple:
+    """
+    运行单个测试用例
+    :return: (成功标志, 输出内容, 超时标志, 错误信息)
+    """
+    input_file_path = None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as input_file:
+            input_file.write(input_data)
+            input_file_path = input_file.name
+        
+        with open(input_file_path, 'r') as f:
+            run_result = subprocess.run(
+                [executable_path],
+                stdin=f,
+                capture_output=True,
+                text=True,
+                timeout=time_limit
+            )
+        
+        return (True, run_result.stdout.strip(), False, None)
+        
+    except subprocess.TimeoutExpired:
+        return (False, '', True, 'TLE')
+    except Exception as e:
+        return (False, '', False, str(e))
+    finally:
+        if input_file_path:
+            _cleanup_temp_files(input_file_path)
+
+
+def evaluate_code(code: str, test_cases: list, time_limit: int = 1, memory_limit: int = 256) -> dict:
     """
     评测C++代码
     :param code: C++代码
@@ -632,70 +518,54 @@ def evaluate_code(code, test_cases, time_limit=1, memory_limit=256):
     results = []
     
     for i, test_case in enumerate(test_cases):
+        source_file_path = None
+        executable_path = None
+        
         try:
             with tempfile.NamedTemporaryFile(mode='w', suffix='.cpp', delete=False) as source_file:
                 source_file.write(code)
                 source_file_path = source_file.name
             
-            executable_path = source_file_path.replace('.cpp', '.exe')
+            success, executable_path, error = _compile_code(source_file_path)
             
-            compile_result = subprocess.run(
-                ['g++', source_file_path, '-o', executable_path, '-O2'],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            
-            if compile_result.returncode != 0:
-                os.unlink(source_file_path)
-                if os.path.exists(executable_path):
-                    os.unlink(executable_path)
+            if not success:
                 return {
                     'status': 'CE',
-                    'message': f'编译错误：{compile_result.stderr}'
+                    'message': f'编译错误：{error}'
                 }
             
-            with tempfile.NamedTemporaryFile(mode='w', delete=False) as input_file:
-                input_file.write(test_case['input'])
-                input_file_path = input_file.name
+            success, output, is_timeout, error = _run_test_case(
+                executable_path, 
+                test_case['input'], 
+                time_limit
+            )
             
-            with open(input_file_path, 'r') as f:
-                run_result = subprocess.run(
-                    [executable_path],
-                    stdin=f,
-                    capture_output=True,
-                    text=True,
-                    timeout=time_limit
-                )
+            _cleanup_temp_files(source_file_path, executable_path)
             
-            os.unlink(source_file_path)
-            os.unlink(executable_path)
-            os.unlink(input_file_path)
+            if is_timeout:
+                return {
+                    'status': 'TLE',
+                    'message': f'测试用例 {i + 1} 超时'
+                }
+            
+            if not success:
+                return {
+                    'status': 'RE',
+                    'message': f'运行时错误：{error}'
+                }
             
             expected_output = test_case['output'].strip()
-            actual_output = run_result.stdout.strip()
             
-            if actual_output == expected_output:
+            if output == expected_output:
                 results.append({'test_case': i + 1, 'status': 'AC'})
             else:
                 return {
                     'status': 'WA',
-                    'message': f'测试用例 {i + 1} 答案错误\n期望输出：{expected_output}\n实际输出：{actual_output}'
+                    'message': f'测试用例 {i + 1} 答案错误\n期望输出：{expected_output}\n实际输出：{output}'
                 }
             
-        except subprocess.TimeoutExpired:
-            os.unlink(source_file_path)
-            if os.path.exists(executable_path):
-                os.unlink(executable_path)
-            return {
-                'status': 'TLE',
-                'message': f'测试用例 {i + 1} 超时'
-            }
         except Exception as e:
-            if os.path.exists(source_file_path):
-                os.unlink(source_file_path)
-            if os.path.exists(executable_path):
-                os.unlink(executable_path)
+            _cleanup_temp_files(source_file_path, executable_path)
             return {
                 'status': 'RE',
                 'message': f'运行时错误：{str(e)}'
@@ -705,6 +575,7 @@ def evaluate_code(code, test_cases, time_limit=1, memory_limit=256):
         'status': 'AC',
         'message': '所有测试用例通过'
     }
+
 
 class AIConversation:
     def __init__(self, id=None, user_id=None, problem_id=None, question=None, 
@@ -1077,16 +948,18 @@ class TeacherSelectedProblem:
                     start_time = datetime.strptime(visible_start, '%Y-%m-%d %H:%M:%S')
                     if now < start_time:
                         is_visible = False
-                except:
-                    pass
+                except (ValueError, TypeError) as e:
+                    import logging
+                    logging.warning(f"Failed to parse visible_start: {e}")
             
             if visible_end:
                 try:
                     end_time = datetime.strptime(visible_end, '%Y-%m-%d %H:%M:%S')
                     if now > end_time:
                         is_visible = False
-                except:
-                    pass
+                except (ValueError, TypeError) as e:
+                    import logging
+                    logging.warning(f"Failed to parse visible_end: {e}")
             
             if is_visible:
                 visible_problems.append(item['problem_id'])
@@ -1098,6 +971,94 @@ class TeacherSelectedProblem:
         db = current_app.db
         if self.id:
             db.delete('teacher_selected_problems', self.id)
+
+
+class LearningProgress(BaseModel):
+    table_name = 'learning_progress'
+    
+    def __init__(self, id=None, user_id=None, course_id=None, chapter_id=None,
+                 lesson_id=None, progress=0, completed=False, updated_at=None):
+        super().__init__(id)
+        self.user_id = user_id
+        self.course_id = course_id
+        self.chapter_id = chapter_id
+        self.lesson_id = lesson_id
+        self.progress = progress
+        self.completed = completed
+        self.updated_at = updated_at
+    
+    def _to_dict(self):
+        return {
+            'user_id': self.user_id,
+            'course_id': self.course_id,
+            'chapter_id': self.chapter_id,
+            'lesson_id': self.lesson_id,
+            'progress': self.progress,
+            'completed': 1 if self.completed else 0,
+            'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S') if self.id else None
+        }
+    
+    @classmethod
+    def _from_dict(cls, data):
+        updated_at = cls._convert_datetime(data.get('updated_at'))
+        return cls(
+            id=data.get('id'),
+            user_id=data.get('user_id'),
+            course_id=data.get('course_id'),
+            chapter_id=data.get('chapter_id'),
+            lesson_id=data.get('lesson_id'),
+            progress=data.get('progress', 0),
+            completed=bool(data.get('completed', 0)),
+            updated_at=updated_at
+        )
+    
+    @staticmethod
+    def get_by_user(user_id):
+        from flask import current_app
+        db = current_app.db
+        data = db.find_by_field('learning_progress', 'user_id', user_id)
+        return [LearningProgress._from_dict(item) for item in data]
+    
+    @staticmethod
+    def get_by_user_and_course(user_id, course_id):
+        from flask import current_app
+        db = current_app.db
+        data = db.find_all('learning_progress', {
+            'user_id': user_id,
+            'course_id': course_id
+        })
+        return [LearningProgress._from_dict(item) for item in data]
+    
+    @staticmethod
+    def get_by_user_and_lesson(user_id, lesson_id):
+        from flask import current_app
+        db = current_app.db
+        data = db.find_all('learning_progress', {
+            'user_id': user_id,
+            'lesson_id': lesson_id
+        })
+        if data:
+            return LearningProgress._from_dict(data[0])
+        return None
+    
+    @staticmethod
+    def update_progress(user_id, course_id, chapter_id, lesson_id, progress, completed=False):
+        existing = LearningProgress.get_by_user_and_lesson(user_id, lesson_id)
+        if existing:
+            existing.progress = progress
+            existing.completed = completed
+            return existing.save()
+        else:
+            new_progress = LearningProgress(
+                user_id=user_id,
+                course_id=course_id,
+                chapter_id=chapter_id,
+                lesson_id=lesson_id,
+                progress=progress,
+                completed=completed
+            )
+            return new_progress.save()
+
 
 class ProblemImportLog:
     def __init__(self, id=None, admin_id=None, source=None, count=None,

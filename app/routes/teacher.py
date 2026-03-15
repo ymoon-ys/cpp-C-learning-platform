@@ -146,7 +146,10 @@ def upload_editor_image():
         return {'error': '权限不足'}, 403
     
     from flask import current_app, jsonify
+    from werkzeug.utils import secure_filename
     import os
+    
+    ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     
     if 'upload' not in request.files:
         return jsonify({'error': '没有上传文件'})
@@ -155,15 +158,88 @@ def upload_editor_image():
     if file.filename == '':
         return jsonify({'error': '没有选择文件'})
     
-    if file:
-        filename = f"editor_{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
-        folder = 'images'
-        os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
-        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], folder, filename))
-        url = f"/uploads/{folder}/{filename}"
-        return jsonify({'url': url, 'uploaded': True})
+    filename = secure_filename(file.filename)
+    if not filename:
+        return jsonify({'error': '文件名包含非法字符'})
     
-    return jsonify({'error': '上传失败'})
+    file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
+        return jsonify({'error': '不支持的图片格式，仅支持 PNG、JPG、GIF、WEBP 格式'})
+    
+    filename = f"editor_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+    folder = 'images'
+    os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
+    file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], folder, filename))
+    url = f"/uploads/{folder}/{filename}"
+    return jsonify({'url': url, 'uploaded': True})
+
+@teacher_bp.route('/upload-video', methods=['POST'])
+@login_required
+def upload_video():
+    if current_user.role != 'teacher':
+        return jsonify({'success': False, 'error': '权限不足'}), 403
+    
+    from flask import current_app, jsonify
+    from werkzeug.utils import secure_filename
+    import os
+    
+    ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'}
+    
+    if 'video' not in request.files:
+        return jsonify({'success': False, 'error': '没有上传文件'})
+    
+    file = request.files['video']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': '没有选择文件'})
+    
+    filename = secure_filename(file.filename)
+    if not filename:
+        return jsonify({'success': False, 'error': '文件名包含非法字符'})
+    
+    file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    if file_ext not in ALLOWED_VIDEO_EXTENSIONS:
+        return jsonify({'success': False, 'error': '不支持的视频格式'})
+    
+    filename = f"video_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+    folder = 'videos'
+    os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
+    file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], folder, filename))
+    url = f"/uploads/{folder}/{filename}"
+    return jsonify({'success': True, 'url': url, 'filename': filename})
+
+@teacher_bp.route('/upload-document', methods=['POST'])
+@login_required
+def upload_document():
+    if current_user.role != 'teacher':
+        return jsonify({'success': False, 'error': '权限不足'}), 403
+    
+    from flask import current_app, jsonify
+    from werkzeug.utils import secure_filename
+    import os
+    
+    ALLOWED_DOCUMENT_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md'}
+    
+    if 'document' not in request.files:
+        return jsonify({'success': False, 'error': '没有上传文件'})
+    
+    file = request.files['document']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': '没有选择文件'})
+    
+    filename = secure_filename(file.filename)
+    if not filename:
+        return jsonify({'success': False, 'error': '文件名包含非法字符'})
+    
+    file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    if file_ext not in ALLOWED_DOCUMENT_EXTENSIONS:
+        return jsonify({'success': False, 'error': '不支持的文档格式'})
+    
+    filename = f"doc_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+    folder = 'documents'
+    os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
+    file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], folder, filename))
+    url = f"/uploads/{folder}/{filename}"
+    return jsonify({'success': True, 'url': url, 'filename': filename})
 
 @teacher_bp.route('/courses/create', methods=['GET', 'POST'])
 @login_required
@@ -173,7 +249,11 @@ def create_course():
         return redirect(url_for('student.dashboard'))
     
     from flask import current_app
+    from werkzeug.utils import secure_filename
     db = current_app.db
+    
+    ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
@@ -182,9 +262,19 @@ def create_course():
         
         cover_path = ''
         if cover and cover.filename:
-            filename = f"course_{datetime.now().strftime('%Y%m%d%H%M%S')}_{cover.filename}"
+            filename = secure_filename(cover.filename)
+            if not filename:
+                flash('文件名包含非法字符', 'error')
+                return redirect(url_for('teacher.create_course'))
+            
+            file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+            if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
+                flash('不支持的图片格式，仅支持 PNG、JPG、GIF、WEBP 格式', 'error')
+                return redirect(url_for('teacher.create_course'))
+            
+            filename = f"course_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
             cover.save(os.path.join(current_app.config['UPLOAD_FOLDER'], 'covers', filename))
-            cover_path = f"uploads/covers/{filename}"
+            cover_path = f"/uploads/covers/{filename}"
         
         course_data = {
             'title': title,
@@ -237,9 +327,14 @@ def create_lesson(chapter_id):
         return redirect(url_for('student.dashboard'))
     
     from flask import current_app
+    from werkzeug.utils import secure_filename
     db = current_app.db
     chapter = db.find_by_id('chapters', chapter_id)
     course = db.find_by_id('courses', chapter['course_id'])
+    
+    ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'}
+    ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    ALLOWED_DOCUMENT_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md'}
     
     if int(course['teacher_id']) != current_user.id:
         flash('您没有权限执行此操作', 'error')
@@ -253,13 +348,22 @@ def create_lesson(chapter_id):
     content_path = ''
     content = ''
     
-    # 根据内容类型处理不同的输入
     if content_type == 'text':
         content = request.form.get('content_text', '')
     elif content_type == 'video':
         content_file = request.files.get('content_video')
         if content_file and content_file.filename:
-            filename = f"lesson_{datetime.now().strftime('%Y%m%d%H%M%S')}_{content_file.filename}"
+            filename = secure_filename(content_file.filename)
+            if not filename:
+                flash('文件名包含非法字符', 'error')
+                return redirect(url_for('teacher.course_detail', course_id=course['id']))
+            
+            file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+            if file_ext not in ALLOWED_VIDEO_EXTENSIONS:
+                flash('不支持的视频格式', 'error')
+                return redirect(url_for('teacher.course_detail', course_id=course['id']))
+            
+            filename = f"lesson_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
             folder = 'videos'
             os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
             content_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], folder, filename))
@@ -267,7 +371,17 @@ def create_lesson(chapter_id):
     elif content_type == 'image':
         content_file = request.files.get('content_image')
         if content_file and content_file.filename:
-            filename = f"lesson_{datetime.now().strftime('%Y%m%d%H%M%S')}_{content_file.filename}"
+            filename = secure_filename(content_file.filename)
+            if not filename:
+                flash('文件名包含非法字符', 'error')
+                return redirect(url_for('teacher.course_detail', course_id=course['id']))
+            
+            file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+            if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
+                flash('不支持的图片格式', 'error')
+                return redirect(url_for('teacher.course_detail', course_id=course['id']))
+            
+            filename = f"lesson_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
             folder = 'images'
             os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
             content_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], folder, filename))
@@ -275,7 +389,17 @@ def create_lesson(chapter_id):
     elif content_type == 'document':
         content_file = request.files.get('content_document')
         if content_file and content_file.filename:
-            filename = f"lesson_{datetime.now().strftime('%Y%m%d%H%M%S')}_{content_file.filename}"
+            filename = secure_filename(content_file.filename)
+            if not filename:
+                flash('文件名包含非法字符', 'error')
+                return redirect(url_for('teacher.course_detail', course_id=course['id']))
+            
+            file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+            if file_ext not in ALLOWED_DOCUMENT_EXTENSIONS:
+                flash('不支持的文档格式', 'error')
+                return redirect(url_for('teacher.course_detail', course_id=course['id']))
+            
+            filename = f"lesson_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
             folder = 'documents'
             os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
             content_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], folder, filename))
@@ -354,10 +478,15 @@ def edit_lesson(lesson_id):
         return redirect(url_for('student.dashboard'))
     
     from flask import current_app
+    from werkzeug.utils import secure_filename
     db = current_app.db
     lesson = db.find_by_id('lessons', lesson_id)
     chapter = db.find_by_id('chapters', lesson['chapter_id'])
     course = db.find_by_id('courses', chapter['course_id'])
+    
+    ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'}
+    ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    ALLOWED_DOCUMENT_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md'}
     
     if int(course['teacher_id']) != current_user.id:
         flash('您没有权限执行此操作', 'error')
@@ -370,24 +499,37 @@ def edit_lesson(lesson_id):
     content = request.form.get('content_edit', lesson.get('content', ''))
     content_path = lesson.get('content_path', '')
     
-    # 处理新文件上传
     content_file = request.files.get('content_file_edit')
     if content_file and content_file.filename:
-        # 删除旧文件（如果存在）
+        filename = secure_filename(content_file.filename)
+        if not filename:
+            flash('文件名包含非法字符', 'error')
+            return redirect(url_for('teacher.course_detail', course_id=course['id']))
+        
+        file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+        
+        if content_type == 'video':
+            if file_ext not in ALLOWED_VIDEO_EXTENSIONS:
+                flash('不支持的视频格式', 'error')
+                return redirect(url_for('teacher.course_detail', course_id=course['id']))
+            folder = 'videos'
+        elif content_type == 'image':
+            if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
+                flash('不支持的图片格式', 'error')
+                return redirect(url_for('teacher.course_detail', course_id=course['id']))
+            folder = 'images'
+        else:
+            if file_ext not in ALLOWED_DOCUMENT_EXTENSIONS:
+                flash('不支持的文档格式', 'error')
+                return redirect(url_for('teacher.course_detail', course_id=course['id']))
+            folder = 'documents'
+        
         if content_path:
             old_file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], content_path.replace('uploads/', ''))
             if os.path.exists(old_file_path):
                 os.remove(old_file_path)
         
-        # 确定文件夹
-        if content_type == 'video':
-            folder = 'videos'
-        elif content_type == 'image':
-            folder = 'images'
-        else:
-            folder = 'documents'
-        
-        filename = f"lesson_{datetime.now().strftime('%Y%m%d%H%M%S')}_{content_file.filename}"
+        filename = f"lesson_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
         os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
         content_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], folder, filename))
         content_path = f"uploads/{folder}/{filename}"
@@ -830,7 +972,7 @@ def selected_problems():
 def edit_selected_problem(selected_id):
     if current_user.role != 'teacher':
         flash('您没有权限执行此操作', 'error')
-        return redirect(url_for('student.dashboard'))
+        return redirect(url_for('teacher.selected_problems'))
     
     from app.models import TeacherSelectedProblem
     
