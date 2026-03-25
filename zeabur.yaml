@@ -1,0 +1,13 @@
+services:
+  - name: web
+    type: web
+    buildCommand: pip install -r requirements.txt && pip install gunicorn
+    startCommand: gunicorn --config gunicorn.conf.py run:app
+    env:
+      FLASK_ENV: production
+    healthCheck:
+      path: /
+      interval: 30s
+
+  - name: mysql
+    type: mysql
