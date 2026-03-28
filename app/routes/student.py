@@ -247,15 +247,6 @@ def create_review(course_id):
     flash('评价提交成功', 'success')
     return redirect(url_for('student.course_detail', course_id=course_id))
 
-@student_bp.route('/test-user-info')
-@login_required
-def test_user_info():
-    context = {
-        'greeting': get_greeting()
-    }
-    
-    return render_template('student/test_user_info.html', **context)
-
 @student_bp.route('/settings')
 @login_required
 def settings():

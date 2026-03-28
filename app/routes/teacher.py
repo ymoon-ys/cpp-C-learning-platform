@@ -1,9 +1,14 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 
 teacher_bp = Blueprint('teacher', __name__, url_prefix='/teacher')
+
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'}
+ALLOWED_DOCUMENT_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md'}
 
 @teacher_bp.route('/dashboard')
 @login_required
@@ -146,10 +151,7 @@ def upload_editor_image():
         return {'error': '权限不足'}, 403
     
     from flask import current_app, jsonify
-    from werkzeug.utils import secure_filename
     import os
-    
-    ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     
     if 'upload' not in request.files:
         return jsonify({'error': '没有上传文件'})
@@ -180,10 +182,7 @@ def upload_video():
         return jsonify({'success': False, 'error': '权限不足'}), 403
     
     from flask import current_app, jsonify
-    from werkzeug.utils import secure_filename
     import os
-    
-    ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'}
     
     if 'video' not in request.files:
         return jsonify({'success': False, 'error': '没有上传文件'})
@@ -214,10 +213,7 @@ def upload_document():
         return jsonify({'success': False, 'error': '权限不足'}), 403
     
     from flask import current_app, jsonify
-    from werkzeug.utils import secure_filename
     import os
-    
-    ALLOWED_DOCUMENT_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md'}
     
     if 'document' not in request.files:
         return jsonify({'success': False, 'error': '没有上传文件'})
@@ -249,10 +245,7 @@ def create_course():
         return redirect(url_for('student.dashboard'))
     
     from flask import current_app
-    from werkzeug.utils import secure_filename
     db = current_app.db
-    
-    ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     
     if request.method == 'POST':
         title = request.form.get('title')
@@ -327,14 +320,9 @@ def create_lesson(chapter_id):
         return redirect(url_for('student.dashboard'))
     
     from flask import current_app
-    from werkzeug.utils import secure_filename
     db = current_app.db
     chapter = db.find_by_id('chapters', chapter_id)
     course = db.find_by_id('courses', chapter['course_id'])
-    
-    ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'}
-    ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-    ALLOWED_DOCUMENT_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md'}
     
     if int(course['teacher_id']) != current_user.id:
         flash('您没有权限执行此操作', 'error')
@@ -478,15 +466,10 @@ def edit_lesson(lesson_id):
         return redirect(url_for('student.dashboard'))
     
     from flask import current_app
-    from werkzeug.utils import secure_filename
     db = current_app.db
     lesson = db.find_by_id('lessons', lesson_id)
     chapter = db.find_by_id('chapters', lesson['chapter_id'])
     course = db.find_by_id('courses', chapter['course_id'])
-    
-    ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'}
-    ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-    ALLOWED_DOCUMENT_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md'}
     
     if int(course['teacher_id']) != current_user.id:
         flash('您没有权限执行此操作', 'error')
