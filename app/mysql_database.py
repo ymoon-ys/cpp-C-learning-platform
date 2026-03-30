@@ -5,29 +5,6 @@ from mysql.connector import pooling
 from datetime import datetime
 from typing import List, Dict, Optional, Any
 import threading
-import time
-from functools import wraps
-
-def cache_result(ttl=60):
-    def decorator(func):
-        cache = {}
-        cache_time = {}
-        
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            cache_key = f"{func.__name__}:{str(args)}:{str(kwargs)}"
-            
-            if cache_key in cache:
-                if time.time() - cache_time.get(cache_key, 0) < ttl:
-                    return cache[cache_key]
-            
-            result = func(self, *args, **kwargs)
-            cache[cache_key] = result
-            cache_time[cache_key] = time.time()
-            return result
-        
-        return wrapper
-    return decorator
 
 class MySQLDatabase:
     _connection_pool = None
@@ -54,9 +31,7 @@ class MySQLDatabase:
                             password=self.password,
                             database=self.database,
                             port=self.port,
-                            autocommit=True,
-                            connection_timeout=10,
-                            connect_timeout=10
+                            autocommit=True
                         )
                         print(f'✅ 成功创建数据库连接池')
                     except Exception as e:
@@ -89,9 +64,7 @@ class MySQLDatabase:
                 password=self.password,
                 database=self.database,
                 port=self.port,
-                autocommit=True,
-                connection_timeout=10,
-                connect_timeout=10
+                autocommit=True
             )
             print(f'✅ 成功连接到MySQL数据库: {self.database}')
             return self.conn
@@ -487,7 +460,6 @@ class MySQLDatabase:
             print(f'❌ 删除 {table_name} 记录时出错: {e}')
             return False
     
-    @cache_result(ttl=30)
     def find_by_id(self, table_name: str, record_id: int) -> Optional[Dict[str, Any]]:
         conn = self.get_connection()
         if not conn:
@@ -511,7 +483,6 @@ class MySQLDatabase:
             print(f'❌ 查找 {table_name} 记录时出错: {e}')
             return None
     
-    @cache_result(ttl=30)
     def find_by_field(self, table_name: str, field_name: str, field_value: Any) -> List[Dict[str, Any]]:
         conn = self.get_connection()
         if not conn:
