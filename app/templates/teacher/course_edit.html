@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑课程 - {{ course.title }} - C++学习平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .edit-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .top-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        
+        .top-header h1 {
+            font-size: 22px;
+            margin: 0;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* 左侧导航栏 */
+        .sidebar-nav {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .sidebar-header h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .add-chapter-btn {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .add-chapter-btn:hover {
+            background: #0056b3;
+        }
+        
+        .chapter-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .chapter-item {
+            margin-bottom: 10px;
+        }
+        
+        .chapter-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #e9ecef;
+        }
+        
+        .chapter-header:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+        }
+        
+        .chapter-toggle {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: #6c757d;
+            transition: transform 0.3s;
+        }
+        
+        .chapter-item.expanded .chapter-toggle {
+            transform: rotate(90deg);
+        }
+        
+        .chapter-title {
+            flex: 1;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .chapter-actions {
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .chapter-header:hover .chapter-actions {
+            opacity: 1;
+        }
+        
+        .chapter-action-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #f8f9fa;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+        
+        .chapter-action-btn:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .chapter-action-btn.delete:hover {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .lesson-list {
+            display: none;
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        
+        .chapter-item.expanded .lesson-list {
+            display: block;
+        }
+        
+        .lesson-item {
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .lesson-item:hover {
+            background: #f0f7ff;
+        }
+        
+        .lesson-item.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        .lesson-item.active .lesson-title {
+            color: white;
+        }
+        
+        .lesson-title {
+            flex: 1;
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        .lesson-actions {
+            display: flex;
+            gap: 3px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .lesson-item:hover .lesson-actions {
+            opacity: 1;
+        }
+        
+        .lesson-action-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: inherit;
+            transition: all 0.3s;
+        }
+        
+        .lesson-action-btn:hover {
+            background: rgba(0,0,0,0.1);
+        }
+        
+        .add-lesson-btn {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            background: #e9ecef;
+            color: #495057;
+            border: 1px dashed #adb5bd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        
+        .add-lesson-btn:hover {
+            background: #dee2e6;
+            border-color: #007bff;
+            color: #007bff;
+        }
+        
+        /* 右侧编辑区域 */
+        .editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+        
+        .editor-toolbar {
+            padding: 15px 30px;
+            background: white;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .editor-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .btn-outline-secondary {
+            background: white;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+        }
+        
+        .btn-outline-secondary:hover {
+            background: #f8f9fa;
+        }
+        
+        .editor-container {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        
+        .editor-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .lesson-header-edit {
+            padding: 25px 30px;
+            border-bottom: 1px solid #dee2e6;
+            background: #fafbfc;
+        }
+        
+        .lesson-header-edit input {
+            width: 100%;
+            font-size: 24px;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            outline: none;
+            color: #212529;
+        }
+        
+        .lesson-header-edit input::placeholder {
+            color: #adb5bd;
+        }
+        
+        .lesson-header-edit input:focus {
+            border-bottom: 2px solid #007bff;
+            margin-bottom: -2px;
+        }
+        
+        .lesson-description-edit {
+            padding: 15px 30px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .lesson-description-edit textarea {
+            width: 100%;
+            border: none;
+            background: transparent;
+            outline: none;
+            resize: none;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .lesson-description-edit textarea::placeholder {
+            color: #adb5bd;
+        }
+        
+        .ck-editor__editable {
+            min-height: 500px;
+            padding: 30px !important;
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 30px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state p {
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        /* 模态框 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .modal h3 {
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            color: #212529;
+        }
+        
+        .modal input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .modal input:focus {
+            border-color: #007bff;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .save-status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            display: none;
+        }
+        
+        .save-status.saving {
+            display: inline-flex;
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .save-status.saved {
+            display: inline-flex;
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .save-status.error {
+            display: inline-flex;
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="edit-container">
+        <!-- 顶部标题栏 -->
+        <div class="top-header">
+            <h1>
+                <i class="fas fa-edit"></i> 编辑课程：{{ course.title }}
+            </h1>
+            <div class="header-actions">
+                <a href="{{ url_for('teacher.course_detail', course_id=course.id) }}" class="btn btn-outline-secondary" style="color: white; border-color: white;">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- 左侧导航栏 -->
+            <div class="sidebar-nav">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-book"></i> 课程目录</h3>
+                    <button class="add-chapter-btn" onclick="showAddChapterModal()">
+                        <i class="fas fa-plus"></i> 添加章节
+                    </button>
+                </div>
+                <div class="chapter-list" id="chapterList">
+                    {% if chapters %}
+                    {% for chapter in chapters %}
+                    <div class="chapter-item {% if loop.first %}expanded{% endif %}" data-chapter-id="{{ chapter.id }}">
+                        <div class="chapter-header" onclick="toggleChapter({{ chapter.id }})">
+                            <span class="chapter-toggle"><i class="fas fa-chevron-right"></i></span>
+                            <span class="chapter-title">{{ chapter.title }}</span>
+                            <div class="chapter-actions">
+                                <button class="chapter-action-btn" onclick="event.stopPropagation(); showEditChapterModal({{ chapter.id }}, '{{ chapter.title }}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="chapter-action-btn" onclick="event.stopPropagation(); showAddLessonModal({{ chapter.id }})">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="chapter-action-btn delete" onclick="event.stopPropagation(); deleteChapter({{ chapter.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="lesson-list">
+                            {% if chapter.lessons %}
+                            {% for lesson in chapter.lessons %}
+                            <div class="lesson-item {% if loop.first and chapter.loop.first %}active{% endif %}" data-lesson-id="{{ lesson.id }}" onclick="selectLesson({{ lesson.id }})">
+                                <span class="lesson-title">{{ lesson.title }}</span>
+                                <div class="lesson-actions">
+                                    <button class="lesson-action-btn" onclick="event.stopPropagation(); showEditLessonModal({{ lesson.id }}, '{{ lesson.title }}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="lesson-action-btn" onclick="event.stopPropagation(); deleteLesson({{ lesson.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                            <button class="add-lesson-btn" onclick="showAddLessonModal({{ chapter.id }})">
+                                <i class="fas fa-plus"></i> 添加小节
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state" style="padding: 40px 20px;">
+                        <i class="fas fa-folder-open"></i>
+                        <p>暂无章节，点击上方添加</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 右侧编辑区域 -->
+            <div class="editor-area">
+                <div class="editor-toolbar">
+                    <div>
+                        <span class="editor-title" id="editorTitle">
+                            {% if chapters and chapters[0].lessons %}
+                            {{ chapters[0].lessons[0].title }}
+                            {% else %}
+                            请选择或创建一个小节
+                            {% endif %}
+                        </span>
+                        <span class="save-status" id="saveStatus"></span>
+                    </div>
+                    <div class="editor-actions">
+                        <button class="btn btn-secondary" onclick="previewLesson()">
+                            <i class="fas fa-eye"></i> 预览
+                        </button>
+                        <button class="btn btn-primary" onclick="saveLesson()">
+                            <i class="fas fa-save"></i> 保存
+                        </button>
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <div class="editor-wrapper">
+                        {% if chapters and chapters[0].lessons %}
+                        {% set first_lesson = chapters[0].lessons[0] %}
+                        <div class="lesson-header-edit">
+                            <input type="text" id="lessonTitleInput" value="{{ first_lesson.title }}" placeholder="输入小节标题...">
+                        </div>
+                        <div class="lesson-description-edit">
+                            <textarea id="lessonDescriptionInput" placeholder="输入小节描述（可选）...">{{ first_lesson.description or '' }}</textarea>
+                        </div>
+                        <div id="editor">
+                            {{ first_lesson.content or '' }}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-file-alt"></i>
+                            <p>请从左侧选择一个小节，或创建新的小节开始编辑</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加章节模态框 -->
+    <div class="modal-overlay" id="addChapterModal">
+        <div class="modal">
+            <h3><i class="fas fa-folder-plus"></i> 添加章节</h3>
+            <input type="text" id="chapterTitleInput" placeholder="请输入章节标题">
+            <div class="modal-actions">
+                <button class="btn btn-outline-secondary" onclick="closeModal('addChapterModal')">取消</button>
+                <button class="btn btn-primary" onclick="addChapter()">添加</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 编辑章节模态框 -->
+    <div class="modal-overlay" id="editChapterModal">
+        <div class="modal">
+            <h3><i class="fas fa-edit"></i> 编辑章节</h3>
+            <input type="text" id="editChapterTitleInput" placeholder="请输入章节标题">
+            <input type="hidden" id="editChapterId">
+            <div class="modal-actions">
+                <button class="btn btn-outline-secondary" onclick="closeModal('editChapterModal')">取消</button>
+                <button class="btn btn-primary" onclick="updateChapter()">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加小节模态框 -->
+    <div class="modal-overlay" id="addLessonModal">
+        <div class="modal">
+            <h3><i class="fas fa-file-plus"></i> 添加小节</h3>
+            <input type="text" id="lessonTitleModalInput" placeholder="请输入小节标题">
+            <input type="hidden" id="addLessonChapterId">
+            <div class="modal-actions">
+                <button class="btn btn-outline-secondary" onclick="closeModal('addLessonModal')">取消</button>
+                <button class="btn btn-primary" onclick="addLesson()">添加</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 编辑小节模态框 -->
+    <div class="modal-overlay" id="editLessonModal">
+        <div class="modal">
+            <h3><i class="fas fa-edit"></i> 编辑小节</h3>
+            <input type="text" id="editLessonTitleInput" placeholder="请输入小节标题">
+            <input type="hidden" id="editLessonId">
+            <div class="modal-actions">
+                <button class="btn btn-outline-secondary" onclick="closeModal('editLessonModal')">取消</button>
+                <button class="btn btn-primary" onclick="updateLesson()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let editor = null;
+        let currentLessonId = {% if chapters and chapters[0].lessons %}{{ chapters[0].lessons[0].id }}{% else %}null{% endif %};
+        let currentChapterId = {% if chapters %}{{ chapters[0].id }}{% else %}null{% endif %};
+        let autoSaveTimer = null;
+        
+        // 初始化编辑器
+        document.addEventListener('DOMContentLoaded', function() {
+            const editorElement = document.getElementById('editor');
+            if (editorElement) {
+                ClassicEditor
+                    .create(editorElement, {
+                        toolbar: {
+                            items: [
+                                'heading', '|',
+                                'bold', 'italic', 'underline', 'strikethrough', '|',
+                                'fontColor', 'fontBackgroundColor', '|',
+                                'bulletedList', 'numberedList', '|',
+                                'alignment', '|',
+                                'indent', 'outdent', '|',
+                                'link', 'imageUpload', 'blockQuote', 'insertTable', 'mediaEmbed', '|',
+                                'undo', 'redo'
+                            ]
+                        },
+                        language: 'zh-cn',
+                        image: {
+                            toolbar: [
+                                'imageTextAlternative',
+                                'imageStyle:inline',
+                                'imageStyle:block',
+                                'imageStyle:side'
+                            ]
+                        },
+                        table: {
+                            contentToolbar: [
+                                'tableColumn',
+                                'tableRow',
+                                'mergeTableCells'
+                            ]
+                        },
+                        simpleUpload: {
+                            uploadUrl: '{{ url_for("teacher.upload_editor_image") }}'
+                        }
+                    })
+                    .then(newEditor => {
+                        editor = newEditor;
+                        editor.model.document.on('change:data', () => {
+                            scheduleAutoSave();
+                        });
+                    })
+                    .catch(error => {
+                        console.error('编辑器初始化失败:', error);
+                    });
+            }
+        });
+        
+        // 切换章节展开/收起
+        function toggleChapter(chapterId) {
+            const chapterItem = document.querySelector(`.chapter-item[data-chapter-id="${chapterId}"]`);
+            if (chapterItem) {
+                chapterItem.classList.toggle('expanded');
+            }
+        }
+        
+        // 选择小节
+        function selectLesson(lessonId) {
+            if (currentLessonId && !confirm('当前内容未保存，确定要切换吗？')) {
+                return;
+            }
+            
+            document.querySelectorAll('.lesson-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.lesson-item[data-lesson-id="${lessonId}"]`).classList.add('active');
+            
+            currentLessonId = lessonId;
+            loadLessonContent(lessonId);
+        }
+        
+        // 加载小节内容
+        function loadLessonContent(lessonId) {
+            fetch(`/teacher/lessons/${lessonId}/content`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('lessonTitleInput').value = data.lesson.title;
+                        document.getElementById('lessonDescriptionInput').value = data.lesson.description || '';
+                        document.getElementById('editorTitle').textContent = data.lesson.title;
+                        if (editor) {
+                            editor.setData(data.lesson.content || '');
+                        }
+                    }
+                })
+                .catch(error => console.error('加载失败:', error));
+        }
+        
+        // 自动保存
+        function scheduleAutoSave() {
+            if (autoSaveTimer) {
+                clearTimeout(autoSaveTimer);
+            }
+            autoSaveTimer = setTimeout(() => {
+                saveLesson(true);
+            }, 3000);
+        }
+        
+        // 保存小节
+        function saveLesson(isAuto = false) {
+            if (!currentLessonId) {
+                if (!isAuto) {
+                    alert('请先选择一个小节');
+                }
+                return;
+            }
+            
+            const saveStatus = document.getElementById('saveStatus');
+            saveStatus.className = 'save-status saving';
+            saveStatus.textContent = isAuto ? '自动保存中...' : '保存中...';
+            saveStatus.style.display = 'inline-flex';
+            
+            const formData = new FormData();
+            formData.append('title', document.getElementById('lessonTitleInput').value);
+            formData.append('description', document.getElementById('lessonDescriptionInput').value);
+            formData.append('content', editor ? editor.getData() : '');
+            
+            fetch(`/teacher/lessons/${currentLessonId}/save`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    saveStatus.className = 'save-status saved';
+                    saveStatus.textContent = isAuto ? '已自动保存' : '已保存';
+                    document.getElementById('editorTitle').textContent = document.getElementById('lessonTitleInput').value;
+                    
+                    const lessonItem = document.querySelector(`.lesson-item[data-lesson-id="${currentLessonId}"] .lesson-title`);
+                    if (lessonItem) {
+                        lessonItem.textContent = document.getElementById('lessonTitleInput').value;
+                    }
+                    
+                    setTimeout(() => {
+                        saveStatus.style.display = 'none';
+                    }, 2000);
+                } else {
+                    saveStatus.className = 'save-status error';
+                    saveStatus.textContent = '保存失败';
+                }
+            })
+            .catch(error => {
+                console.error('保存失败:', error);
+                saveStatus.className = 'save-status error';
+                saveStatus.textContent = '保存失败';
+            });
+        }
+        
+        // 预览小节
+        function previewLesson() {
+            if (currentLessonId) {
+                window.open(`/student/lessons/${currentLessonId}`, '_blank');
+            }
+        }
+        
+        // 模态框操作
+        function showAddChapterModal() {
+            document.getElementById('chapterTitleInput').value = '';
+            document.getElementById('addChapterModal').classList.add('active');
+        }
+        
+        function showEditChapterModal(chapterId, title) {
+            document.getElementById('editChapterId').value = chapterId;
+            document.getElementById('editChapterTitleInput').value = title;
+            document.getElementById('editChapterModal').classList.add('active');
+        }
+        
+        function showAddLessonModal(chapterId) {
+            document.getElementById('addLessonChapterId').value = chapterId;
+            document.getElementById('lessonTitleModalInput').value = '';
+            document.getElementById('addLessonModal').classList.add('active');
+        }
+        
+        function showEditLessonModal(lessonId, title) {
+            document.getElementById('editLessonId').value = lessonId;
+            document.getElementById('editLessonTitleInput').value = title;
+            document.getElementById('editLessonModal').classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // 添加章节
+        function addChapter() {
+            const title = document.getElementById('chapterTitleInput').value;
+            if (!title) {
+                alert('请输入章节标题');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('title', title);
+            
+            fetch(`{{ url_for('teacher.create_chapter', course_id=course.id) }}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(() => {
+                location.reload();
+            });
+        }
+        
+        // 更新章节
+        function updateChapter() {
+            const chapterId = document.getElementById('editChapterId').value;
+            const title = document.getElementById('editChapterTitleInput').value;
+            if (!title) {
+                alert('请输入章节标题');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('title', title);
+            
+            fetch(`/teacher/chapters/${chapterId}/edit`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(() => {
+                location.reload();
+            });
+        }
+        
+        // 删除章节
+        function deleteChapter(chapterId) {
+            if (confirm('确定要删除这个章节吗？所有小节也会被删除。')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/teacher/chapters/${chapterId}/delete`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        // 添加小节
+        function addLesson() {
+            const chapterId = document.getElementById('addLessonChapterId').value;
+            const title = document.getElementById('lessonTitleModalInput').value;
+            if (!title) {
+                alert('请输入小节标题');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('content_type', 'text');
+            
+            fetch(`/teacher/chapters/${chapterId}/lessons/create`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(() => {
+                location.reload();
+            });
+        }
+        
+        // 更新小节
+        function updateLesson() {
+            const lessonId = document.getElementById('editLessonId').value;
+            const title = document.getElementById('editLessonTitleInput').value;
+            if (!title) {
+                alert('请输入小节标题');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('title', title);
+            
+            fetch(`/teacher/lessons/${lessonId}/update-title`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const lessonItem = document.querySelector(`.lesson-item[data-lesson-id="${lessonId}"] .lesson-title`);
+                    if (lessonItem) {
+                        lessonItem.textContent = title;
+                    }
+                    if (currentLessonId == lessonId) {
+                        document.getElementById('lessonTitleInput').value = title;
+                        document.getElementById('editorTitle').textContent = title;
+                    }
+                    closeModal('editLessonModal');
+                }
+            });
+        }
+        
+        // 删除小节
+        function deleteLesson(lessonId) {
+            if (confirm('确定要删除这个小节吗？')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/teacher/lessons/${lessonId}/delete`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        // 点击模态框外部关闭
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建课程 - C++学习平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="header">
+        <div class="header-left">
+            <h1>C++学习平台</h1>
+        </div>
+        <div class="header-right">
+            <div class="greeting">
+                <p>上午好，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
+                <p class="sub-greeting">教师后台</p>
+            </div>
+            <div class="user-icon">
+                {% if current_user.avatar %}
+                <img src="{{ current_user.avatar }}" alt="用户头像">
+                {% else %}
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="learning-stats">
+                    <p class="days">教师</p>
+                    <p class="number">后台</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/teacher/dashboard">仪表盘</a></li>
+                    <li class="active"><a href="/teacher/courses/create">创建课程</a></li>
+                    <li><a href="/teacher/add-exercise">添加练习</a></li>
+                    <li><a href="/community">社区管理</a></li>
+                    <li><a href="/teacher/settings">设置</a></li>
+                    <li><a href="/logout">退出登录</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <div class="section-header">
+                <h2>创建课程</h2>
+            </div>
+            
+            <!-- 创建课程表单 -->
+            <div class="create-course-form">
+                <form action="{{ url_for('teacher.create_course') }}" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>课程标题</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label>课程描述</label>
+                        <textarea class="form-control" name="description" rows="4" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>课程封面</label>
+                        <input type="file" class="form-control" name="cover_image" accept="image/*">
+                        <div class="form-text">支持 JPG、PNG、GIF 格式</div>
+                    </div>
+                    <div class="form-actions">
+                        <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary">返回</a>
+                        <button type="submit" class="btn btn-primary">创建课程</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

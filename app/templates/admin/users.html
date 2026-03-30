@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - C++学习平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="header">
+        <div class="header-left">
+            <h1>C++学习平台</h1>
+        </div>
+        <div class="header-right">
+            <div class="greeting">
+                <p>上午好，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
+                <p class="sub-greeting">管理员后台</p>
+            </div>
+            <div class="user-icon">
+                {% if current_user.avatar %}
+                <img src="{{ current_user.avatar }}" alt="用户头像">
+                {% else %}
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="learning-stats">
+                    <p class="days">管理员</p>
+                    <p class="number">后台</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/admin/dashboard">仪表盘</a></li>
+                    <li class="active"><a href="/admin/users">用户管理</a></li>
+                    <li><a href="/admin/courses">课程管理</a></li>
+                    <li><a href="/admin/problems">题目管理</a></li>
+                    <li><a href="/community">社区管理</a></li>
+                    <li><a href="/admin/settings">设置</a></li>
+                    <li><a href="/logout">退出登录</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <div class="section-header">
+                <h2>用户管理</h2>
+            </div>
+            
+            <!-- 角色统计卡片 -->
+            <div class="stats-cards mb-6">
+                <div class="stat-card">
+                    <h3>管理员</h3>
+                    <p>{{ admins|length }}</p>
+                </div>
+                <div class="stat-card">
+                    <h3>教师</h3>
+                    <p>{{ teachers|length }}</p>
+                </div>
+                <div class="stat-card">
+                    <h3>学生</h3>
+                    <p>{{ students|length }}</p>
+                </div>
+                <div class="stat-card">
+                    <h3>总用户</h3>
+                    <p>{{ users|length }}</p>
+                </div>
+            </div>
+            
+            <!-- 管理员列表 -->
+            {% if admins %}
+            <div class="content-card mb-6">
+                <h3 class="card-title">
+                    <i class="fas fa-user-shield"></i>
+                    管理员
+                </h3>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>用户名</th>
+                                <th>邮箱</th>
+                                <th>注册时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in admins %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.created_at[:10] if user.created_at else '未知' }}</td>
+                                <td>
+                                    <form action="/admin/users/{{ user.id }}/delete" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- 教师列表 -->
+            {% if teachers %}
+            <div class="content-card mb-6">
+                <h3 class="card-title">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    教师
+                </h3>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>用户名</th>
+                                <th>邮箱</th>
+                                <th>注册时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in teachers %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.created_at[:10] if user.created_at else '未知' }}</td>
+                                <td>
+                                    <form action="/admin/users/{{ user.id }}/delete" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- 学生列表 -->
+            {% if students %}
+            <div class="content-card">
+                <h3 class="card-title">
+                    <i class="fas fa-user-graduate"></i>
+                    学生
+                </h3>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>用户名</th>
+                                <th>邮箱</th>
+                                <th>注册时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in students %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.created_at[:10] if user.created_at else '未知' }}</td>
+                                <td>
+                                    <form action="/admin/users/{{ user.id }}/delete" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帖子详情 - C++学习平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 返回按钮 */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            color: #666;
+            cursor: pointer;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        /* 帖子内容 */
+        .post-detail {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .post-meta {
+            flex: 1;
+        }
+        
+        .post-author {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .post-time {
+            font-size: 13px;
+            color: #999;
+            margin-top: 4px;
+        }
+        
+        .follow-btn {
+            padding: 8px 20px;
+            background: #9c27b0;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .follow-btn.following {
+            background: #e0e0e0;
+            color: #666;
+        }
+        
+        .post-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        
+        .post-content {
+            font-size: 15px;
+            color: #333;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+        
+        /* 图片网格 */
+        .post-images {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .post-images.single {
+            grid-template-columns: 1fr;
+        }
+        
+        .post-images.double {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .post-images.multiple {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .post-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .post-images.single .post-image {
+            aspect-ratio: 16/9;
+        }
+        
+        /* 帖子操作 */
+        .post-actions {
+            display: flex;
+            gap: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .action-item:hover {
+            color: #9c27b0;
+        }
+        
+        .action-item.liked {
+            color: #ff6b6b;
+        }
+        
+        .action-item i {
+            font-size: 22px;
+        }
+        
+        .action-item span {
+            font-size: 14px;
+        }
+        
+        /* 评论区 */
+        .comments-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .comments-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .comments-count {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .sort-btn {
+            padding: 6px 12px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 4px;
+            color: #666;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        /* 评论输入 */
+        .comment-input-area {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .comment-input-wrapper {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .comment-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            background: #f5f5f5;
+            font-size: 14px;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+        }
+        
+        .comment-input:focus {
+            outline: none;
+            background: white;
+            border-color: #9c27b0;
+        }
+        
+        .send-btn {
+            padding: 10px 24px;
+            background: #9c27b0;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .send-btn:hover {
+            background: #7b1fa2;
+        }
+        
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* 评论列表 - 抖音风格 */
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .comment-item {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .comment-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        
+        .comment-content {
+            flex: 1;
+        }
+        
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        
+        .comment-author {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .comment-text {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        
+        .comment-footer {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 13px;
+            color: #999;
+        }
+        
+        .comment-time {
+            color: #999;
+        }
+        
+        .comment-reply-btn {
+            color: #666;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .comment-reply-btn:hover {
+            color: #9c27b0;
+        }
+        
+        .comment-like {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .comment-like:hover,
+        .comment-like.liked {
+            color: #ff6b6b;
+        }
+        
+        /* 嵌套回复 */
+        .reply-list {
+            margin-top: 12px;
+            padding-left: 12px;
+            border-left: 2px solid #eee;
+        }
+        
+        .reply-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .reply-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .reply-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        
+        .reply-content {
+            flex: 1;
+        }
+        
+        .reply-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        
+        .reply-author {
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .reply-to {
+            font-size: 13px;
+            color: #999;
+        }
+        
+        .reply-target {
+            font-size: 13px;
+            color: #9c27b0;
+        }
+        
+        .reply-text {
+            font-size: 13px;
+            color: #333;
+            line-height: 1.5;
+            margin-bottom: 6px;
+        }
+        
+        .reply-footer {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        /* 回复输入框 */
+        .reply-input-area {
+            display: none;
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .reply-input-area.active {
+            display: block;
+        }
+        
+        .reply-input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .reply-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            font-size: 13px;
+            resize: none;
+        }
+        
+        .reply-input:focus {
+            outline: none;
+            border-color: #9c27b0;
+        }
+        
+        /* 展开更多回复 */
+        .show-more-replies {
+            padding: 8px 0;
+            color: #9c27b0;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        
+        /* 空状态 */
+        .empty-comments {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-comments i {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .loading i {
+            font-size: 32px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-btn" onclick="history.back()">
+            <i class="fas fa-arrow-left"></i>
+            返回社区
+        </button>
+        
+        <!-- 帖子详情 -->
+        <div class="post-detail" id="postDetail">
+            <div class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>加载中...</p>
+            </div>
+        </div>
+        
+        <!-- 评论区 -->
+        <div class="comments-section">
+            <div class="comments-header">
+                <span class="comments-count">评论 (<span id="commentCount">0</span>)</span>
+                <button class="sort-btn">按时间排序</button>
+            </div>
+            
+            <!-- 评论输入 -->
+            <div class="comment-input-area">
+                <img src="{{ current_user.avatar or '/static/default-avatar.png' }}" alt="头像" class="user-avatar" style="width: 40px; height: 40px;">
+                <div class="comment-input-wrapper">
+                    <textarea class="comment-input" id="commentInput" placeholder="写下你的评论..." rows="1"></textarea>
+                    <button class="send-btn" onclick="submitComment()">发送</button>
+                </div>
+            </div>
+            
+            <!-- 评论列表 -->
+            <div class="comment-list" id="commentList">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const discussionId = {{ discussion_id }};
+        let replyingTo = null;
+        
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPostDetail();
+            loadComments();
+            
+            // 自动调整输入框高度
+            const commentInput = document.getElementById('commentInput');
+            commentInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+        });
+        
+        // 加载帖子详情
+        async function loadPostDetail() {
+            try {
+                const response = await fetch(`/community/discussions/${discussionId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderPostDetail(data.discussion);
+                } else {
+                    document.getElementById('postDetail').innerHTML = `
+                        <div class="empty-comments">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>帖子不存在或已删除</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载失败:', error);
+            }
+        }
+        
+        // 渲染帖子详情
+        function renderPostDetail(post) {
+            const imagesHtml = renderImages(post.images);
+            
+            document.getElementById('postDetail').innerHTML = `
+                <div class="post-header">
+                    <img src="${post.user.avatar}" alt="头像" class="user-avatar">
+                    <div class="post-meta">
+                        <div class="post-author">${post.user.nickname}</div>
+                        <div class="post-time">${formatTime(post.created_at)}</div>
+                    </div>
+                    <button class="follow-btn" onclick="toggleFollow(this)">关注</button>
+                </div>
+                <div class="post-title">${escapeHtml(post.title)}</div>
+                <div class="post-content">${escapeHtml(post.content)}</div>
+                ${imagesHtml}
+                <div class="post-actions">
+                    <div class="action-item ${post.is_liked ? 'liked' : ''}" onclick="toggleLike()">
+                        <i class="${post.is_liked ? 'fas' : 'far'} fa-heart"></i>
+                        <span>${post.like_count || 0}</span>
+                    </div>
+                    <div class="action-item">
+                        <i class="far fa-comment"></i>
+                        <span>${post.reply_count || 0}</span>
+                    </div>
+                    <div class="action-item">
+                        <i class="far fa-eye"></i>
+                        <span>${post.view_count || 0}</span>
+                    </div>
+                    <div class="action-item">
+                        <i class="far fa-share-square"></i>
+                        <span>分享</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 渲染图片
+        function renderImages(images) {
+            if (!images || images.length === 0) return '';
+            
+            let className = 'multiple';
+            if (images.length === 1) className = 'single';
+            else if (images.length === 2) className = 'double';
+            
+            return `
+                <div class="post-images ${className}">
+                    ${images.map(img => `<img src="${img}" class="post-image" onclick="viewImage('${img}')">`).join('')}
+                </div>
+            `;
+        }
+        
+        // 加载评论
+        async function loadComments() {
+            try {
+                const response = await fetch(`/community/discussions/${discussionId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderComments(data.replies);
+                    document.getElementById('commentCount').textContent = countAllReplies(data.replies);
+                }
+            } catch (error) {
+                console.error('加载评论失败:', error);
+            }
+        }
+        
+        // 渲染评论列表
+        function renderComments(replies) {
+            const container = document.getElementById('commentList');
+            
+            if (!replies || replies.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-comments">
+                        <i class="fas fa-comment-slash"></i>
+                        <p>暂无评论，快来抢沙发吧！</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = replies.map(reply => renderCommentItem(reply)).join('');
+        }
+        
+        // 渲染单个评论
+        function renderCommentItem(reply, isNested = false) {
+            const hasChildren = reply.children && reply.children.length > 0;
+            const childrenHtml = hasChildren 
+                ? reply.children.map(child => renderReplyItem(child, reply.user.nickname)).join('')
+                : '';
+            
+            return `
+                <div class="comment-item" data-id="${reply.id}">
+                    <img src="${reply.user.avatar}" alt="头像" class="comment-avatar">
+                    <div class="comment-content">
+                        <div class="comment-header">
+                            <span class="comment-author">${reply.user.nickname}</span>
+                        </div>
+                        <div class="comment-text">${escapeHtml(reply.content)}</div>
+                        <div class="comment-footer">
+                            <span class="comment-time">${formatTime(reply.created_at)}</span>
+                            <span class="comment-reply-btn" onclick="showReplyInput(${reply.id}, '${reply.user.nickname}')">回复</span>
+                            <div class="comment-like ${reply.is_liked ? 'liked' : ''}" onclick="toggleCommentLike(${reply.id}, this)">
+                                <i class="${reply.is_liked ? 'fas' : 'far'} fa-heart"></i>
+                                <span>${reply.like_count || 0}</span>
+                            </div>
+                        </div>
+                        
+                        ${hasChildren ? `
+                            <div class="reply-list">
+                                ${childrenHtml}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="reply-input-area" id="replyInput-${reply.id}">
+                            <div class="reply-input-wrapper">
+                                <textarea class="reply-input" id="replyText-${reply.id}" placeholder="回复 ${reply.user.nickname}..." rows="1"></textarea>
+                                <button class="send-btn" onclick="submitReply(${reply.id})">发送</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 渲染嵌套回复
+        function renderReplyItem(reply, targetName) {
+            return `
+                <div class="reply-item" data-id="${reply.id}">
+                    <img src="${reply.user.avatar}" alt="头像" class="reply-avatar">
+                    <div class="reply-content">
+                        <div class="reply-header">
+                            <span class="reply-author">${reply.user.nickname}</span>
+                            <span class="reply-to">回复</span>
+                            <span class="reply-target">@${targetName}</span>
+                        </div>
+                        <div class="reply-text">${escapeHtml(reply.content)}</div>
+                        <div class="reply-footer">
+                            <span class="comment-time">${formatTime(reply.created_at)}</span>
+                            <span class="comment-reply-btn" onclick="showReplyInput(${reply.parent_id}, '${reply.user.nickname}')">回复</span>
+                            <div class="comment-like ${reply.is_liked ? 'liked' : ''}" onclick="toggleCommentLike(${reply.id}, this)">
+                                <i class="${reply.is_liked ? 'fas' : 'far'} fa-heart"></i>
+                                <span>${reply.like_count || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 统计所有评论数
+        function countAllReplies(replies) {
+            let count = 0;
+            for (const reply of replies) {
+                count++;
+                if (reply.children) {
+                    count += reply.children.length;
+                }
+            }
+            return count;
+        }
+        
+        // 显示回复输入框
+        function showReplyInput(commentId, targetName) {
+            // 隐藏所有回复输入框
+            document.querySelectorAll('.reply-input-area').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // 显示当前回复输入框
+            const inputArea = document.getElementById(`replyInput-${commentId}`);
+            if (inputArea) {
+                inputArea.classList.add('active');
+                const textarea = document.getElementById(`replyText-${commentId}`);
+                textarea.placeholder = `回复 ${targetName}...`;
+                textarea.focus();
+                replyingTo = commentId;
+            }
+        }
+        
+        // 提交评论
+        async function submitComment() {
+            const content = document.getElementById('commentInput').value.trim();
+            
+            if (!content) {
+                alert('请输入评论内容');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/community/discussions/${discussionId}/replies`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('commentInput').value = '';
+                    document.getElementById('commentInput').style.height = 'auto';
+                    loadComments();
+                } else {
+                    alert('评论失败：' + data.error);
+                }
+            } catch (error) {
+                alert('评论失败');
+            }
+        }
+        
+        // 提交回复
+        async function submitReply(parentId) {
+            const content = document.getElementById(`replyText-${parentId}`).value.trim();
+            
+            if (!content) {
+                alert('请输入回复内容');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/community/discussions/${discussionId}/replies`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content, parent_id: parentId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById(`replyText-${parentId}`).value = '';
+                    document.getElementById(`replyInput-${parentId}`).classList.remove('active');
+                    loadComments();
+                } else {
+                    alert('回复失败：' + data.error);
+                }
+            } catch (error) {
+                alert('回复失败');
+            }
+        }
+        
+        // 点赞帖子
+        async function toggleLike() {
+            try {
+                const response = await fetch(`/community/discussions/${discussionId}/like`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadPostDetail();
+                }
+            } catch (error) {
+                console.error('点赞失败:', error);
+            }
+        }
+        
+        // 点赞评论
+        async function toggleCommentLike(replyId, btn) {
+            try {
+                const response = await fetch(`/community/replies/${replyId}/like`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const icon = btn.querySelector('i');
+                    const count = btn.querySelector('span');
+                    
+                    if (data.liked) {
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
+                        btn.classList.add('liked');
+                    } else {
+                        icon.classList.remove('fas');
+                        icon.classList.add('far');
+                        btn.classList.remove('liked');
+                    }
+                    
+                    count.textContent = data.like_count;
+                }
+            } catch (error) {
+                console.error('点赞失败:', error);
+            }
+        }
+        
+        // 关注/取消关注
+        function toggleFollow(btn) {
+            if (btn.classList.contains('following')) {
+                btn.classList.remove('following');
+                btn.textContent = '关注';
+            } else {
+                btn.classList.add('following');
+                btn.textContent = '已关注';
+            }
+        }
+        
+        // 查看图片
+        function viewImage(url) {
+            window.open(url, '_blank');
+        }
+        
+        // 格式化时间
+        function formatTime(timeStr) {
+            if (!timeStr) return '未知';
+            const date = new Date(timeStr);
+            const now = new Date();
+            const diff = now - date;
+            
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return '刚刚';
+            if (minutes < 60) return `${minutes}分钟前`;
+            if (hours < 24) return `${hours}小时前`;
+            if (days < 30) return `${days}天前`;
+            
+            return date.toLocaleDateString('zh-CN');
+        }
+        
+        // HTML转义
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // 回车发送评论
+        document.getElementById('commentInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitComment();
+            }
+        });
+    </script>
+</body>
+</html>
