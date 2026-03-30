@@ -22,7 +22,8 @@ cache = Cache()
 # 配置速率限制
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
 )
 
 @login_manager.user_loader
@@ -145,38 +146,42 @@ def create_app(config_class=Config):
     
     # 初始化默认用户
     try:
-        user_count = db.count('users')
-        print(f'当前用户数量: {user_count}')
-        if user_count == 0:
-            from werkzeug.security import generate_password_hash
-            default_users = [
-                {
-                    'username': 'admin',
-                    'email': 'admin@example.com',
-                    'password_hash': generate_password_hash('admin123'),
-                    'role': 'admin',
-                    'nickname': '管理员'
-                },
-                {
-                    'username': 'teacher',
-                    'email': 'teacher@example.com',
-                    'password_hash': generate_password_hash('teacher123'),
-                    'role': 'teacher',
-                    'nickname': '教师'
-                },
-                {
-                    'username': 'student',
-                    'email': 'student@example.com',
-                    'password_hash': generate_password_hash('student123'),
-                    'role': 'student',
-                    'nickname': '学生'
-                }
-            ]
-            for user_data in default_users:
-                db.insert('users', user_data)
-            print('✅ 成功创建默认用户')
+        # 检查数据库连接是否成功
+        if not db.conn:
+            print('❌ 数据库连接失败，跳过默认用户创建')
         else:
-            print('✅ 数据库中已有用户，跳过默认用户创建')
+            user_count = db.count('users')
+            print(f'当前用户数量: {user_count}')
+            if user_count == 0:
+                from werkzeug.security import generate_password_hash
+                default_users = [
+                    {
+                        'username': 'admin',
+                        'email': 'admin@example.com',
+                        'password_hash': generate_password_hash('admin123'),
+                        'role': 'admin',
+                        'nickname': '管理员'
+                    },
+                    {
+                        'username': 'teacher',
+                        'email': 'teacher@example.com',
+                        'password_hash': generate_password_hash('teacher123'),
+                        'role': 'teacher',
+                        'nickname': '教师'
+                    },
+                    {
+                        'username': 'student',
+                        'email': 'student@example.com',
+                        'password_hash': generate_password_hash('student123'),
+                        'role': 'student',
+                        'nickname': '学生'
+                    }
+                ]
+                for user_data in default_users:
+                    db.insert('users', user_data)
+                print('✅ 成功创建默认用户')
+            else:
+                print('✅ 数据库中已有用户，跳过默认用户创建')
     except Exception as e:
         print(f'❌ 初始化默认用户失败: {e}')
     

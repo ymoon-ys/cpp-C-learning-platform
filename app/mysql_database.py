@@ -5,6 +5,7 @@ from mysql.connector import pooling
 from datetime import datetime
 from typing import List, Dict, Optional, Any
 import threading
+import time
 
 class MySQLDatabase:
     _connection_pool = None
@@ -21,22 +22,7 @@ class MySQLDatabase:
         if MySQLDatabase._connection_pool is None:
             with MySQLDatabase._pool_lock:
                 if MySQLDatabase._connection_pool is None:
-                    try:
-                        MySQLDatabase._connection_pool = pooling.MySQLConnectionPool(
-                            pool_name='learning_platform_pool',
-                            pool_size=5,
-                            pool_reset_session=True,
-                            host=self.host,
-                            user=self.user,
-                            password=self.password,
-                            database=self.database,
-                            port=self.port,
-                            autocommit=True
-                        )
-                        print(f'✅ 成功创建数据库连接池')
-                    except Exception as e:
-                        print(f'❌ 创建数据库连接池失败: {e}')
-                        MySQLDatabase._connection_pool = None
+                    self._create_pool_with_retry()
         
         try:
             self.get_connection()
@@ -44,6 +30,30 @@ class MySQLDatabase:
                 self.create_tables()
         except Exception as e:
             print(f'❌ 数据库初始化失败: {e}')
+    
+    def _create_pool_with_retry(self, max_retries=3, retry_delay=2):
+        for attempt in range(max_retries):
+            try:
+                MySQLDatabase._connection_pool = pooling.MySQLConnectionPool(
+                    pool_name='learning_platform_pool',
+                    pool_size=5,
+                    pool_reset_session=True,
+                    host=self.host,
+                    user=self.user,
+                    password=self.password,
+                    database=self.database,
+                    port=self.port,
+                    autocommit=True
+                )
+                print(f'✅ 成功创建数据库连接池')
+                return True
+            except Exception as e:
+                print(f'❌ 创建数据库连接池失败 (尝试 {attempt + 1}/{max_retries}): {e}')
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+        
+        MySQLDatabase._connection_pool = None
+        return False
     
     def get_connection(self):
         try:
