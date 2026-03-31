@@ -535,7 +535,7 @@ class MySQLDatabase:
     def count(self, table_name: str, filters: Optional[Dict[str, Any]] = None) -> int:
         conn = self.get_connection()
         if not conn:
-            return 0
+            return -1
         
         try:
             if filters:
@@ -553,7 +553,7 @@ class MySQLDatabase:
             return count
         except Exception as e:
             print(f'[ERR] Error counting {table_name} records: {e}')
-            return 0
+            return -1
     
     def find_by_ids(self, table_name: str, ids: List[int]) -> List[Dict[str, Any]]:
         if not ids:

@@ -136,7 +136,9 @@ def create_app(config_class=Config):
         else:
             user_count = db.count('users')
             print(f'Current user count: {user_count}')
-            if user_count == 0:
+            if user_count == -1:
+                print('[ERR] Failed to count users, skipping default user creation')
+            elif user_count == 0:
                 from werkzeug.security import generate_password_hash
                 default_users = [
                     {
