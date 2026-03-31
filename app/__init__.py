@@ -11,15 +11,12 @@ from app.models import User
 from dotenv import load_dotenv
 from app.exceptions import BusinessException
 
-# 加载.env文件
 load_dotenv()
 
 login_manager = LoginManager()
 
-# 配置缓存
 cache = Cache()
 
-# 配置速率限制
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["200 per day", "50 per hour"],
@@ -34,19 +31,15 @@ def create_app(config_class=Config):
     app = Flask(__name__, static_folder=config_class.STATIC_FOLDER, static_url_path='/static')
     app.config.from_object(config_class)
     
-    # 配置缓存
     app.config['CACHE_TYPE'] = 'SimpleCache'
     app.config['CACHE_DEFAULT_TIMEOUT'] = 300
     cache.init_app(app)
     
-    # 配置速率限制
     limiter.init_app(app)
     
-    # 根据环境变量选择数据库类型
     db_type = os.getenv('DB_TYPE', 'mysql').lower()
     
     if db_type == 'mysql':
-        # 使用MySQL数据库
         db = MySQLDatabase(
             host=os.getenv('MYSQL_HOST', 'localhost'),
             user=os.getenv('MYSQL_USER', 'root'),
@@ -54,19 +47,18 @@ def create_app(config_class=Config):
             database=os.getenv('MYSQL_DATABASE', 'learning_platform'),
             port=int(os.getenv('MYSQL_PORT', '3306'))
         )
-        print(f'✅ 使用MySQL数据库: {os.getenv("MYSQL_DATABASE", "learning_platform")}')
-        print(f'连接信息: {os.getenv("MYSQL_HOST", "localhost")}:{os.getenv("MYSQL_PORT", "3306")}')
+        print(f'[OK] Using MySQL database: {os.getenv("MYSQL_DATABASE", "learning_platform")}')
+        print(f'Connection: {os.getenv("MYSQL_HOST", "localhost")}:{os.getenv("MYSQL_PORT", "3306")}')
     else:
-        # 使用SQLite数据库
         db_path = os.path.join(app.config['DATABASE_DIR'], 'learning_platform.db')
         db = SQLiteDatabase(db_path)
-        print(f'✅ 使用SQLite数据库: {db_path}')
+        print(f'[OK] Using SQLite database: {db_path}')
     
     app.db = db
     
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
-    login_manager.login_message = '请先登录'
+    login_manager.login_message = 'Please login first'
     
     Config.init_app(app)
     
@@ -75,7 +67,6 @@ def create_app(config_class=Config):
     
     @app.errorhandler(BusinessException)
     def handle_business_exception(error):
-        """处理业务异常"""
         if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
             return {'error': error.message}, error.status_code
         flash(error.message, 'error')
@@ -83,17 +74,14 @@ def create_app(config_class=Config):
     
     @app.errorhandler(404)
     def page_not_found(error):
-        """处理404错误"""
         return render_template('errors/404.html'), 404
     
     @app.errorhandler(500)
     def internal_server_error(error):
-        """处理500错误"""
         return render_template('errors/500.html'), 500
     
     @app.after_request
     def add_security_headers(response):
-        """添加安全HTTP头"""
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'SAMEORIGIN'
         response.headers['X-XSS-Protection'] = '1; mode=block'
@@ -116,17 +104,15 @@ def create_app(config_class=Config):
     app.register_blueprint(course_bp, url_prefix='/course')
     app.register_blueprint(ai_bp, url_prefix='/ai')
     
-    # 初始化CAIgpt数据库
     try:
         from app.routes.ai_assistant import init_caigpt_database
         init_caigpt_database(db)
     except Exception as e:
-        print(f'❌ 初始化CAIgpt数据库失败: {e}')
+        print(f'[ERR] Failed to initialize CAIgpt database: {e}')
     
     app.register_blueprint(recommendation_bp, url_prefix='/recommendation')
     app.register_blueprint(community_bp, url_prefix='/community')
     
-    # 添加重定向规则，将/logout重定向到/auth/logout
     @app.route('/logout')
     def logout_redirect():
         return redirect(url_for('auth.logout'))
@@ -144,14 +130,12 @@ def create_app(config_class=Config):
         
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
     
-    # 初始化默认用户
     try:
-        # 检查数据库连接是否成功
         if not db.conn:
-            print('❌ 数据库连接失败，跳过默认用户创建')
+            print('[ERR] Database connection failed, skipping default user creation')
         else:
             user_count = db.count('users')
-            print(f'当前用户数量: {user_count}')
+            print(f'Current user count: {user_count}')
             if user_count == 0:
                 from werkzeug.security import generate_password_hash
                 default_users = [
@@ -160,29 +144,29 @@ def create_app(config_class=Config):
                         'email': 'admin@example.com',
                         'password_hash': generate_password_hash('admin123'),
                         'role': 'admin',
-                        'nickname': '管理员'
+                        'nickname': 'Admin'
                     },
                     {
                         'username': 'teacher',
                         'email': 'teacher@example.com',
                         'password_hash': generate_password_hash('teacher123'),
                         'role': 'teacher',
-                        'nickname': '教师'
+                        'nickname': 'Teacher'
                     },
                     {
                         'username': 'student',
                         'email': 'student@example.com',
                         'password_hash': generate_password_hash('student123'),
                         'role': 'student',
-                        'nickname': '学生'
+                        'nickname': 'Student'
                     }
                 ]
                 for user_data in default_users:
                     db.insert('users', user_data)
-                print('✅ 成功创建默认用户')
+                print('[OK] Default users created successfully')
             else:
-                print('✅ 数据库中已有用户，跳过默认用户创建')
+                print('[OK] Users already exist, skipping default user creation')
     except Exception as e:
-        print(f'❌ 初始化默认用户失败: {e}')
+        print(f'[ERR] Failed to initialize default users: {e}')
     
     return app

@@ -1,4 +1,4 @@
-﻿﻿// 浠诲姟鍕鹃€夊姛鑳?const checkboxes = document.querySelectorAll('.task-item input[type="checkbox"]');
+﻿﻿﻿﻿// 浠诲姟鍕鹃€夊姛鑳?const checkboxes = document.querySelectorAll('.task-item input[type="checkbox"]');
 
 checkboxes.forEach(checkbox => {
     checkbox.addEventListener('change', function() {

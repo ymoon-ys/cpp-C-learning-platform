@@ -29,7 +29,7 @@ class MySQLDatabase:
             if self.conn:
                 self.create_tables()
         except Exception as e:
-            print(f'❌ 数据库初始化失败: {e}')
+            print(f'[ERR] Database initialization failed: {e}')
     
     def _create_pool_with_retry(self, max_retries=3, retry_delay=2):
         for attempt in range(max_retries):
@@ -45,10 +45,10 @@ class MySQLDatabase:
                     port=self.port,
                     autocommit=True
                 )
-                print(f'✅ 成功创建数据库连接池')
+                print(f'[OK] Database connection pool created successfully')
                 return True
             except Exception as e:
-                print(f'❌ 创建数据库连接池失败 (尝试 {attempt + 1}/{max_retries}): {e}')
+                print(f'[ERR] Failed to create connection pool (attempt {attempt + 1}/{max_retries}): {e}')
                 if attempt < max_retries - 1:
                     time.sleep(retry_delay)
         
@@ -63,10 +63,10 @@ class MySQLDatabase:
             if MySQLDatabase._connection_pool:
                 try:
                     self.conn = MySQLDatabase._connection_pool.get_connection()
-                    print(f'✅ 从连接池获取数据库连接')
+                    print(f'[OK] Got database connection from pool')
                     return self.conn
                 except Exception as e:
-                    print(f'⚠️ 从连接池获取连接失败，创建新连接: {e}')
+                    print(f'[WARN] Failed to get connection from pool, creating new: {e}')
             
             self.conn = mysql.connector.connect(
                 host=self.host,
@@ -76,10 +76,10 @@ class MySQLDatabase:
                 port=self.port,
                 autocommit=True
             )
-            print(f'✅ 成功连接到MySQL数据库: {self.database}')
+            print(f'[OK] Connected to MySQL database: {self.database}')
             return self.conn
         except Exception as e:
-            print(f'❌ 连接MySQL数据库失败: {e}')
+            print(f'[ERR] Failed to connect to MySQL database: {e}')
             self.conn = None
             return None
     
@@ -350,9 +350,9 @@ class MySQLDatabase:
             try:
                 cursor.execute(create_sql)
                 conn.commit()
-                print(f'✅ 成功创建表: {table_name}')
+                print(f'[OK] Table created: {table_name}')
             except Exception as e:
-                print(f'❌ 创建表 {table_name} 时出错: {e}')
+                print(f'[ERR] Error creating table {table_name}: {e}')
         cursor.close()
     
     def _convert_datetime_to_string(self, row: Dict[str, Any]) -> Dict[str, Any]:
@@ -377,11 +377,10 @@ class MySQLDatabase:
                 rows[i] = self._convert_datetime_to_string(row)
             return rows
         except Exception as e:
-            print(f'❌ 读取表 {table_name} 时出错: {e}')
+            print(f'[ERR] Error reading table {table_name}: {e}')
             return []
     
     def write_table(self, table_name: str, data: List[Dict[str, Any]]):
-        # MySQL通过insert方法直接操作，不需要write_table
         pass
     
     def insert(self, table_name: str, data: Dict[str, Any]) -> int:
@@ -390,13 +389,11 @@ class MySQLDatabase:
             return 0
         
         try:
-            # 准备插入数据
             if 'created_at' not in data:
                 data['created_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             if 'updated_at' not in data:
                 data['updated_at'] = data['created_at']
             
-            # 构建SQL语句
             columns = list(data.keys())
             values = list(data.values())
             placeholders = ','.join(['%s'] * len(values))
@@ -406,13 +403,12 @@ class MySQLDatabase:
             cursor = conn.cursor()
             cursor.execute(sql, values)
             conn.commit()
-            # 获取自增ID
             new_id = cursor.lastrowid
             cursor.close()
-            print(f'✅ 成功插入 {table_name} 记录，ID: {new_id}')
+            print(f'[OK] Inserted {table_name} record, ID: {new_id}')
             return new_id
         except Exception as e:
-            print(f'❌ 插入 {table_name} 记录时出错: {e}')
+            print(f'[ERR] Error inserting {table_name} record: {e}')
             return 0
     
     def update(self, table_name: str, record_id: int, data: Dict[str, Any]) -> bool:
@@ -421,11 +417,9 @@ class MySQLDatabase:
             return False
         
         try:
-            # 确保updated_at字段
             if 'updated_at' not in data:
                 data['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             
-            # 构建SQL语句
             set_clause = ','.join([f"{key}=%s" for key in data.keys()])
             values = list(data.values())
             values.append(record_id)
@@ -436,15 +430,15 @@ class MySQLDatabase:
             cursor.execute(sql, values)
             conn.commit()
             if cursor.rowcount > 0:
-                print(f'✅ 成功更新 {table_name} 记录，ID: {record_id}')
+                print(f'[OK] Updated {table_name} record, ID: {record_id}')
                 cursor.close()
                 return True
             else:
-                print(f'❌ 未找到 {table_name} 记录，ID: {record_id}')
+                print(f'[ERR] {table_name} record not found, ID: {record_id}')
                 cursor.close()
                 return False
         except Exception as e:
-            print(f'❌ 更新 {table_name} 记录时出错: {e}')
+            print(f'[ERR] Error updating {table_name} record: {e}')
             return False
     
     def delete(self, table_name: str, record_id: int) -> bool:
@@ -459,15 +453,15 @@ class MySQLDatabase:
             cursor.execute(sql, (record_id,))
             conn.commit()
             if cursor.rowcount > 0:
-                print(f'✅ 成功删除 {table_name} 记录，ID: {record_id}')
+                print(f'[OK] Deleted {table_name} record, ID: {record_id}')
                 cursor.close()
                 return True
             else:
-                print(f'❌ 未找到 {table_name} 记录，ID: {record_id}')
+                print(f'[ERR] {table_name} record not found, ID: {record_id}')
                 cursor.close()
                 return False
         except Exception as e:
-            print(f'❌ 删除 {table_name} 记录时出错: {e}')
+            print(f'[ERR] Error deleting {table_name} record: {e}')
             return False
     
     def find_by_id(self, table_name: str, record_id: int) -> Optional[Dict[str, Any]]:
@@ -482,15 +476,15 @@ class MySQLDatabase:
             cursor.execute(sql, (record_id,))
             row = cursor.fetchone()
             if row:
-                print(f'✅ 找到 {table_name} 记录，ID: {record_id}')
+                print(f'[OK] Found {table_name} record, ID: {record_id}')
                 cursor.close()
                 return self._convert_datetime_to_string(row)
             else:
-                print(f'❌ 未找到 {table_name} 记录，ID: {record_id}')
+                print(f'[ERR] {table_name} record not found, ID: {record_id}')
                 cursor.close()
                 return None
         except Exception as e:
-            print(f'❌ 查找 {table_name} 记录时出错: {e}')
+            print(f'[ERR] Error finding {table_name} record: {e}')
             return None
     
     def find_by_field(self, table_name: str, field_name: str, field_value: Any) -> List[Dict[str, Any]]:
@@ -499,7 +493,6 @@ class MySQLDatabase:
             return []
         
         try:
-            # 构建SQL语句，使用精确匹配
             sql = f"SELECT * FROM {table_name} WHERE {field_name} = %s"
             
             cursor = conn.cursor(dictionary=True)
@@ -508,10 +501,10 @@ class MySQLDatabase:
             cursor.close()
             for i, row in enumerate(rows):
                 rows[i] = self._convert_datetime_to_string(row)
-            print(f'✅ 找到 {len(rows)} 条 {table_name} 记录，字段: {field_name}, 值: {field_value}')
+            print(f'[OK] Found {len(rows)} {table_name} records, field: {field_name}, value: {field_value}')
             return rows
         except Exception as e:
-            print(f'❌ 查找 {table_name} 记录时出错: {e}')
+            print(f'[ERR] Error finding {table_name} records: {e}')
             return []
     
     def find_all(self, table_name: str, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
@@ -536,7 +529,7 @@ class MySQLDatabase:
                 rows[i] = self._convert_datetime_to_string(row)
             return rows
         except Exception as e:
-            print(f'❌ 查找 {table_name} 记录时出错: {e}')
+            print(f'[ERR] Error finding {table_name} records: {e}')
             return []
     
     def count(self, table_name: str, filters: Optional[Dict[str, Any]] = None) -> int:
@@ -559,11 +552,10 @@ class MySQLDatabase:
             cursor.close()
             return count
         except Exception as e:
-            print(f'❌ 统计 {table_name} 记录时出错: {e}')
+            print(f'[ERR] Error counting {table_name} records: {e}')
             return 0
     
     def find_by_ids(self, table_name: str, ids: List[int]) -> List[Dict[str, Any]]:
-        """批量查询：根据多个ID获取记录"""
         if not ids:
             return []
         
@@ -583,11 +575,10 @@ class MySQLDatabase:
                 rows[i] = self._convert_datetime_to_string(row)
             return rows
         except Exception as e:
-            print(f'❌ 批量查询 {table_name} 记录时出错: {e}')
+            print(f'[ERR] Error batch querying {table_name} records: {e}')
             return []
     
     def batch_insert(self, table_name: str, data_list: List[Dict[str, Any]]) -> int:
-        """批量插入记录"""
         if not data_list:
             return 0
         
@@ -609,8 +600,8 @@ class MySQLDatabase:
             conn.commit()
             inserted_count = cursor.rowcount
             cursor.close()
-            print(f'✅ 批量插入 {table_name} 记录: {inserted_count} 条')
+            print(f'[OK] Batch inserted {table_name} records: {inserted_count}')
             return inserted_count
         except Exception as e:
-            print(f'❌ 批量插入 {table_name} 记录时出错: {e}')
+            print(f'[ERR] Error batch inserting {table_name} records: {e}')
             return 0

@@ -821,7 +821,7 @@ def handle_caigpt_chat(model_info, question, problem_id, conversation_type, has_
     try:
         ollama_url = "http://localhost:11434/api/chat"
         payload = {
-            "model": "qwen2.5-coder:3b",
+            "model": "qwen3-coder:30b",
             "messages": messages,
             "stream": False
         }
