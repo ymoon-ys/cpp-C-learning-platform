@@ -1,12 +1,13 @@
 # Stage 1: 前端构建
 FROM node:18-alpine AS frontend-builder
 
-WORKDIR /app/static
+WORKDIR /app
 
 COPY package.json package-lock.json* ./
 RUN npm ci
 
-COPY static/src/ ./src/
+COPY static/src/ ./static/src/
+COPY vite.config.js ./
 RUN npm run build
 
 # Stage 2: Python运行环境
