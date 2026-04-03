@@ -1,4 +1,4 @@
-﻿/* 鍏ㄥ眬鏍峰紡閲嶇疆 */
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿/* 鍏ㄥ眬鏍峰紡閲嶇疆 */
 * {
     margin: 0;
     padding: 0;
@@ -141,7 +141,6 @@ body {
 
 .sidebar-nav li.active a {
     background-color: #7b1fa2;
-    border-left: 4px solid #ecf0f1;
 }
 
 /* 涓诲唴瀹瑰尯 */

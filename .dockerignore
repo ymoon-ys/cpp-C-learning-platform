@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build output
+static/dist/
+dist/
+
+# Source files (built in Stage 1)
+static/src/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation & Config
+*.md
+.trae/
+.git/
+
+# Logs
+*.log
+npm-debug.log*

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
 from datetime import datetime
-from app.utils import get_greeting, get_week_day_chinese, get_learning_days
+from app.utils import get_greeting, get_week_day_chinese, get_learning_days, get_consecutive_learning_days
 
 student_bp = Blueprint('student', __name__, url_prefix='/student')
 
@@ -22,7 +22,7 @@ def dashboard():
         'greeting': get_greeting(),
         'week_day': get_week_day_chinese(),
         'learning_days': get_learning_days(current_user),
-        'consecutive_days': 8,
+        'consecutive_days': get_consecutive_learning_days(current_user),
         'registration_time': current_user.created_at if hasattr(current_user, 'created_at') else '2024-03-01',
         'last_login': current_user.updated_at if hasattr(current_user, 'updated_at') else '2024-03-15 14:30'
     }
@@ -247,19 +247,106 @@ def create_review(course_id):
     flash('评价提交成功', 'success')
     return redirect(url_for('student.course_detail', course_id=course_id))
 
-@student_bp.route('/settings')
+@student_bp.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
+    from werkzeug.security import check_password_hash, generate_password_hash
+    from app.models import User
+    from werkzeug.utils import secure_filename
+    import os
+
+    if request.method == 'POST':
+        db = current_app.db
+        ALLOWED_AVATAR_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+        nickname = request.form.get('nickname')
+        email = request.form.get('email')
+        bio = request.form.get('bio')
+        avatar = request.files.get('avatar')
+
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        update_data = {
+            'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+        if nickname is not None:
+            update_data['nickname'] = nickname
+        if email is not None:
+            update_data['email'] = email
+        if bio is not None:
+            update_data['bio'] = bio
+
+        if avatar and avatar.filename:
+            filename = secure_filename(avatar.filename)
+            if not filename:
+                flash('文件名包含非法字符', 'error')
+                return redirect(url_for('student.settings'))
+
+            file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+            if file_ext not in ALLOWED_AVATAR_EXTENSIONS:
+                flash('不支持的文件类型，仅支持 PNG、JPG、GIF、WEBP 格式', 'error')
+                return redirect(url_for('student.settings'))
+
+            filename = f"avatar_{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+            upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'avatars')
+            os.makedirs(upload_path, exist_ok=True)
+            avatar.save(os.path.join(upload_path, filename))
+            update_data['avatar'] = f"/uploads/avatars/{filename}"
+
+        user_id = current_user.id
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            flash('用户ID无效', 'error')
+            return redirect(url_for('student.settings'))
+
+        success = db.update('users', user_id, update_data)
+
+        if success:
+            updated_user = User.get_by_id(user_id)
+            if updated_user:
+                from flask_login import login_user
+                login_user(updated_user, remember=True)
+
+        if new_password:
+            if not current_password:
+                flash('修改密码需要输入当前密码', 'error')
+            elif new_password != confirm_password:
+                flash('两次输入的密码不一致', 'error')
+            elif len(new_password) < 6:
+                flash('密码长度至少为6位', 'error')
+            else:
+                user_data = db.find_by_id('users', current_user.id)
+                if user_data and check_password_hash(user_data['password_hash'], current_password):
+                    db.update('users', current_user.id, {
+                        'password_hash': generate_password_hash(new_password),
+                        'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    })
+                    flash('设置保存成功，密码已更新，请重新登录', 'success')
+                    return redirect(url_for('auth.logout'))
+                else:
+                    flash('当前密码错误，其他设置已保存', 'warning')
+
+        if success:
+            flash('设置保存成功', 'success')
+        else:
+            flash('设置保存失败', 'error')
+
+        return redirect(url_for('student.settings'))
+
     context = {
         'greeting': get_greeting(),
         'week_day': get_week_day_chinese(),
-        'consecutive_days': 8,
+        'consecutive_days': get_consecutive_learning_days(current_user),
         'registration_time': current_user.created_at if hasattr(current_user, 'created_at') else '2024-03-01',
         'last_login': current_user.updated_at if hasattr(current_user, 'updated_at') else '2024-03-15 14:30',
         'learning_days': get_learning_days(current_user),
         'today_date': datetime.now().strftime('%Y-%m-%d')
     }
-    
+
     return render_template('student/settings.html', **context)
 
 @student_bp.route('/settings/profile', methods=['POST'])
@@ -420,7 +507,7 @@ def practice():
         'search': search,
         'greeting': get_greeting(),
         'week_day': get_week_day_chinese(),
-        'consecutive_days': 8,
+        'consecutive_days': get_consecutive_learning_days(current_user),
         'assignments': assignments,
         'get_difficulty_label': get_difficulty_label,
         'get_difficulty_icon': get_difficulty_icon
@@ -449,7 +536,7 @@ def problem_detail(problem_id):
         'submissions': problem_submissions,
         'greeting': get_greeting(),
         'week_day': get_week_day_chinese(),
-        'consecutive_days': 8,
+        'consecutive_days': get_consecutive_learning_days(current_user),
         'questions': []
     }
     
@@ -513,7 +600,175 @@ def submissions():
         'submissions': submissions,
         'greeting': get_greeting(),
         'week_day': get_week_day_chinese(),
-        'consecutive_days': 8
+        'consecutive_days': get_consecutive_learning_days(current_user)
     }
     
     return render_template('student/submissions.html', **context)
+
+@student_bp.route('/lessons/<int:lesson_id>/discussions/api')
+@login_required
+def get_lesson_discussions(lesson_id):
+    from flask import jsonify
+    from flask import current_app
+    db = current_app.db
+
+    discussions = db.find_all('discussions', {'lesson_id': lesson_id})
+    discussions.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+
+    result = []
+    for disc in discussions:
+        user = db.find_by_id('users', disc['user_id'])
+        result.append({
+            'id': disc['id'],
+            'title': disc.get('title', ''),
+            'content': disc.get('content', ''),
+            'user_name': user.get('username', '未知用户') if user else '未知用户',
+            'created_at': disc.get('created_at', ''),
+            'user_id': disc.get('user_id')
+        })
+
+    return jsonify({'success': True, 'discussions': result})
+
+@student_bp.route('/lessons/<int:lesson_id>/discussions/api/create', methods=['POST'])
+@login_required
+def create_lesson_discussion_api(lesson_id):
+    from flask import jsonify
+    from flask import current_app
+    db = current_app.db
+
+    title = request.form.get('title', '')
+    content = request.form.get('content', '')
+
+    if not title or not content:
+        return jsonify({'success': False, 'error': '标题和内容不能为空'}), 400
+
+    discussion_data = {
+        'lesson_id': lesson_id,
+        'user_id': current_user.id,
+        'title': title,
+        'content': content
+    }
+
+    discussion_id = db.insert('discussions', discussion_data)
+
+    return jsonify({
+        'success': True,
+        'discussion': {
+            'id': discussion_id,
+            'title': title,
+            'content': content,
+            'user_name': current_user.username,
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'user_id': current_user.id
+        }
+    })
+
+@student_bp.route('/lessons/<int:lesson_id>/notes/api')
+@login_required
+def get_lesson_notes(lesson_id):
+    from flask import jsonify
+    from flask import current_app
+    db = current_app.db
+
+    notes = db.find_all('lesson_notes', {'lesson_id': lesson_id, 'user_id': current_user.id})
+
+    if notes:
+        return jsonify({'success': True, 'notes': notes[0]})
+    else:
+        return jsonify({'success': True, 'notes': None})
+
+@student_bp.route('/lessons/<int:lesson_id>/notes/api/save', methods=['POST'])
+@login_required
+def save_lesson_note(lesson_id):
+    from flask import jsonify
+    from flask import current_app
+    db = current_app.db
+
+    content = request.form.get('content', '')
+
+    existing_notes = db.find_all('lesson_notes', {'lesson_id': lesson_id, 'user_id': current_user.id})
+
+    if existing_notes:
+        success = db.update('lesson_notes', existing_notes[0]['id'], {'content': content, 'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
+    else:
+        note_id = db.insert('lesson_notes', {
+            'lesson_id': lesson_id,
+            'user_id': current_user.id,
+            'content': content,
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
+        success = note_id > 0
+
+    return jsonify({'success': success})
+
+@student_bp.route('/lessons/<int:lesson_id>/bookmarks/api')
+@login_required
+def get_lesson_bookmarks(lesson_id):
+    from flask import jsonify
+    from flask import current_app
+    db = current_app.db
+
+    bookmarks = db.find_all('lesson_bookmarks', {'lesson_id': lesson_id, 'user_id': current_user.id})
+    bookmarks.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+
+    result = []
+    for bm in bookmarks:
+        result.append({
+            'id': bm['id'],
+            'content': bm.get('content', ''),
+            'position': bm.get('position', 0),
+            'color': bm.get('color', '#667eea'),
+            'created_at': bm.get('created_at', '')
+        })
+
+    return jsonify({'success': True, 'bookmarks': result})
+
+@student_bp.route('/lessons/<int:lesson_id>/bookmarks/api/create', methods=['POST'])
+@login_required
+def create_lesson_bookmark(lesson_id):
+    from flask import jsonify
+    from flask import current_app
+    db = current_app.db
+
+    content = request.form.get('content', '')
+    position = request.form.get('position', 0)
+    color = request.form.get('color', '#667eea')
+
+    if not content:
+        return jsonify({'success': False, 'error': '标注内容不能为空'}), 400
+
+    bookmark_id = db.insert('lesson_bookmarks', {
+        'lesson_id': lesson_id,
+        'user_id': current_user.id,
+        'content': content,
+        'position': position,
+        'color': color,
+        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    })
+
+    return jsonify({
+        'success': True,
+        'bookmark': {
+            'id': bookmark_id,
+            'content': content,
+            'position': position,
+            'color': color,
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+    })
+
+@student_bp.route('/bookmarks/<int:bookmark_id>/api/delete', methods=['POST'])
+@login_required
+def delete_bookmark(bookmark_id):
+    from flask import jsonify
+    from flask import current_app
+    db = current_app.db
+
+    bookmark = db.find_by_id('lesson_bookmarks', bookmark_id)
+
+    if not bookmark or int(bookmark['user_id']) != current_user.id:
+        return jsonify({'success': False, 'error': '无权删除此标注'}), 403
+
+    success = db.delete('lesson_bookmarks', bookmark_id)
+
+    return jsonify({'success': success})

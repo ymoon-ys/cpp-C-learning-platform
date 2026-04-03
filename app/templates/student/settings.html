@@ -1,238 +1,283 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>设置 - C++学习平台</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <header class="header">
-        <div class="header-left">
-            <h1>C++学习平台</h1>
-        </div>
-        <div class="header-right">
-            <div class="greeting">
-                <p>{{ greeting }}，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
-                <p class="sub-greeting">今天也要坚持学习，上次登录：{{ week_day }}</p>
-            </div>
-            <div class="user-icon">
-                {% if current_user.avatar %}
-                <img src="{{ current_user.avatar }}" alt="用户头像">
-                {% else %}
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
-                {% endif %}
-                <span class="notification">1</span>
-            </div>
-        </div>
-    </header>
+{% extends "base.html" %}
 
-    <div class="container">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="learning-stats">
-                    <p class="days">已连续学习</p>
-                    <p class="number">{{ consecutive_days }}天</p>
-                    <p class="streak">继续加油</p>
-                </div>
-            </div>
-            <nav class="sidebar-nav">
-                <ul>
-                    <li><a href="{{ url_for('student.dashboard') }}">我的课程</a></li>
-                    <li><a href="{{ url_for('student.practice') }}">练习</a></li>
-                    <li><a href="{{ url_for('ai_assistant.index') }}">AI助手</a></li>
-                    <li><a href="{{ url_for('community.community_page') }}">社区</a></li>
-                    <li class="active"><a href="{{ url_for('student.settings') }}">设置</a></li>
-                    <li><a href="{{ url_for('auth.logout') }}">退出登录</a></li>
-                </ul>
-            </nav>
-        </aside>
+{% block title %}设置 - C++学习平台{% endblock %}
 
-        <main class="main-content settings-content">
-            <div class="settings-container">
-                <div class="settings-header">
-                    <h2>账户设置</h2>
-                    <p>管理您的账户信息和安全设置</p>
-                </div>
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .settings-layout {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 20px;
+    }
+    
+    .settings-sidebar {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        height: fit-content;
+    }
+    
+    .settings-menu {
+        list-style: none;
+    }
+    
+    .settings-menu li {
+        margin-bottom: 5px;
+    }
+    
+    .settings-menu a {
+        display: block;
+        padding: 12px 15px;
+        color: #7f8c8d;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.3s;
+        font-size: 14px;
+    }
+    
+    .settings-menu a:hover {
+        background: #f8f9fa;
+        color: #667eea;
+    }
+    
+    .settings-menu li.active a {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .settings-content {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .settings-section {
+        margin-bottom: 30px;
+    }
+    
+    .settings-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .settings-section h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s;
+        font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    
+    .avatar-upload {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .avatar-preview {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #e0e0e0;
+    }
+    
+    .upload-btn {
+        padding: 10px 20px;
+        background: #f8f9fa;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 14px;
+    }
+    
+    .upload-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .checkbox-group input {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+    
+    .checkbox-group label {
+        margin: 0;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
 
-                <div class="settings-layout">
-                    <div class="left-section">
-                        <div class="settings-header-section">
-                            <h3>设置选项</h3>
-                        </div>
-                        <div class="settings-tabs">
-                            <button class="tab-btn active" data-tab="profile">基本资料</button>
-                            <button class="tab-btn" data-tab="security">账户安全</button>
-                            <button class="tab-btn" data-tab="privacy">账户注销</button>
-                        </div>
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">账户设置</h1>
+</div>
 
-                        <div class="tab-content active" id="profile">
-                            <form class="profile-form" id="profileForm" action="{{ url_for('student.update_profile') }}" method="POST" enctype="multipart/form-data">
-                                <div class="avatar-section">
-                                    <div class="current-avatar">
-                                        {% if current_user.avatar %}
-                                        <img src="{{ current_user.avatar }}" alt="当前头像">
-                                        {% else %}
-                                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=minimalist%20user%20avatar%20icon%20with%20white%20background%20simple%20clean&image_size=square" alt="当前头像">
-                                        {% endif %}
-                                    </div>
-                                    <div class="upload-options">
-                                        <input type="file" id="avatar" name="avatar" accept="image/*">
-                                        <label for="avatar">更换头像</label>
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="nickname">昵称</label>
-                                    <input type="text" id="nickname" name="nickname" placeholder="请输入昵称" value="{{ current_user.nickname if current_user.nickname else current_user.username }}">
-                                </div>
-
-                                <div class="form-actions">
-                                    <button type="submit" class="save-btn">保存修改</button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div class="tab-content" id="security">
-                            <form class="security-form" id="securityForm" action="{{ url_for('student.update_password') }}" method="POST">
-                                <div class="form-group">
-                                    <label for="currentPassword">当前密码</label>
-                                    <input type="password" id="currentPassword" name="currentPassword" placeholder="请输入当前密码">
-                                </div>
-                                <div class="form-group">
-                                    <label for="newPassword">新密码</label>
-                                    <input type="password" id="newPassword" name="newPassword" placeholder="请输入新密码">
-                                </div>
-                                <div class="form-group">
-                                    <label for="confirmPassword">确认密码</label>
-                                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="请再次输入新密码">
-                                </div>
-                                <div class="form-actions">
-                                    <button type="submit" class="save-btn">修改密码</button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div class="tab-content" id="privacy">
-                            <div class="privacy-settings">
-                                <div class="warning-text">
-                                    <p>警告：注销账户是不可逆操作，您的所有数据将被永久删除。</p>
-                                </div>
-                                <div class="account-actions">
-                                    <form action="{{ url_for('student.delete_account') }}" method="POST" id="deleteAccountForm">
-                                        <button type="button" class="delete-account-btn" id="deleteAccountBtn">注销账户</button>
-                                    </form>
-                                </div>
-                            </div>
+<div class="settings-layout">
+    <aside class="settings-sidebar">
+        <ul class="settings-menu">
+            <li class="active"><a href="#profile"><i class="fas fa-user"></i> 个人资料</a></li>
+            <li><a href="#security"><i class="fas fa-lock"></i> 安全设置</a></li>
+            <li><a href="#notifications"><i class="fas fa-bell"></i> 通知设置</a></li>
+            <li><a href="#preferences"><i class="fas fa-cog"></i> 偏好设置</a></li>
+        </ul>
+    </aside>
+    
+    <div class="settings-content">
+        <form method="POST" action="{{ url_for('student.settings') }}" enctype="multipart/form-data">
+            <div class="settings-section" id="profile">
+                <h2><i class="fas fa-user"></i> 个人资料</h2>
+                
+                <div class="form-group">
+                    <label>头像</label>
+                    <div class="avatar-upload">
+                        <img src="{{ current_user.avatar if current_user.avatar else 'https://via.placeholder.com/100' }}" 
+                             alt="用户头像" class="avatar-preview">
+                        <div>
+                            <input type="file" id="avatar" name="avatar" accept="image/*" style="display: none;">
+                            <button type="button" class="upload-btn" onclick="document.getElementById('avatar').click()">
+                                <i class="fas fa-upload"></i> 上传头像
+                            </button>
+                            <p style="font-size: 12px; color: #95a5a6; margin-top: 5px;">支持 JPG、PNG 格式，大小不超过 2MB</p>
                         </div>
                     </div>
-
-                    <div class="right-section">
-                        <div class="account-info-header">
-                            <h3>账户信息</h3>
-                        </div>
-                        <div class="account-info-section">
-                            <div class="info-card">
-                                <div class="info-item">
-                                    <span class="info-label">用户角色：</span>
-                                    <span class="info-value">学生</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">注册时间：</span>
-                                    <span class="info-value">{{ registration_time }}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">上次登录：</span>
-                                    <span class="info-value">{{ last_login }}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">学习天数：</span>
-                                    <span class="info-value">{{ learning_days }}天</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="help-header">
-                            <h3>帮助与支持</h3>
-                        </div>
-                        <div class="help-section">
-                            <div class="help-card">
-                                <div class="help-item">
-                                    <h4>忘记密码？</h4>
-                                    <p>如果您忘记了密码，请联系管理员重置。</p>
-                                </div>
-                                <div class="help-item">
-                                    <h4>账户问题？</h4>
-                                    <p>如有任何账户相关问题，请发送邮件至 support@cpplearning.com</p>
-                                </div>
-                            </div>
-                        </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="username">用户名</label>
+                        <input type="text" id="username" name="username" value="{{ current_user.username }}" disabled>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nickname">昵称</label>
+                        <input type="text" id="nickname" name="nickname" value="{{ current_user.nickname or '' }}" placeholder="请输入昵称">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">邮箱</label>
+                    <input type="email" id="email" name="email" value="{{ current_user.email }}" placeholder="请输入邮箱">
+                </div>
+                
+                <div class="form-group">
+                    <label for="bio">个人简介</label>
+                    <textarea id="bio" name="bio" rows="4" placeholder="介绍一下自己吧...">{{ current_user.bio or '' }}</textarea>
+                </div>
+            </div>
+            
+            <div class="settings-section" id="security">
+                <h2><i class="fas fa-lock"></i> 安全设置</h2>
+                
+                <div class="form-group">
+                    <label for="current_password">当前密码</label>
+                    <input type="password" id="current_password" name="current_password" placeholder="请输入当前密码">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new_password">新密码</label>
+                        <input type="password" id="new_password" name="new_password" placeholder="请输入新密码">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirm_password">确认新密码</label>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="请再次输入新密码">
                     </div>
                 </div>
             </div>
-        </main>
+            
+            <div class="settings-section" id="notifications">
+                <h2><i class="fas fa-bell"></i> 通知设置</h2>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="email_notifications" name="email_notifications" checked>
+                        <label for="email_notifications">接收邮件通知</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="course_updates" name="course_updates" checked>
+                        <label for="course_updates">课程更新提醒</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="assignment_reminders" name="assignment_reminders" checked>
+                        <label for="assignment_reminders">作业截止提醒</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 15px; margin-top: 30px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> 保存更改
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.reload()">
+                    <i class="fas fa-undo"></i> 重置
+                </button>
+            </div>
+        </form>
     </div>
-
-    <div class="modal" id="deleteModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>确认注销</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>您确定要注销您的账户吗？此操作不可恢复，所有数据将被删除。</p>
-            </div>
-            <div class="modal-footer">
-                <button id="cancelDelete">取消</button>
-                <button id="confirmDelete">确认注销</button>
-            </div>
-        </div>
-    </div>
-
-
-    <script src="/static/script.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const deleteAccountBtn = document.getElementById('deleteAccountBtn');
-            const deleteModal = document.getElementById('deleteModal');
-            const closeModal = document.querySelector('.close-modal');
-            const cancelDelete = document.getElementById('cancelDelete');
-            const confirmDelete = document.getElementById('confirmDelete');
-            const deleteAccountForm = document.getElementById('deleteAccountForm');
-            
-            if (deleteAccountBtn) {
-                deleteAccountBtn.addEventListener('click', function() {
-                    deleteModal.style.display = 'block';
-                });
-            }
-            
-            if (closeModal) {
-                closeModal.addEventListener('click', function() {
-                    deleteModal.style.display = 'none';
-                });
-            }
-            
-            if (cancelDelete) {
-                cancelDelete.addEventListener('click', function() {
-                    deleteModal.style.display = 'none';
-                });
-            }
-            
-            if (confirmDelete) {
-                confirmDelete.addEventListener('click', function() {
-                    if (deleteAccountForm) {
-                        deleteAccountForm.submit();
-                    }
-                });
-            }
-            
-            window.addEventListener('click', function(e) {
-                if (e.target === deleteModal) {
-                    deleteModal.style.display = 'none';
-                }
-            });
-        });
-    </script>
-
-</body>
-</html>
+</div>
+{% endblock %}

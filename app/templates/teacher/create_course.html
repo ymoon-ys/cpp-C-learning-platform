@@ -1,83 +1,522 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>创建课程 - C++学习平台</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <!-- 顶部导航栏 -->
-    <header class="header">
-        <div class="header-left">
-            <h1>C++学习平台</h1>
-        </div>
-        <div class="header-right">
-            <div class="greeting">
-                <p>上午好，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
-                <p class="sub-greeting">教师后台</p>
-            </div>
-            <div class="user-icon">
-                {% if current_user.avatar %}
-                <img src="{{ current_user.avatar }}" alt="用户头像">
-                {% else %}
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
-                {% endif %}
-            </div>
-        </div>
-    </header>
+{% extends "base.html" %}
 
-    <div class="container">
-        <!-- 左侧边栏 -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="learning-stats">
-                    <p class="days">教师</p>
-                    <p class="number">后台</p>
-                </div>
-            </div>
-            <nav class="sidebar-nav">
-                <ul>
-                    <li><a href="/teacher/dashboard">仪表盘</a></li>
-                    <li class="active"><a href="/teacher/courses/create">创建课程</a></li>
-                    <li><a href="/teacher/add-exercise">添加练习</a></li>
-                    <li><a href="/community">社区管理</a></li>
-                    <li><a href="/teacher/settings">设置</a></li>
-                    <li><a href="/logout">退出登录</a></li>
-                </ul>
-            </nav>
-        </aside>
+{% block title %}创建课程 - C++学习平台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .form-layout {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 30px;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .preview-card {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        height: fit-content;
+        position: sticky;
+        top: 30px;
+    }
+    
+    .form-section {
+        margin-bottom: 35px;
+    }
+    
+    .form-section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .form-section-title i {
+        color: #667eea;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 15px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 15px;
+        transition: all 0.3s;
+        font-family: inherit;
+        background: #fafafa;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+    
+    .form-group textarea {
+        resize: vertical;
+        min-height: 150px;
+        line-height: 1.6;
+    }
+    
+    .form-group input[type="file"] {
+        padding: 10px;
+        cursor: pointer;
+    }
+    
+    .form-text {
+        font-size: 13px;
+        color: #95a5a6;
+        margin-top: 8px;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 2px solid #f0f0f0;
+        justify-content: flex-end;
+    }
+    
+    .cover-preview {
+        margin-top: 15px;
+        max-width: 300px;
+        border-radius: 10px;
+        overflow: hidden;
+        display: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .cover-preview img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+    
+    .preview-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .preview-cover {
+        width: 100%;
+        height: 180px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    
+    .preview-cover i {
+        font-size: 48px;
+        color: white;
+        opacity: 0.6;
+    }
+    
+    .preview-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .preview-info {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+    }
+    
+    .preview-info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .preview-info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .preview-info-label {
+        font-size: 13px;
+        color: #7f8c8d;
+        font-weight: 500;
+    }
+    
+    .preview-info-value {
+        font-size: 14px;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .difficulty-options {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .difficulty-option {
+        flex: 1;
+        min-width: 100px;
+        padding: 12px 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        background: #fafafa;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #7f8c8d;
+    }
+    
+    .difficulty-option:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+        color: #667eea;
+    }
+    
+    .difficulty-option.selected {
+        border-color: #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .tips-box {
+        background: linear-gradient(135deg, #fff9e6 0%, #fff5cc 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-left: 4px solid #fd9644;
+    }
+    
+    .tips-box h4 {
+        font-size: 14px;
+        font-weight: 700;
+        color: #fd9644;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .tips-box ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .tips-box li {
+        font-size: 13px;
+        color: #7f8c8d;
+        padding: 5px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .tips-box li::before {
+        content: '•';
+        color: #fd9644;
+        font-weight: bold;
+    }
+    
+    @media (max-width: 1200px) {
+        .form-layout {
+            grid-template-columns: 1fr;
+        }
         
-        <!-- 主内容区 -->
-        <main class="main-content">
-            <div class="section-header">
-                <h2>创建课程</h2>
-            </div>
-            
-            <!-- 创建课程表单 -->
-            <div class="create-course-form">
-                <form action="{{ url_for('teacher.create_course') }}" method="POST" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label>课程标题</label>
-                        <input type="text" class="form-control" name="title" required>
-                    </div>
-                    <div class="form-group">
-                        <label>课程描述</label>
-                        <textarea class="form-control" name="description" rows="4" required></textarea>
-                    </div>
+        .preview-card {
+            position: static;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .form-card,
+        .preview-card {
+            padding: 25px;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
 
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">创建新课程</h1>
+</div>
+
+<div class="form-layout">
+    <div>
+        <div class="tips-box">
+            <h4><i class="fas fa-lightbulb"></i> 创建课程小贴士</h4>
+            <ul>
+                <li>清晰的课程标题能帮助学生快速理解课程内容</li>
+                <li>详细的课程描述能吸引更多学生报名</li>
+                <li>精美的封面图片能提升课程的吸引力</li>
+                <li>合理设置课程难度，让更多学生能够接受</li>
+            </ul>
+        </div>
+        
+        <div class="form-card">
+            <form action="{{ url_for('teacher.create_course') }}" method="POST" enctype="multipart/form-data" id="createCourseForm">
+                <div class="form-section">
+                    <h2 class="form-section-title">
+                        <i class="fas fa-info-circle"></i>
+                        基本信息
+                    </h2>
+                    
                     <div class="form-group">
-                        <label>课程封面</label>
-                        <input type="file" class="form-control" name="cover_image" accept="image/*">
-                        <div class="form-text">支持 JPG、PNG、GIF 格式</div>
+                        <label for="title">课程标题 <span style="color: #e74c3c;">*</span></label>
+                        <input type="text" id="title" name="title" placeholder="请输入课程标题" required oninput="updatePreview()">
                     </div>
-                    <div class="form-actions">
-                        <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary">返回</a>
-                        <button type="submit" class="btn btn-primary">创建课程</button>
+                    
+                    <div class="form-group">
+                        <label for="description">课程描述 <span style="color: #e74c3c;">*</span></label>
+                        <textarea id="description" name="description" rows="5" placeholder="请详细描述您的课程内容、学习目标和适合人群..." required oninput="updatePreview()"></textarea>
                     </div>
-                </form>
-            </div>
-        </main>
+                </div>
+                
+                <div class="form-section">
+                    <h2 class="form-section-title">
+                        <i class="fas fa-sliders-h"></i>
+                        课程设置
+                    </h2>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="category">课程分类 <span style="color: #e74c3c;">*</span></label>
+                            <select id="category" name="category" required onchange="updatePreview()">
+                                <option value="">请选择分类</option>
+                                <option value="C语言基础">C语言基础</option>
+                                <option value="C++进阶">C++进阶</option>
+                                <option value="数据结构">数据结构</option>
+                                <option value="算法设计">算法设计</option>
+                                <option value="游戏开发">游戏开发</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="duration">预计学时</label>
+                            <input type="text" id="duration" name="duration" placeholder="例如：12小时" oninput="updatePreview()">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>课程难度 <span style="color: #e74c3c;">*</span></label>
+                        <div class="difficulty-options">
+                            <div class="difficulty-option" data-difficulty="beginner" onclick="selectDifficulty(this)">
+                                <i class="fas fa-seedling"></i>
+                                <div>入门级</div>
+                            </div>
+                            <div class="difficulty-option" data-difficulty="intermediate" onclick="selectDifficulty(this)">
+                                <i class="fas fa-chart-line"></i>
+                                <div>中级</div>
+                            </div>
+                            <div class="difficulty-option" data-difficulty="advanced" onclick="selectDifficulty(this)">
+                                <i class="fas fa-rocket"></i>
+                                <div>高级</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="difficulty" name="difficulty" value="">
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h2 class="form-section-title">
+                        <i class="fas fa-image"></i>
+                        课程封面
+                    </h2>
+                    
+                    <div class="form-group">
+                        <label for="cover_image">上传封面图片</label>
+                        <input type="file" id="cover_image" name="cover_image" accept="image/*" onchange="previewCover(event)">
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            支持 JPG、PNG、GIF 格式，建议尺寸 1200x630 像素
+                        </div>
+                        <div class="cover-preview" id="coverPreview">
+                            <img id="previewImage" src="" alt="封面预览">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> 取消
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> 创建课程
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</body>
-</html>
+    
+    <div class="preview-card">
+        <h3 class="preview-title">
+            <i class="fas fa-eye"></i>
+            实时预览
+        </h3>
+        
+        <div class="preview-cover" id="previewCoverBox">
+            <i class="fas fa-book"></i>
+        </div>
+        
+        <div class="preview-info">
+            <div class="preview-info-item">
+                <span class="preview-info-label">课程标题</span>
+                <span class="preview-info-value" id="previewTitle">未设置</span>
+            </div>
+            <div class="preview-info-item">
+                <span class="preview-info-label">课程分类</span>
+                <span class="preview-info-value" id="previewCategory">未设置</span>
+            </div>
+            <div class="preview-info-item">
+                <span class="preview-info-label">预计学时</span>
+                <span class="preview-info-value" id="previewDuration">未设置</span>
+            </div>
+            <div class="preview-info-item">
+                <span class="preview-info-label">课程难度</span>
+                <span class="preview-info-value" id="previewDifficulty">未设置</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedDifficulty = null;
+
+function selectDifficulty(element) {
+    document.querySelectorAll('.difficulty-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    element.classList.add('selected');
+    selectedDifficulty = element.dataset.difficulty;
+    document.getElementById('difficulty').value = selectedDifficulty;
+    
+    const difficultyMap = {
+        'beginner': '入门级',
+        'intermediate': '中级',
+        'advanced': '高级'
+    };
+    document.getElementById('previewDifficulty').textContent = difficultyMap[selectedDifficulty] || '未设置';
+}
+
+function updatePreview() {
+    const title = document.getElementById('title').value;
+    const description = document.getElementById('description').value;
+    const category = document.getElementById('category').value;
+    const duration = document.getElementById('duration').value;
+    
+    document.getElementById('previewTitle').textContent = title || '未设置';
+    document.getElementById('previewCategory').textContent = category || '未设置';
+    document.getElementById('previewDuration').textContent = duration || '未设置';
+}
+
+function previewCover(event) {
+    const preview = document.getElementById('coverPreview');
+    const image = document.getElementById('previewImage');
+    const previewCoverBox = document.getElementById('previewCoverBox');
+    
+    if (event.target.files && event.target.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            image.src = e.target.result;
+            preview.style.display = 'block';
+            
+            previewCoverBox.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            previewCoverBox.appendChild(img);
+        }
+        
+        reader.readAsDataURL(event.target.files[0]);
+    } else {
+        preview.style.display = 'none';
+        previewCoverBox.innerHTML = '<i class="fas fa-book"></i>';
+    }
+}
+
+document.getElementById('createCourseForm').addEventListener('submit', function(e) {
+    if (!document.getElementById('difficulty').value) {
+        e.preventDefault();
+        alert('请选择课程难度');
+    }
+});
+</script>
+{% endblock %}

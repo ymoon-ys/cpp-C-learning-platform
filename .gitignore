@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .env
 .env.production
+.env.mysql
 uploads/
 .trae/
 *.xlsx
@@ -20,3 +21,16 @@ env/
 
 .DS_Store
 Thumbs.db
+
+# Node.js
+node_modules/
+
+# Instance folder (Flask)
+instance/
+
+# Database backups
+*.sql
+!init_database.sql
+
+# Build outputs (keep dist for deployment)
+static/dist/assets/*.map

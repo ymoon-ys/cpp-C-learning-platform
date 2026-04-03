@@ -1,0 +1,376 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ============================================
+// 社区页面 (Community Page)
+// 帖子列表 / 发帖 / 评论交互
+// ============================================
+
+// ------------------------------------------
+// 社区主容器
+// ------------------------------------------
+.community-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+// 社区头部
+.community-header {
+  text-align: center;
+  margin-bottom: 30px;
+
+  h1 {
+    font-size: 32px;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin-bottom: 10px;
+  }
+
+  p {
+    font-size: $font-size-md;
+    color: $text-secondary;
+  }
+}
+
+// ------------------------------------------
+// 发帖区域
+// ------------------------------------------
+.create-post-section {
+  @include card-base;
+  padding: 24px;
+  margin-bottom: 30px;
+}
+
+.create-post-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.create-post-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: $radius-full;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.create-post-input {
+  flex: 1;
+  padding: 14px 20px;
+  border: 2px solid $border-color;
+  border-radius: 24px;
+  font-size: 15px;
+  color: $text-primary;
+  cursor: pointer;
+  transition: all $transition-base;
+  background: $bg-light;
+
+  &:hover {
+    border-color: $primary-color;
+    background: $bg-white;
+  }
+}
+
+.create-post-form {
+  display: none;
+  margin-top: 20px;
+
+  &.active { display: block; }
+}
+
+// 帖子表单字段
+.form-label {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid $border-color;
+  border-radius: $radius-md;
+  font-size: 15px;
+  min-height: 150px;
+  resize: vertical;
+  font-family: inherit;
+  transition: all $transition-base;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+  }
+}
+
+// 发布按钮组
+.btn-cancel {
+  padding: 10px 24px;
+  background: #f0f0f0;
+  color: #666;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  transition: all $transition-base;
+
+  &:hover { background: #e0e0e0; }
+}
+
+.btn-publish {
+  padding: 10px 28px;
+  background: $primary-gradient;
+  color: $text-white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba($primary-color, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+// ------------------------------------------
+// 帖子列表区域
+// ------------------------------------------
+.posts-section {
+  margin-top: 30px;
+}
+
+.posts-header {
+  @include flex-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.posts-title {
+  font-size: 22px;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+}
+
+.sort-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.sort-btn {
+  padding: 8px 16px;
+  background: $bg-white;
+  border: 1px solid $border-color;
+  border-radius: 20px;
+  color: #666;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all $transition-base;
+
+  &.active,
+  &:hover {
+    background: $primary-color;
+    color: $text-white;
+    border-color: $primary-color;
+  }
+}
+
+// ------------------------------------------
+// 帖子卡片
+// ------------------------------------------
+.post-card {
+  @include card-base;
+  padding: 24px;
+  margin-bottom: 20px;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-3px);
+  }
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 16px;
+}
+
+.post-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: $radius-full;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.post-meta {
+  flex: 1;
+}
+
+.post-author {
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+  font-size: 16px;
+}
+
+.post-time {
+  font-size: 13px;
+  color: $text-muted;
+  margin-top: 3px;
+}
+
+.post-title {
+  font-size: 18px;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  @include text-clamp(2);
+}
+
+.post-content {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #555;
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+  @include text-clamp(4);
+}
+
+// 帖子图片网格
+.post-images {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  &.single   { grid-template-columns: 1fr; }
+  &.double   { grid-template-columns: repeat(2, 1fr); }
+  &.multiple { grid-template-columns: repeat(3, 1fr); }
+}
+
+.post-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: $radius-sm;
+}
+
+.post-images.single .post-image {
+  aspect-ratio: 16/9;
+}
+
+// 帖子底部操作栏
+.post-footer {
+  display: flex;
+  gap: 25px;
+  padding-top: 16px;
+  border-top: 1px solid $border-light;
+}
+
+.post-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: $text-muted;
+  font-size: $font-size-sm;
+  cursor: pointer;
+  transition: color $transition-fast;
+  user-select: none;
+
+  &:hover { color: $primary-color; }
+
+  &.liked { color: #ff6b6b; }
+
+  i { font-size: 18px; }
+}
+
+// ------------------------------------------
+// 社区加载状态
+// ------------------------------------------
+.community-loading {
+  text-align: center;
+  padding: 60px;
+  background: $bg-white;
+  border-radius: $radius-lg;
+
+  i {
+    font-size: 40px;
+    color: $primary-color;
+    animation: spin 1s linear infinite;
+  }
+
+  p {
+    margin-top: 15px;
+    color: #999;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+// 加载更多
+.load-more-section {
+  text-align: center;
+  padding: 30px;
+}
+
+.load-more-btn {
+  padding: 12px 36px;
+  background: $bg-white;
+  border: 2px solid $border-color;
+  border-radius: 24px;
+  color: #666;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  transition: all $transition-base;
+
+  &:hover {
+    border-color: $primary-color;
+    color: $primary-color;
+  }
+}
+
+// ============================================
+// 响应式适配
+// ============================================
+
+@include respond-below('md') {
+  .community-container {
+    padding: 15px;
+  }
+
+  .post-images.multiple {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .post-footer {
+    gap: 18px;
+  }
+}
+
+@include respond-below('sm') {
+  .posts-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .post-images.double,
+  .post-images.multiple {
+    grid-template-columns: 1fr;
+  }
+}

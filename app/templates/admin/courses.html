@@ -1,90 +1,260 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>课程管理 - C++学习平台</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <!-- 顶部导航栏 -->
-    <header class="header">
-        <div class="header-left">
-            <h1>C++学习平台</h1>
-        </div>
-        <div class="header-right">
-            <div class="greeting">
-                <p>上午好，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
-                <p class="sub-greeting">管理员后台</p>
-            </div>
-            <div class="user-icon">
-                {% if current_user.avatar %}
-                <img src="{{ current_user.avatar }}" alt="用户头像">
-                {% else %}
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
-                {% endif %}
-            </div>
-        </div>
-    </header>
+{% extends "base.html" %}
 
-    <div class="container">
-        <!-- 左侧边栏 -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="learning-stats">
-                    <p class="days">管理员</p>
-                    <p class="number">后台</p>
-                </div>
-            </div>
-            <nav class="sidebar-nav">
-                <ul>
-                    <li><a href="/admin/dashboard">仪表盘</a></li>
-                    <li><a href="/admin/users">用户管理</a></li>
-                    <li class="active"><a href="/admin/courses">课程管理</a></li>
-                    <li><a href="/admin/problems">题目管理</a></li>
-                    <li><a href="/community">社区管理</a></li>
-                    <li><a href="/admin/settings">设置</a></li>
-                    <li><a href="/logout">退出登录</a></li>
-                </ul>
-            </nav>
-        </aside>
-        
-        <!-- 主内容区 -->
-        <main class="main-content">
-            <div class="section-header">
-                <h2>课程管理</h2>
-            </div>
-            
-            <!-- 课程列表 -->
-            <div class="course-list">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>标题</th>
-                            <th>教师</th>
-                            <th>状态</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for course in courses %}
-                        <tr>
-                            <td>{{ course.id }}</td>
-                            <td>{{ course.title }}</td>
-                            <td>{{ course.teacher_id }}</td>
-                            <td>{{ course.status }}</td>
-                            <td>
-                                <form action="/admin/courses/{{ course.id }}/delete" method="POST" style="display: inline;">
-                                    <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </main>
+{% block title %}课程管理 - C++学习平台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .search-box {
+        flex: 1;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .search-box input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .courses-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .course-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+    }
+    
+    .course-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    
+    .course-cover {
+        width: 100%;
+        height: 160px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 48px;
+    }
+    
+    .course-content {
+        padding: 20px;
+    }
+    
+    .course-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+    
+    .course-meta {
+        display: flex;
+        gap: 15px;
+        font-size: 13px;
+        color: #95a5a6;
+        margin-bottom: 15px;
+    }
+    
+    .course-meta span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .course-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-sm {
+        padding: 8px 16px;
+        font-size: 13px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .btn-edit {
+        background: #667eea;
+        color: white;
+    }
+    
+    .btn-edit:hover {
+        background: #764ba2;
+    }
+    
+    .btn-delete {
+        background: #e74c3c;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background: #c0392b;
+    }
+    
+    .btn-view {
+        background: #f8f9fa;
+        color: #7f8c8d;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .btn-view:hover {
+        background: #e9ecef;
+    }
+    
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">课程管理</h1>
+</div>
+
+<div class="filter-section">
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="搜索课程名称...">
+        <button class="btn btn-primary" onclick="searchCourses()">
+            <i class="fas fa-search"></i> 搜索
+        </button>
     </div>
-</body>
-</html>
+    <select class="filter-select" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; background: white;" onchange="filterByStatus()">
+        <option value="">全部状态</option>
+        <option value="active">已发布</option>
+        <option value="inactive">未发布</option>
+    </select>
+</div>
+
+<div class="courses-grid">
+    {% for course in courses %}
+    <div class="course-card">
+        <div class="course-cover">
+            <i class="fas fa-book"></i>
+        </div>
+        <div class="course-content">
+            <h3 class="course-title">{{ course.title }}</h3>
+            <div class="course-meta">
+                <span><i class="fas fa-user"></i> {{ course.teacher.username if course.teacher else '未知' }}</span>
+                <span><i class="fas fa-users"></i> {{ course.students|length if course.students else 0 }} 学生</span>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <span class="status-badge status-{{ 'active' if course.is_published else 'inactive' }}">
+                    {{ '已发布' if course.is_published else '未发布' }}
+                </span>
+            </div>
+            <div class="course-actions">
+                <button class="btn-sm btn-edit" onclick="alert('编辑功能开发中...')">
+                    <i class="fas fa-edit"></i> 编辑
+                </button>
+                <button class="btn-sm btn-delete" onclick="deleteCourse({{ course.id }})">
+                    <i class="fas fa-trash"></i> 删除
+                </button>
+                <a href="{{ url_for('student.course_detail', course_id=course.id) }}" class="btn-sm btn-view">
+                    <i class="fas fa-eye"></i> 查看
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not courses %}
+<div class="empty-state" style="text-align: center; padding: 60px 20px; background: white; border-radius: 16px;">
+    <i class="fas fa-book" style="font-size: 64px; color: #d0d0d0; margin-bottom: 20px;"></i>
+    <h3 style="font-size: 20px; color: #7f8c8d; margin-bottom: 10px;">还没有任何课程</h3>
+    <p style="color: #95a5a6; font-size: 14px;">暂无课程</p>
+</div>
+{% endif %}
+
+<script>
+function searchCourses() {
+    const search = document.getElementById('searchInput').value;
+    window.location.href = `{{ url_for('admin.courses') }}?search=${search}`;
+}
+
+function filterByStatus() {
+    const search = document.getElementById('searchInput').value;
+    const status = event.target.value;
+    window.location.href = `{{ url_for('admin.courses') }}?search=${search}&status=${status}`;
+}
+
+function deleteCourse(courseId) {
+    if (confirm('确定要删除这个课程吗？此操作不可恢复。')) {
+        fetch(`/admin/courses/${courseId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('删除失败，请重试');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

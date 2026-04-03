@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>帖子详情 - C++学习平台</title>
-    <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -12,887 +11,1384 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             background: #f5f5f5;
+            min-height: 100vh;
         }
-        
-        .container {
-            max-width: 800px;
+
+        .detail-container {
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px 20px;
         }
-        
-        /* 返回按钮 */
-        .back-btn {
-            display: inline-flex;
+
+        /* 三栏布局 */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 56px minmax(0, 1fr) 400px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* 左侧返回按钮 */
+        .back-column {
+            position: sticky;
+            top: 100px;
+        }
+
+        .back-button {
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            background: white;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            background: #fff;
             border: none;
-            border-radius: 8px;
-            color: #666;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             cursor: pointer;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            color: #555;
         }
-        
-        .back-btn:hover {
-            background: #f0f0f0;
+
+        .back-button:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
         }
-        
-        /* 帖子内容 */
-        .post-detail {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+        .back-button i {
+            font-size: 18px;
+            margin-bottom: 3px;
         }
-        
-        .post-header {
+
+        .back-button span {
+            font-size: 11px;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 2px;
+        }
+
+        /* 中间帖子内容区 */
+        .post-content-area {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+        }
+
+        /* 帖子头部 */
+        .post-header-section {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 14px;
+            padding-bottom: 22px;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 24px;
         }
-        
-        .user-avatar {
-            width: 48px;
-            height: 48px;
+
+        .author-avatar-img {
+            width: 54px;
+            height: 54px;
             border-radius: 50%;
             object-fit: cover;
+            border: 2.5px solid #f5f5f5;
         }
-        
-        .post-meta {
+
+        .author-details {
             flex: 1;
         }
-        
-        .post-author {
-            font-size: 16px;
+
+        .author-display-name {
+            font-size: 17px;
             font-weight: 600;
-            color: #333;
+            color: #222;
+            margin-bottom: 3px;
         }
-        
-        .post-time {
+
+        .post-publish-time {
             font-size: 13px;
             color: #999;
-            margin-top: 4px;
         }
-        
-        .follow-btn {
-            padding: 8px 20px;
-            background: #9c27b0;
+
+        /* 关注按钮 */
+        .follow-action-btn {
+            padding: 9px 22px;
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
             color: white;
             border: none;
-            border-radius: 20px;
+            border-radius: 22px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
         }
-        
-        .follow-btn.following {
-            background: #e0e0e0;
+
+        .follow-action-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.35);
+        }
+
+        .follow-action-btn.is-following {
+            background: #f0f0f0;
             color: #666;
         }
-        
-        .post-title {
-            font-size: 20px;
-            font-weight: 600;
+
+        /* 帖主操作菜单 */
+        .owner-menu-wrapper {
+            position: relative;
+        }
+
+        .menu-trigger-btn {
+            width: 38px;
+            height: 38px;
+            background: #f8f8f8;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #666;
+            font-size: 16px;
+            transition: all 0.25s;
+        }
+
+        .menu-trigger-btn:hover {
+            background: #eee;
             color: #333;
-            margin-bottom: 12px;
+            transform: rotate(90deg);
+        }
+
+        .dropdown-options {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+            min-width: 160px;
+            z-index: 1000;
+            overflow: hidden;
+            animation: dropdownFadeIn 0.2s ease;
+        }
+
+        @keyframes dropdownFadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-options.is-visible {
+            display: block;
+        }
+
+        .dropdown-option-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 13px 18px;
+            background: none;
+            border: none;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .dropdown-option-item:hover {
+            background: #fff5f5;
+            color: #dc3545;
+        }
+
+        .dropdown-option-item i {
+            width: 16px;
+        }
+
+        /* 帖子标题 */
+        .post-heading-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1a1a1a;
             line-height: 1.4;
+            margin-bottom: 20px;
+            word-break: break-word;
         }
-        
-        .post-content {
+
+        /* 帖子正文 */
+        .post-body-text {
             font-size: 15px;
-            color: #333;
-            line-height: 1.8;
-            margin-bottom: 20px;
+            color: #444;
+            line-height: 1.85;
+            margin-bottom: 24px;
             white-space: pre-wrap;
+            word-wrap: break-word;
         }
-        
-        /* 图片网格 */
-        .post-images {
+
+        /* 图片展示 */
+        .images-gallery {
             display: grid;
-            gap: 8px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 24px;
         }
-        
-        .post-images.single {
+
+        .images-gallery.layout-single {
             grid-template-columns: 1fr;
+            max-width: 580px;
         }
-        
-        .post-images.double {
+
+        .images-gallery.layout-double {
             grid-template-columns: repeat(2, 1fr);
         }
-        
-        .post-images.multiple {
+
+        .images-gallery.layout-multiple {
             grid-template-columns: repeat(3, 1fr);
         }
-        
-        .post-image {
+
+        .gallery-image {
             width: 100%;
             aspect-ratio: 1;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
+            transition: transform 0.3s;
         }
-        
-        .post-images.single .post-image {
+
+        .gallery-image:hover {
+            transform: scale(1.03);
+        }
+
+        .images-gallery.layout-single .gallery-image {
             aspect-ratio: 16/9;
         }
-        
-        /* 帖子操作 */
-        .post-actions {
+
+        /* 底部互动栏 */
+        .post-interactions {
             display: flex;
-            gap: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
+            align-items: center;
+            gap: 36px;
+            padding-top: 24px;
+            border-top: 1px solid #f0f0f0;
         }
-        
-        .action-item {
+
+        .interaction-btn {
             display: flex;
             align-items: center;
             gap: 8px;
             cursor: pointer;
-            color: #666;
-            transition: all 0.3s;
+            color: #888;
+            font-size: 15px;
+            transition: all 0.25s;
+            user-select: none;
+            background: none;
+            border: none;
+            padding: 0;
         }
-        
-        .action-item:hover {
-            color: #9c27b0;
+
+        .interaction-btn:hover {
+            color: #e91e63;
         }
-        
-        .action-item.liked {
-            color: #ff6b6b;
+
+        .interaction-btn i {
+            font-size: 21px;
+            transition: transform 0.3s;
         }
-        
-        .action-item i {
-            font-size: 22px;
+
+        .interaction-btn:hover i {
+            transform: scale(1.15);
         }
-        
-        .action-item span {
-            font-size: 14px;
+
+        .interaction-btn.is-active {
+            color: #ff4757;
         }
-        
-        /* 评论区 */
-        .comments-section {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+        .interaction-btn.is-active i {
+            animation: likeHeartBeat 0.4s ease;
         }
-        
-        .comments-header {
+
+        @keyframes likeHeartBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        .interaction-count {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        /* 右侧评论区 */
+        .comments-panel {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+            position: sticky;
+            top: 24px;
+        }
+
+        .comments-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .comments-panel::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 3px;
+        }
+
+        .comments-header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f0f0f0;
         }
-        
-        .comments-count {
-            font-size: 16px;
+
+        .comments-title-text {
+            font-size: 17px;
             font-weight: 600;
             color: #333;
         }
-        
-        .sort-btn {
-            padding: 6px 12px;
-            background: #f5f5f5;
-            border: none;
-            border-radius: 4px;
-            color: #666;
-            cursor: pointer;
-            font-size: 13px;
+
+        .comments-total-num {
+            color: #e91e63;
+            margin-left: 4px;
         }
-        
+
+        .sort-dropdown {
+            padding: 7px 14px;
+            background: #f8f8f8;
+            border: 1px solid #eee;
+            border-radius: 18px;
+            color: #777;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+        }
+
         /* 评论输入 */
-        .comment-input-area {
+        .comment-form-row {
             display: flex;
             gap: 12px;
             margin-bottom: 24px;
-        }
-        
-        .comment-input-wrapper {
-            flex: 1;
-            display: flex;
-            gap: 10px;
             align-items: flex-end;
         }
-        
-        .comment-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 1px solid #e0e0e0;
-            border-radius: 20px;
-            background: #f5f5f5;
-            font-size: 14px;
-            resize: none;
-            min-height: 44px;
-            max-height: 120px;
-        }
-        
-        .comment-input:focus {
-            outline: none;
-            background: white;
-            border-color: #9c27b0;
-        }
-        
-        .send-btn {
-            padding: 10px 24px;
-            background: #9c27b0;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        
-        .send-btn:hover {
-            background: #7b1fa2;
-        }
-        
-        .send-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        
-        /* 评论列表 - 抖音风格 */
-        .comment-list {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .comment-item {
-            display: flex;
-            gap: 12px;
-        }
-        
-        .comment-avatar {
+
+        .commenter-avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
             object-fit: cover;
             flex-shrink: 0;
         }
-        
-        .comment-content {
+
+        .comment-input-group {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+        }
+
+        .comment-textarea {
+            flex: 1;
+            padding: 11px 17px;
+            border: 2px solid #e8e8e8;
+            border-radius: 23px;
+            font-size: 14px;
+            resize: none;
+            min-height: 42px;
+            max-height: 100px;
+            font-family: inherit;
+            transition: all 0.25s;
+            outline: none;
+        }
+
+        .comment-textarea:focus {
+            border-color: #e91e63;
+            background: #fff;
+        }
+
+        .submit-comment-btn {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+            color: white;
+            border: none;
+            border-radius: 23px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .submit-comment-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.35);
+        }
+
+        /* 评论列表 */
+        .comments-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .single-comment {
+            display: flex;
+            gap: 12px;
+        }
+
+        .commenter-avatar-small {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .comment-main-body {
             flex: 1;
         }
-        
-        .comment-header {
+
+        .commenter-name-row {
             display: flex;
             align-items: center;
             gap: 8px;
             margin-bottom: 6px;
         }
-        
-        .comment-author {
+
+        .commenter-name-label {
             font-size: 14px;
-            font-weight: 500;
-            color: #666;
-        }
-        
-        .comment-text {
-            font-size: 14px;
+            font-weight: 600;
             color: #333;
-            line-height: 1.6;
+        }
+
+        .comment-message-text {
+            font-size: 14px;
+            color: #444;
+            line-height: 1.65;
             margin-bottom: 8px;
         }
-        
-        .comment-footer {
+
+        .comment-actions-row {
             display: flex;
             align-items: center;
-            gap: 20px;
-            font-size: 13px;
-            color: #999;
+            gap: 18px;
+            font-size: 12px;
+            color: #aaa;
         }
-        
-        .comment-time {
-            color: #999;
-        }
-        
-        .comment-reply-btn {
-            color: #666;
+
+        .action-link {
             cursor: pointer;
-            transition: color 0.3s;
+            transition: color 0.25s;
+            background: none;
+            border: none;
+            color: inherit;
+            padding: 0;
+            font-size: inherit;
         }
-        
-        .comment-reply-btn:hover {
-            color: #9c27b0;
+
+        .action-link:hover {
+            color: #e91e63;
         }
-        
-        .comment-like {
+
+        /* 删除评论按钮 */
+        .delete-comment-btn {
+            cursor: pointer;
+            transition: all 0.25s;
+            background: none;
+            border: none;
+            color: inherit;
+            padding: 0;
+            font-size: inherit;
+            opacity: 0.6;
+        }
+
+        .delete-comment-btn:hover {
+            color: #dc3545;
+            opacity: 1;
+        }
+
+        .like-action-btn {
             display: flex;
             align-items: center;
             gap: 4px;
             cursor: pointer;
-            transition: color 0.3s;
+            transition: all 0.25s;
+            background: none;
+            border: none;
+            color: inherit;
+            padding: 0;
+            font-size: inherit;
         }
-        
-        .comment-like:hover,
-        .comment-like.liked {
-            color: #ff6b6b;
+
+        .like-action-btn:hover,
+        .like-action-btn.is-liked {
+            color: #ff4757;
         }
-        
+
         /* 嵌套回复 */
-        .reply-list {
+        .nested-replies-wrapper {
             margin-top: 12px;
-            padding-left: 12px;
-            border-left: 2px solid #eee;
+            padding-left: 14px;
+            border-left: 2px solid #f0f0f0;
         }
-        
-        .reply-item {
+
+        .nested-reply-item {
             display: flex;
             gap: 10px;
             margin-bottom: 12px;
         }
-        
-        .reply-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .reply-avatar {
-            width: 32px;
-            height: 32px;
+
+        .nested-reply-avatar {
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             object-fit: cover;
             flex-shrink: 0;
         }
-        
-        .reply-content {
+
+        .nested-reply-body {
             flex: 1;
         }
-        
-        .reply-header {
+
+        .nested-reply-meta {
             display: flex;
             align-items: center;
             gap: 6px;
             margin-bottom: 4px;
         }
-        
-        .reply-author {
+
+        .nested-replyer-name {
             font-size: 13px;
-            font-weight: 500;
-            color: #666;
-        }
-        
-        .reply-to {
-            font-size: 13px;
-            color: #999;
-        }
-        
-        .reply-target {
-            font-size: 13px;
-            color: #9c27b0;
-        }
-        
-        .reply-text {
-            font-size: 13px;
+            font-weight: 600;
             color: #333;
-            line-height: 1.5;
+        }
+
+        .reply-indicator {
+            font-size: 13px;
+            color: #bbb;
+        }
+
+        .reply-target-user {
+            font-size: 13px;
+            color: #e91e63;
+        }
+
+        .nested-reply-text {
+            font-size: 13px;
+            color: #444;
+            line-height: 1.55;
             margin-bottom: 6px;
         }
-        
-        .reply-footer {
+
+        .nested-reply-footer {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
             font-size: 12px;
-            color: #999;
+            color: #aaa;
         }
-        
+
         /* 回复输入框 */
-        .reply-input-area {
+        .reply-input-box {
             display: none;
-            margin-top: 12px;
+            margin-top: 10px;
             padding: 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
+            background: #fafafa;
+            border-radius: 10px;
         }
-        
-        .reply-input-area.active {
+
+        .reply-input-box.is-visible {
             display: block;
         }
-        
-        .reply-input-wrapper {
+
+        .reply-form-inline {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
-        
-        .reply-input {
+
+        .reply-field {
             flex: 1;
-            padding: 10px 14px;
+            padding: 8px 14px;
             border: 1px solid #e0e0e0;
-            border-radius: 16px;
+            border-radius: 19px;
             font-size: 13px;
             resize: none;
-        }
-        
-        .reply-input:focus {
             outline: none;
-            border-color: #9c27b0;
+            font-family: inherit;
         }
-        
-        /* 展开更多回复 */
-        .show-more-replies {
-            padding: 8px 0;
-            color: #9c27b0;
-            font-size: 13px;
+
+        .reply-field:focus {
+            border-color: #e91e63;
+        }
+
+        .send-reply-btn {
+            padding: 8px 18px;
+            background: #e91e63;
+            color: white;
+            border: none;
+            border-radius: 19px;
             cursor: pointer;
+            font-size: 13px;
+            transition: background 0.25s;
         }
-        
+
+        .send-reply-btn:hover {
+            background: #c2185b;
+        }
+
         /* 空状态 */
-        .empty-comments {
+        .empty-comments-state {
             text-align: center;
             padding: 60px 20px;
-            color: #999;
+            color: #ccc;
         }
-        
-        .empty-comments i {
+
+        .empty-comments-state i {
             font-size: 48px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            display: block;
         }
-        
+
+        .empty-comments-state p {
+            font-size: 14px;
+        }
+
         /* 加载状态 */
-        .loading {
+        .loading-indicator {
             text-align: center;
-            padding: 40px;
+            padding: 80px 20px;
             color: #999;
         }
-        
-        .loading i {
-            font-size: 32px;
-            animation: spin 1s linear infinite;
+
+        .loading-indicator > i {
+            font-size: 36px;
+            color: #e91e63;
+            animation: spinAnimation 1s linear infinite;
+            display: inline-block;
         }
-        
-        @keyframes spin {
+
+        @keyframes spinAnimation {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+        }
+
+        /* Toast 提示 */
+        .toast-msg {
+            position: fixed;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-120px);
+            padding: 14px 28px;
+            background: #333;
+            color: white;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 99999;
+            transition: transform 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .toast-msg.is-showing {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast-msg.type-success {
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+        }
+
+        .toast-msg.type-error {
+            background: linear-gradient(135deg, #d63031 0%, #b71c1c 100%);
+        }
+
+        /* 删除确认弹窗 */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 99998;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            animation: fadeInBackdrop 0.25s ease;
+        }
+
+        @keyframes fadeInBackdrop {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-backdrop.is-open {
+            display: flex;
+        }
+
+        .modal-dialog {
+            background: #fff;
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 420px;
+            width: 92%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalSlideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalSlideUp {
+            from { opacity: 0; transform: translateY(40px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-title-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 12px;
+        }
+
+        .modal-desc-text {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.7;
+            margin-bottom: 28px;
+        }
+
+        .modal-buttons-row {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 11px 26px;
+            border: none;
+            border-radius: 22px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .modal-cancel-btn {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .modal-cancel-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .modal-confirm-btn {
+            background: linear-gradient(135deg, #d63031 0%, #b71c1c 100%);
+            color: white;
+        }
+
+        .modal-confirm-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(214, 48, 49, 0.35);
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .back-column {
+                position: static;
+                margin-bottom: 8px;
+            }
+
+            .comments-panel {
+                position: static;
+                max-height: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <button class="back-btn" onclick="history.back()">
-            <i class="fas fa-arrow-left"></i>
-            返回社区
-        </button>
-        
-        <!-- 帖子详情 -->
-        <div class="post-detail" id="postDetail">
-            <div class="loading">
-                <i class="fas fa-spinner"></i>
-                <p>加载中...</p>
+    <div class="detail-container">
+        <!-- 主布局 -->
+        <div class="detail-grid">
+            <!-- 左侧返回 -->
+            <div class="back-column">
+                <button class="back-button" onclick="history.back()">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>返回社区</span>
+                </button>
+            </div>
+
+            <!-- 中间帖子 -->
+            <main class="post-content-area" id="postContentArea">
+                <div class="loading-indicator">
+                    <i class="fas fa-spinner"></i>
+                    <p style="margin-top: 16px;">加载中...</p>
+                </div>
+            </main>
+
+            <!-- 右侧评论 -->
+            <aside class="comments-panel" id="commentsPanelArea">
+                <div class="comments-header-row">
+                    <h3 class="comments-title-text">评论<span class="comments-total-num" id="commentsTotalCount">(0)</span></h3>
+                    <select class="sort-dropdown">
+                        <option>按时间排序</option>
+                        <option>按热度排序</option>
+                    </select>
+                </div>
+
+                <div class="comment-form-row">
+                    <img src="{{ current_user.avatar or '/static/default-avatar.png' }}" alt="" class="commenter-avatar">
+                    <div class="comment-input-group">
+                        <textarea class="comment-textarea" id="mainCommentInput" placeholder="写下你的评论..." rows="1"></textarea>
+                        <button class="submit-comment-btn" onclick="submitMainComment()">发送</button>
+                    </div>
+                </div>
+
+                <div class="comments-list-container" id="commentsListContainer">
+                    <div class="loading-indicator">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-msg" id="toastEl"></div>
+
+    <!-- 删除确认弹窗 - 帖子 -->
+    <div class="modal-backdrop" id="deleteModalEl">
+        <div class="modal-dialog">
+            <h3 class="modal-title-text">⚠️ 确认删除</h3>
+            <p class="modal-desc-text">确定要删除这个帖子吗？<br><br>删除后<strong style="color:#d63031;">无法恢复</strong>，该帖子的所有评论也将一并删除。</p>
+            <div class="modal-buttons-row">
+                <button class="modal-btn modal-cancel-btn" onclick="hideDeleteModal()">取消</button>
+                <button class="modal-btn modal-confirm-btn" onclick="executeDeletePost()">确定删除</button>
             </div>
         </div>
-        
-        <!-- 评论区 -->
-        <div class="comments-section">
-            <div class="comments-header">
-                <span class="comments-count">评论 (<span id="commentCount">0</span>)</span>
-                <button class="sort-btn">按时间排序</button>
-            </div>
-            
-            <!-- 评论输入 -->
-            <div class="comment-input-area">
-                <img src="{{ current_user.avatar or '/static/default-avatar.png' }}" alt="头像" class="user-avatar" style="width: 40px; height: 40px;">
-                <div class="comment-input-wrapper">
-                    <textarea class="comment-input" id="commentInput" placeholder="写下你的评论..." rows="1"></textarea>
-                    <button class="send-btn" onclick="submitComment()">发送</button>
-                </div>
-            </div>
-            
-            <!-- 评论列表 -->
-            <div class="comment-list" id="commentList">
-                <div class="loading">
-                    <i class="fas fa-spinner"></i>
-                </div>
+    </div>
+
+    <!-- 删除确认弹窗 - 评论 -->
+    <div class="modal-backdrop" id="deleteCommentModalEl">
+        <div class="modal-dialog">
+            <h3 class="modal-title-text">⚠️ 确认删除评论</h3>
+            <p class="modal-desc-text" id="deleteCommentMessage">确定要删除这条评论吗？<br><br>删除后<strong style="color:#d63031;">无法恢复</strong>。</p>
+            <div class="modal-buttons-row">
+                <button class="modal-btn modal-cancel-btn" onclick="hideDeleteCommentModal()">取消</button>
+                <button class="modal-btn modal-confirm-btn" onclick="executeDeleteComment()">确定删除</button>
             </div>
         </div>
     </div>
 
     <script>
         const discussionId = {{ discussion_id }};
-        let replyingTo = null;
-        
-        // 页面加载
+        let isOwner = false;
+        let currentDeleteCommentId = null;  // 当前要删除的评论ID
+
         document.addEventListener('DOMContentLoaded', function() {
-            loadPostDetail();
-            loadComments();
-            
-            // 自动调整输入框高度
-            const commentInput = document.getElementById('commentInput');
-            commentInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = this.scrollHeight + 'px';
-            });
+            loadPostData();
+            loadCommentsData();
+
+            const mainInput = document.getElementById('mainCommentInput');
+            if (mainInput) {
+                mainInput.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+                });
+
+                mainInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        submitMainComment();
+                    }
+                });
+            }
         });
-        
-        // 加载帖子详情
-        async function loadPostDetail() {
+
+        async function loadPostData() {
             try {
-                const response = await fetch(`/community/discussions/${discussionId}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    renderPostDetail(data.discussion);
+                const res = await fetch(`/community/discussions/${discussionId}`);
+                const result = await res.json();
+
+                if (result.success) {
+                    renderPostContent(result.discussion);
                 } else {
-                    document.getElementById('postDetail').innerHTML = `
-                        <div class="empty-comments">
-                            <i class="fas fa-exclamation-circle"></i>
-                            <p>帖子不存在或已删除</p>
+                    showErrorMessage('帖子不存在或已被删除');
+                }
+            } catch (err) {
+                console.error('加载失败:', err);
+                showErrorMessage('网络错误，请刷新重试');
+            }
+        }
+
+        function renderPostContent(post) {
+            const container = document.getElementById('postContentArea');
+            const imagesHtml = buildImagesHtml(post.images);
+
+            isOwner = post.is_owner || false;
+
+            let actionHtml = '';
+            if (isOwner) {
+                actionHtml = `
+                    <div class="owner-menu-wrapper">
+                        <button class="menu-trigger-btn" onclick="openDropdown(this)">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                        <div class="dropdown-options" id="ownerDropdownMenu">
+                            <button class="dropdown-option-item" onclick="showDeleteConfirm()">
+                                <i class="fas fa-trash-alt"></i> 删除此帖子
+                            </button>
                         </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('加载失败:', error);
-            }
-        }
-        
-        // 渲染帖子详情
-        function renderPostDetail(post) {
-            const imagesHtml = renderImages(post.images);
-            
-            document.getElementById('postDetail').innerHTML = `
-                <div class="post-header">
-                    <img src="${post.user.avatar}" alt="头像" class="user-avatar">
-                    <div class="post-meta">
-                        <div class="post-author">${post.user.nickname}</div>
-                        <div class="post-time">${formatTime(post.created_at)}</div>
                     </div>
-                    <button class="follow-btn" onclick="toggleFollow(this)">关注</button>
+                `;
+            } else {
+                actionHtml = `<button class="follow-action-btn" onclick="toggleFollowBtn(this)">+ 关注</button>`;
+            }
+
+            container.innerHTML = `
+                <div class="post-header-section">
+                    <img src="${post.user.avatar || '/static/default-avatar.png'}" alt="" class="author-avatar-img">
+                    <div class="author-details">
+                        <div class="author-display-name">${escapeHtml(post.user.nickname)}</div>
+                        <div class="post-publish-time">${formatTimeAgo(post.created_at)}</div>
+                    </div>
+                    ${actionHtml}
                 </div>
-                <div class="post-title">${escapeHtml(post.title)}</div>
-                <div class="post-content">${escapeHtml(post.content)}</div>
+
+                <h1 class="post-heading-title">${escapeHtml(post.title)}</h1>
+                <div class="post-body-text">${escapeHtml(post.content)}</div>
                 ${imagesHtml}
-                <div class="post-actions">
-                    <div class="action-item ${post.is_liked ? 'liked' : ''}" onclick="toggleLike()">
+
+                <div class="post-interactions">
+                    <button class="interaction-btn ${post.is_liked ? 'is-active' : ''}" onclick="handleLikePost()">
                         <i class="${post.is_liked ? 'fas' : 'far'} fa-heart"></i>
-                        <span>${post.like_count || 0}</span>
-                    </div>
-                    <div class="action-item">
-                        <i class="far fa-comment"></i>
-                        <span>${post.reply_count || 0}</span>
-                    </div>
-                    <div class="action-item">
+                        <span class="interaction-count">${post.like_count || 0}</span>
+                    </button>
+                    <button class="interaction-btn">
+                        <i class="far fa-comment-dots"></i>
+                        <span class="interaction-count">${post.reply_count || 0}</span>
+                    </button>
+                    <button class="interaction-btn">
                         <i class="far fa-eye"></i>
-                        <span>${post.view_count || 0}</span>
-                    </div>
-                    <div class="action-item">
-                        <i class="far fa-share-square"></i>
-                        <span>分享</span>
-                    </div>
+                        <span class="interaction-count">${post.view_count || 0}</span>
+                    </button>
+                    <button class="interaction-btn" onclick="handleShare()">
+                        <i class="fas fa-share-alt"></i>
+                        <span class="interaction-count">分享</span>
+                    </button>
                 </div>
             `;
         }
-        
-        // 渲染图片
-        function renderImages(images) {
+
+        function buildImagesHtml(images) {
             if (!images || images.length === 0) return '';
-            
-            let className = 'multiple';
-            if (images.length === 1) className = 'single';
-            else if (images.length === 2) className = 'double';
-            
+
+            let layoutClass = 'layout-multiple';
+            if (images.length === 1) layoutClass = 'layout-single';
+            else if (images.length === 2) layoutClass = 'layout-double';
+
             return `
-                <div class="post-images ${className}">
-                    ${images.map(img => `<img src="${img}" class="post-image" onclick="viewImage('${img}')">`).join('')}
+                <div class="images-gallery ${layoutClass}">
+                    ${images.map(img => `<img src="${img}" class="gallery-image" onclick="window.open('${img}','_blank')">`).join('')}
                 </div>
             `;
         }
-        
-        // 加载评论
-        async function loadComments() {
+
+        async function loadCommentsData() {
             try {
-                const response = await fetch(`/community/discussions/${discussionId}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    renderComments(data.replies);
-                    document.getElementById('commentCount').textContent = countAllReplies(data.replies);
+                const res = await fetch(`/community/discussions/${discussionId}`);
+                const result = await res.json();
+
+                if (result.success) {
+                    renderCommentsList(result.replies);
+                    updateCommentsTotal(result.replies);
                 }
-            } catch (error) {
-                console.error('加载评论失败:', error);
+            } catch (err) {
+                console.error('加载评论失败:', err);
             }
         }
-        
-        // 渲染评论列表
-        function renderComments(replies) {
-            const container = document.getElementById('commentList');
-            
+
+        function renderCommentsList(replies) {
+            const container = document.getElementById('commentsListContainer');
+
             if (!replies || replies.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-comments">
-                        <i class="fas fa-comment-slash"></i>
+                    <div class="empty-comments-state">
+                        <i class="far fa-comment-dots"></i>
                         <p>暂无评论，快来抢沙发吧！</p>
                     </div>
                 `;
                 return;
             }
-            
-            container.innerHTML = replies.map(reply => renderCommentItem(reply)).join('');
+
+            container.innerHTML = replies.map(reply => createCommentHtml(reply)).join('');
         }
-        
-        // 渲染单个评论
-        function renderCommentItem(reply, isNested = false) {
+
+        function createCommentHtml(reply) {
             const hasChildren = reply.children && reply.children.length > 0;
-            const childrenHtml = hasChildren 
-                ? reply.children.map(child => renderReplyItem(child, reply.user.nickname)).join('')
+            const childrenHtml = hasChildren
+                ? `<div class="nested-replies-wrapper">
+                    ${reply.children.map(child => createNestedReplyHtml(child, reply.user.nickname)).join('')}
+                   </div>`
                 : '';
-            
+
+            // 判断是否可以删除（评论作者或帖主）
+            const canDelete = reply.is_comment_owner || isOwner;
+
             return `
-                <div class="comment-item" data-id="${reply.id}">
-                    <img src="${reply.user.avatar}" alt="头像" class="comment-avatar">
-                    <div class="comment-content">
-                        <div class="comment-header">
-                            <span class="comment-author">${reply.user.nickname}</span>
+                <div class="single-comment" data-id="${reply.id}">
+                    <img src="${reply.user.avatar || '/static/default-avatar.png'}" alt="" class="commenter-avatar-small">
+                    <div class="comment-main-body">
+                        <div class="commenter-name-row">
+                            <span class="commenter-name-label">${escapeHtml(reply.user.nickname)}</span>
+                            ${canDelete ? `<button class="delete-comment-btn" onclick="showDeleteCommentModal(${reply.id}, '${escapeHtml(reply.user.nickname)}')" title="删除评论">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>` : ''}
                         </div>
-                        <div class="comment-text">${escapeHtml(reply.content)}</div>
-                        <div class="comment-footer">
-                            <span class="comment-time">${formatTime(reply.created_at)}</span>
-                            <span class="comment-reply-btn" onclick="showReplyInput(${reply.id}, '${reply.user.nickname}')">回复</span>
-                            <div class="comment-like ${reply.is_liked ? 'liked' : ''}" onclick="toggleCommentLike(${reply.id}, this)">
+                        <div class="comment-message-text">${escapeHtml(reply.content)}</div>
+                        <div class="comment-actions-row">
+                            <span>${formatTimeAgo(reply.created_at)}</span>
+                            <button class="action-link" onclick="openReplyBox(${reply.id}, '${escapeHtml(reply.user.nickname)}')">回复</button>
+                            <button class="like-action-btn ${reply.is_liked ? 'is-liked' : ''}" onclick="handleLikeComment(${reply.id}, this)">
                                 <i class="${reply.is_liked ? 'fas' : 'far'} fa-heart"></i>
                                 <span>${reply.like_count || 0}</span>
-                            </div>
+                            </button>
                         </div>
-                        
-                        ${hasChildren ? `
-                            <div class="reply-list">
-                                ${childrenHtml}
-                            </div>
-                        ` : ''}
-                        
-                        <div class="reply-input-area" id="replyInput-${reply.id}">
-                            <div class="reply-input-wrapper">
-                                <textarea class="reply-input" id="replyText-${reply.id}" placeholder="回复 ${reply.user.nickname}..." rows="1"></textarea>
-                                <button class="send-btn" onclick="submitReply(${reply.id})">发送</button>
+                        ${childrenHtml}
+                        <div class="reply-input-box" id="replyBox-${reply.id}">
+                            <div class="reply-form-inline">
+                                <textarea class="reply-field" id="replyField-${reply.id}" placeholder="回复 ${escapeHtml(reply.user.nickname)}..." rows="1"></textarea>
+                                <button class="send-reply-btn" onclick="submitReplyAction(${reply.id})">发送</button>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
         }
-        
-        // 渲染嵌套回复
-        function renderReplyItem(reply, targetName) {
+
+        function createNestedReplyHtml(reply, targetName) {
+            // 判断是否可以删除（回复作者或帖主）
+            const canDelete = reply.is_comment_owner || isOwner;
+
             return `
-                <div class="reply-item" data-id="${reply.id}">
-                    <img src="${reply.user.avatar}" alt="头像" class="reply-avatar">
-                    <div class="reply-content">
-                        <div class="reply-header">
-                            <span class="reply-author">${reply.user.nickname}</span>
-                            <span class="reply-to">回复</span>
-                            <span class="reply-target">@${targetName}</span>
+                <div class="nested-reply-item" data-id="${reply.id}">
+                    <img src="${reply.user.avatar || '/static/default-avatar.png'}" alt="" class="nested-reply-avatar">
+                    <div class="nested-reply-body">
+                        <div class="nested-reply-meta">
+                            <span class="nested-replyer-name">${escapeHtml(reply.user.nickname)}</span>
+                            ${canDelete ? `<button class="delete-comment-btn" onclick="showDeleteCommentModal(${reply.id}, '${escapeHtml(reply.user.nickname)}')" title="删除回复">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>` : ''}
+                            <span class="reply-indicator">回复</span>
+                            <span class="reply-target-user">@${targetName}</span>
                         </div>
-                        <div class="reply-text">${escapeHtml(reply.content)}</div>
-                        <div class="reply-footer">
-                            <span class="comment-time">${formatTime(reply.created_at)}</span>
-                            <span class="comment-reply-btn" onclick="showReplyInput(${reply.parent_id}, '${reply.user.nickname}')">回复</span>
-                            <div class="comment-like ${reply.is_liked ? 'liked' : ''}" onclick="toggleCommentLike(${reply.id}, this)">
+                        <div class="nested-reply-text">${escapeHtml(reply.content)}</div>
+                        <div class="nested-reply-footer">
+                            <span>${formatTimeAgo(reply.created_at)}</span>
+                            <button class="action-link" onclick="openReplyBox(${reply.parent_id}, '${escapeHtml(reply.user.nickname)}')">回复</button>
+                            <button class="like-action-btn ${reply.is_liked ? 'is-liked' : ''}" onclick="handleLikeComment(${reply.id}, this)">
                                 <i class="${reply.is_liked ? 'fas' : 'far'} fa-heart"></i>
                                 <span>${reply.like_count || 0}</span>
-                            </div>
+                            </button>
                         </div>
                     </div>
                 </div>
             `;
         }
-        
-        // 统计所有评论数
-        function countAllReplies(replies) {
+
+        function updateCommentsTotal(replies) {
             let count = 0;
-            for (const reply of replies) {
+            for (const r of replies) {
                 count++;
-                if (reply.children) {
-                    count += reply.children.length;
-                }
+                if (r.children) count += r.children.length;
             }
-            return count;
+            document.getElementById('commentsTotalCount').textContent = `(${count})`;
         }
-        
-        // 显示回复输入框
-        function showReplyInput(commentId, targetName) {
-            // 隐藏所有回复输入框
-            document.querySelectorAll('.reply-input-area').forEach(el => {
-                el.classList.remove('active');
-            });
-            
-            // 显示当前回复输入框
-            const inputArea = document.getElementById(`replyInput-${commentId}`);
-            if (inputArea) {
-                inputArea.classList.add('active');
-                const textarea = document.getElementById(`replyText-${commentId}`);
-                textarea.placeholder = `回复 ${targetName}...`;
-                textarea.focus();
-                replyingTo = commentId;
+
+        function openReplyBox(commentId, targetName) {
+            document.querySelectorAll('.reply-input-box').forEach(el => el.classList.remove('is-visible'));
+
+            const box = document.getElementById(`replyBox-${commentId}`);
+            if (box) {
+                box.classList.add('is-visible');
+                const field = document.getElementById(`replyField-${commentId}`);
+                field.placeholder = `回复 ${targetName}...`;
+                field.focus();
             }
         }
-        
-        // 提交评论
-        async function submitComment() {
-            const content = document.getElementById('commentInput').value.trim();
-            
+
+        async function submitMainComment() {
+            const content = document.getElementById('mainCommentInput').value.trim();
+
             if (!content) {
-                alert('请输入评论内容');
+                showToastMsg('请输入评论内容', 'error');
                 return;
             }
-            
+
             try {
-                const response = await fetch(`/community/discussions/${discussionId}/replies`, {
+                const res = await fetch(`/community/discussions/${discussionId}/replies`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content })
                 });
-                
-                const data = await response.json();
-                
+                const data = await res.json();
+
                 if (data.success) {
-                    document.getElementById('commentInput').value = '';
-                    document.getElementById('commentInput').style.height = 'auto';
-                    loadComments();
+                    showToastMsg('✅ 评论成功！', 'success');
+                    document.getElementById('mainCommentInput').value = '';
+                    document.getElementById('mainCommentInput').style.height = 'auto';
+                    loadCommentsData();
+                    loadPostData();
                 } else {
-                    alert('评论失败：' + data.error);
+                    showToastMsg(data.error || '评论失败', 'error');
                 }
-            } catch (error) {
-                alert('评论失败');
+            } catch (err) {
+                showToastMsg('网络错误', 'error');
             }
         }
-        
-        // 提交回复
-        async function submitReply(parentId) {
-            const content = document.getElementById(`replyText-${parentId}`).value.trim();
-            
+
+        async function submitReplyAction(parentId) {
+            const content = document.getElementById(`replyField-${parentId}`).value.trim();
+
             if (!content) {
-                alert('请输入回复内容');
+                showToastMsg('请输入回复内容', 'error');
                 return;
             }
-            
+
             try {
-                const response = await fetch(`/community/discussions/${discussionId}/replies`, {
+                const res = await fetch(`/community/discussions/${discussionId}/replies`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content, parent_id: parentId })
                 });
-                
-                const data = await response.json();
-                
+                const data = await res.json();
+
                 if (data.success) {
-                    document.getElementById(`replyText-${parentId}`).value = '';
-                    document.getElementById(`replyInput-${parentId}`).classList.remove('active');
-                    loadComments();
+                    showToastMsg('✅ 回复成功！', 'success');
+                    document.getElementById(`replyBox-${parentId}`).classList.remove('is-visible');
+                    loadCommentsData();
+                    loadPostData();
                 } else {
-                    alert('回复失败：' + data.error);
+                    showToastMsg(data.error || '回复失败', 'error');
                 }
-            } catch (error) {
-                alert('回复失败');
+            } catch (err) {
+                showToastMsg('网络错误', 'error');
             }
         }
-        
-        // 点赞帖子
-        async function toggleLike() {
+
+        async function handleLikePost() {
             try {
-                const response = await fetch(`/community/discussions/${discussionId}/like`, {
-                    method: 'POST'
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    loadPostDetail();
-                }
-            } catch (error) {
-                console.error('点赞失败:', error);
+                const res = await fetch(`/community/discussions/${discussionId}/like`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) loadPostData();
+            } catch (err) {
+                console.error('点赞失败:', err);
             }
         }
-        
-        // 点赞评论
-        async function toggleCommentLike(replyId, btn) {
+
+        async function handleLikeComment(replyId, btn) {
             try {
-                const response = await fetch(`/community/replies/${replyId}/like`, {
-                    method: 'POST'
-                });
-                
-                const data = await response.json();
-                
+                const res = await fetch(`/community/replies/${replyId}/like`, { method: 'POST' });
+                const data = await res.json();
+
                 if (data.success) {
                     const icon = btn.querySelector('i');
                     const count = btn.querySelector('span');
-                    
+
                     if (data.liked) {
                         icon.classList.remove('far');
                         icon.classList.add('fas');
-                        btn.classList.add('liked');
+                        btn.classList.add('is-liked');
                     } else {
                         icon.classList.remove('fas');
                         icon.classList.add('far');
-                        btn.classList.remove('liked');
+                        btn.classList.remove('is-liked');
                     }
-                    
+
                     count.textContent = data.like_count;
                 }
-            } catch (error) {
-                console.error('点赞失败:', error);
+            } catch (err) {
+                console.error('点赞失败:', err);
             }
         }
-        
-        // 关注/取消关注
-        function toggleFollow(btn) {
-            if (btn.classList.contains('following')) {
-                btn.classList.remove('following');
-                btn.textContent = '关注';
+
+        function openDropdown(btn) {
+            const menu = document.getElementById('ownerDropdownMenu');
+            
+            // 先关闭其他可能打开的菜单
+            document.querySelectorAll('.dropdown-options').forEach(m => {
+                if (m !== menu) m.classList.remove('is-visible');
+            });
+
+            menu.classList.toggle('is-visible');
+
+            // 点击外部关闭
+            setTimeout(() => {
+                document.addEventListener('click', function handler(e) {
+                    if (!btn.contains(e.target) && !menu.contains(e.target)) {
+                        menu.classList.remove('is-visible');
+                        document.removeEventListener('click', handler);
+                    }
+                });
+            }, 0);
+        }
+
+        function showDeleteConfirm() {
+            // 关闭下拉菜单
+            document.querySelectorAll('.dropdown-options').forEach(m => m.classList.remove('is-visible'));
+            // 显示弹窗
+            document.getElementById('deleteModalEl').classList.add('is-open');
+        }
+
+        function hideDeleteModal() {
+            document.getElementById('deleteModalEl').classList.remove('is-open');
+        }
+
+        async function executeDeletePost() {
+            try {
+                const res = await fetch(`/community/discussions/${discussionId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    hideDeleteModal();
+                    showToastMsg('🗑️ 帖子已删除', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/community/';
+                    }, 1200);
+                } else {
+                    showToastMsg(data.error || '删除失败', 'error');
+                    hideDeleteModal();
+                }
+            } catch (err) {
+                showToastMsg('网络错误', 'error');
+                hideDeleteModal();
+            }
+        }
+
+        // 显示删除评论确认弹窗
+        function showDeleteCommentModal(commentId, authorName) {
+            currentDeleteCommentId = commentId;
+            document.getElementById('deleteCommentMessage').innerHTML =
+                `确定要删除 <strong>${escapeHtml(authorName)}</strong> 的这条评论吗？<br><br>删除后<strong style="color:#d63031;">无法恢复</strong>。`;
+            document.getElementById('deleteCommentModalEl').classList.add('is-open');
+        }
+
+        // 隐藏删除评论弹窗
+        function hideDeleteCommentModal() {
+            document.getElementById('deleteCommentModalEl').classList.remove('is-open');
+            currentDeleteCommentId = null;
+        }
+
+        // 执行删除评论
+        async function executeDeleteComment() {
+            if (!currentDeleteCommentId) return;
+
+            try {
+                const res = await fetch(`/community/replies/${currentDeleteCommentId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    hideDeleteCommentModal();
+                    showToastMsg('🗑️ 评论已删除', 'success');
+                    // 重新加载评论和帖子数据
+                    loadCommentsData();
+                    loadPostData();
+                } else {
+                    showToastMsg(data.error || '删除失败', 'error');
+                    hideDeleteCommentModal();
+                }
+            } catch (err) {
+                showToastMsg('网络错误', 'error');
+                hideDeleteCommentModal();
+            }
+        }
+
+        function toggleFollowBtn(btn) {
+            if (btn.textContent.includes('已关注')) {
+                btn.textContent = '+ 关注';
+                btn.classList.remove('is-following');
             } else {
-                btn.classList.add('following');
-                btn.textContent = '已关注';
+                btn.textContent = '✓ 已关注';
+                btn.classList.add('is-following');
             }
         }
-        
-        // 查看图片
-        function viewImage(url) {
-            window.open(url, '_blank');
+
+        function handleShare() {
+            if (navigator.share) {
+                navigator.share({
+                    title: document.title,
+                    url: window.location.href
+                }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    showToastMsg('链接已复制到剪贴板 ✅', 'success');
+                }).catch(() => {
+                    showToastMsg('复制失败', 'error');
+                });
+            }
         }
-        
-        // 格式化时间
-        function formatTime(timeStr) {
+
+        function showErrorMessage(msg) {
+            document.getElementById('postContentArea').innerHTML = `
+                <div class="loading-indicator">
+                    <i class="fas fa-exclamation-triangle" style="color:#d63031;font-size:42px;"></i>
+                    <p style="margin-top:16px;color:#d63031;font-size:15px;">${msg}</p>
+                </div>
+            `;
+        }
+
+        function formatTimeAgo(timeStr) {
             if (!timeStr) return '未知';
             const date = new Date(timeStr);
             const now = new Date();
             const diff = now - date;
-            
-            const minutes = Math.floor(diff / 60000);
-            const hours = Math.floor(diff / 3600000);
+
+            const mins = Math.floor(diff / 60000);
+            const hrs = Math.floor(diff / 3600000);
             const days = Math.floor(diff / 86400000);
-            
-            if (minutes < 1) return '刚刚';
-            if (minutes < 60) return `${minutes}分钟前`;
-            if (hours < 24) return `${hours}小时前`;
+
+            if (mins < 1) return '刚刚';
+            if (mins < 60) return `${mins}分钟前`;
+            if (hrs < 24) return `${hrs}小时前`;
             if (days < 30) return `${days}天前`;
-            
+
             return date.toLocaleDateString('zh-CN');
         }
-        
-        // HTML转义
+
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-        
-        // 回车发送评论
-        document.getElementById('commentInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                submitComment();
-            }
+
+        function showToastMsg(message, type = 'info') {
+            const toast = document.getElementById('toastEl');
+            toast.textContent = message;
+            toast.className = `toast-msg type-${type} is-showing`;
+
+            setTimeout(() => {
+                toast.classList.remove('is-showing');
+            }, 3000);
+        }
+
+        // 点击遮罩关闭弹窗
+        document.getElementById('deleteModalEl').addEventListener('click', function(e) {
+            if (e.target === this) hideDeleteModal();
+        });
+
+        // 点击遮罩关闭评论删除弹窗
+        document.getElementById('deleteCommentModalEl').addEventListener('click', function(e) {
+            if (e.target === this) hideDeleteCommentModal();
         });
     </script>
 </body>

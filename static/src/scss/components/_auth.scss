@@ -1,0 +1,403 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ============================================
+// 认证页面组件 (Auth Components)
+// 登录/注册页面 - 双列布局 + 品牌展示
+// ============================================
+
+// 认证页面容器
+.auth-page {
+  min-height: 100vh;
+  @include flex-center;
+  padding: $spacing-lg;
+  background: $primary-gradient;
+}
+
+// 双列布局容器
+.auth-container {
+  display: flex;
+  max-width: 1000px;
+  width: 100%;
+  background: $bg-white;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-xl;
+  overflow: hidden;
+  animation: authFadeInUp 0.6s ease;
+
+  &--register {
+    max-width: 1100px;
+
+    .auth-right {
+      flex: 1.2;
+      padding: 50px;
+      overflow-y: auto;
+      max-height: 90vh;
+    }
+  }
+}
+
+// 左侧品牌展示区
+.auth-left {
+  flex: 1;
+  background: $primary-gradient;
+  padding: 60px 50px;
+  @include flex-column;
+  justify-content: center;
+  color: $text-white;
+  position: relative;
+  overflow: hidden;
+
+  // 背景旋转动画
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: authRotate 20s linear infinite;
+  }
+}
+
+.auth-left-content {
+  position: relative;
+  z-index: 1;
+
+  h1 {
+    font-size: 42px;
+    margin-bottom: $spacing-lg;
+    font-weight: $font-weight-bold;
+  }
+
+  p {
+    font-size: $font-size-lg;
+    line-height: 1.8;
+    opacity: 0.95;
+    margin-bottom: $spacing-xl;
+  }
+}
+
+// 特性列表 / 好处列表
+.auth-features,
+.auth-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.feature-item,
+.benefit-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  font-size: $font-size-md;
+
+  i {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: $radius-full;
+    @include flex-center;
+    font-size: $font-size-lg;
+  }
+}
+
+// 右侧表单区
+.auth-right {
+  flex: 1;
+  padding: 60px 50px;
+  @include flex-column;
+  justify-content: center;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: $spacing-xl;
+
+  h2 {
+    font-size: 32px;
+    color: $text-primary;
+    margin-bottom: $spacing-sm;
+    font-weight: $font-weight-bold;
+  }
+
+  p {
+    color: $text-secondary;
+    font-size: $font-size-md;
+  }
+}
+
+// 认证表单
+.login-form,
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.register-form {
+  gap: 18px;
+}
+
+// 表单行（用于并排字段）
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+// 表单组
+.form-group {
+  position: relative;
+  margin-bottom: 0;
+
+  label {
+    display: block;
+    font-size: $font-size-sm;
+    color: $text-primary;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $spacing-sm;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 14px 15px 14px 45px;
+    border: 2px solid $border-color;
+    border-radius: $radius-md;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: $bg-light;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      background: $bg-white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+  }
+
+  select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2395a5a6' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    padding-right: 40px;
+  }
+}
+
+// 输入框图标包装器
+.input-wrapper {
+  position: relative;
+
+  i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $text-muted;
+    font-size: 18px;
+  }
+
+  input {
+    padding-left: 45px;
+  }
+}
+
+// 表单选项（记住我 + 忘记密码）
+.form-options {
+  @include flex-between;
+  font-size: $font-size-sm;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  cursor: pointer;
+  color: $text-secondary;
+
+  input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: $primary-color;
+  }
+}
+
+.forgot-password {
+  color: $primary-color;
+  text-decoration: none;
+  font-weight: $font-weight-semibold;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: $secondary-color;
+  }
+}
+
+// 认证按钮
+.login-btn,
+.register-btn {
+  @include button-primary;
+  padding: 16px;
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  margin-top: $spacing-sm;
+}
+
+// 分割线
+.divider {
+  display: flex;
+  align-items: center;
+  margin: $spacing-xl 0;
+  color: #bdc3c7;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $border-color;
+  }
+
+  span {
+    padding: 0 15px;
+    font-size: $font-size-sm;
+  }
+}
+
+// 社交登录/注册按钮
+.social-login,
+.social-register {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.social-btn {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid $border-color;
+  border-radius: $radius-md;
+  background: $bg-white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  @include flex-center;
+  gap: 10px;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+
+  &:hover {
+    border-color: $primary-color;
+    color: $primary-color;
+    background: #f8fFF;
+  }
+}
+
+// 注册链接 / 登录链接
+.register-link,
+.login-link {
+  text-align: center;
+  font-size: 15px;
+  color: $text-secondary;
+  margin-top: $spacing-xl;
+
+  a {
+    color: $primary-color;
+    text-decoration: none;
+    font-weight: $font-weight-bold;
+    transition: color $transition-fast;
+
+    &:hover {
+      color: $secondary-color;
+    }
+  }
+}
+
+// Flash消息（认证页面专用）
+.flash-messages {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: $z-toast + 9999;
+  max-width: 400px;
+}
+
+.flash-message {
+  padding: 15px 20px;
+  border-radius: $radius-md;
+  margin-bottom: 10px;
+  box-shadow: $shadow-lg;
+  animation: flashSlideIn 0.3s ease;
+  color: $text-white;
+  font-weight: $font-weight-medium;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &.success { background: $success-gradient; }
+  &.error   { background: $danger-gradient; }
+  &.warning { background: $warning-gradient; }
+}
+
+// 动画定义
+@keyframes authFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes authRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes flashSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// ============================================
+// 响应式适配
+// ============================================
+
+@include respond-below('md') {
+  .auth-container {
+    flex-direction: column;
+  }
+
+  .auth-left,
+  .auth-right {
+    padding: 40px 30px;
+  }
+
+  .auth-left h1 {
+    font-size: 32px;
+  }
+
+  .auth-header h2 {
+    font-size: 28px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-container--register .auth-right {
+    max-height: none;
+  }
+}

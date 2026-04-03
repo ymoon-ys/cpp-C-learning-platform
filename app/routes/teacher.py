@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
+from app.utils import get_greeting, get_week_day_chinese
 
 teacher_bp = Blueprint('teacher', __name__, url_prefix='/teacher')
 
@@ -26,7 +27,8 @@ def dashboard():
         'total_lessons': sum(len(db.find_all('lessons', {'chapter_id': chapter['id']})) for course in courses for chapter in db.find_all('chapters', {'course_id': course['id']}))
     }
     
-    return render_template('teacher/dashboard.html', courses=courses, stats=stats)
+    return render_template('teacher/dashboard.html', courses=courses, stats=stats, 
+                         greeting=get_greeting(), week_day=get_week_day_chinese())
 
 @teacher_bp.route('/courses/<int:course_id>')
 @login_required
@@ -53,8 +55,126 @@ def course_detail(course_id):
     
     # 获取课程资料
     materials = db.find_all('materials', {'course_id': course_id})
-    
+
     return render_template('teacher/course_detail.html', course=course, chapters=chapters, materials=materials)
+
+@teacher_bp.route('/courses/<int:course_id>/preview')
+@login_required
+def preview_as_student(course_id):
+    if current_user.role != 'teacher':
+        flash('您没有权限访问此页面', 'error')
+        return redirect(url_for('student.dashboard'))
+
+    from flask import current_app
+    db = current_app.db
+    course = db.find_by_id('courses', course_id)
+
+    if not course or int(course['teacher_id']) != current_user.id:
+        flash('课程不存在或您没有权限操作', 'error')
+        return redirect(url_for('teacher.dashboard'))
+
+    chapters = db.find_all('chapters', {'course_id': course_id})
+    chapters.sort(key=lambda x: int(x.get('order_index', 0)))
+
+    for chapter in chapters:
+        chapter['lessons'] = db.find_all('lessons', {'chapter_id': chapter['id']})
+        chapter['lessons'].sort(key=lambda x: int(x.get('order_index', 0)))
+
+        for lesson in chapter['lessons']:
+            progress = db.find_by_field('learning_progress', 'user_id', current_user.id)
+            progress = [p for p in progress if int(p.get('lesson_id', 0)) == lesson['id']]
+            lesson['completed'] = len(progress) > 0 and progress[0].get('status') == 'completed'
+
+    materials = db.find_all('materials', {'course_id': course_id})
+    discussions = db.find_all('discussions', {'course_id': course_id})
+    reviews = db.find_all('reviews', {'course_id': course_id})
+
+    total_lessons = sum(len(chapter['lessons']) for chapter in chapters)
+    completed_lessons = sum(len([l for l in chapter['lessons'] if l.get('completed')]) for chapter in chapters)
+
+    return render_template('student/course_detail.html',
+                         course=course,
+                         chapters=chapters,
+                         materials=materials,
+                         discussions=discussions,
+                         reviews=reviews,
+                         total_lessons=total_lessons,
+                         completed_lessons=completed_lessons,
+                         is_preview_mode=True)
+
+@teacher_bp.route('/lessons/<int:lesson_id>/preview')
+@login_required
+def preview_lesson_as_student(lesson_id):
+    if current_user.role != 'teacher':
+        flash('您没有权限访问此页面', 'error')
+        return redirect(url_for('student.dashboard'))
+
+    from flask import current_app
+    db = current_app.db
+    lesson = db.find_by_id('lessons', lesson_id)
+
+    if not lesson:
+        flash('小节不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
+
+    chapter = db.find_by_id('chapters', lesson['chapter_id'])
+    if not chapter:
+        flash('章节不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
+
+    course = db.find_by_id('courses', chapter['course_id'])
+    if not course or int(course['teacher_id']) != current_user.id:
+        flash('课程不存在或您没有权限操作', 'error')
+        return redirect(url_for('teacher.dashboard'))
+
+    chapters = db.find_all('chapters', {'course_id': course['id']})
+    chapters.sort(key=lambda x: int(x.get('order_index', 0)))
+
+    for c in chapters:
+        c['lessons'] = db.find_all('lessons', {'chapter_id': c['id']})
+        c['lessons'].sort(key=lambda x: int(x.get('order_index', 0)))
+
+        for l in c['lessons']:
+            progress = db.find_by_field('learning_progress', 'user_id', current_user.id)
+            progress = [p for p in progress if int(p.get('lesson_id', 0)) == l['id']]
+            l['completed'] = len(progress) > 0 and progress[0].get('status') == 'completed'
+
+    discussions = db.find_all('discussions', {'lesson_id': lesson_id})
+
+    total_lessons = sum(len(c['lessons']) for c in chapters)
+    completed_lessons = sum(len([l for l in c['lessons'] if l.get('completed')]) for c in chapters)
+
+    all_lessons = []
+    for c in chapters:
+        all_lessons.extend(c['lessons'])
+
+    all_lessons.sort(key=lambda x: int(x.get('order_index', 0)))
+
+    prev_lesson = None
+    next_lesson = None
+
+    current_index = -1
+    for i, l in enumerate(all_lessons):
+        if l['id'] == lesson['id']:
+            current_index = i
+            break
+
+    if current_index > 0:
+        prev_lesson = all_lessons[current_index - 1]
+    if current_index < len(all_lessons) - 1:
+        next_lesson = all_lessons[current_index + 1]
+
+    return render_template('student/lesson_detail.html',
+                         lesson=lesson,
+                         course=course,
+                         chapter=chapter,
+                         chapters=chapters,
+                         discussions=discussions,
+                         total_lessons=total_lessons,
+                         completed_lessons=completed_lessons,
+                         prev_lesson=prev_lesson,
+                         next_lesson=next_lesson,
+                         is_preview_mode=True)
 
 @teacher_bp.route('/courses/<int:course_id>/edit')
 @login_required
@@ -102,26 +222,46 @@ def save_lesson_content(lesson_id):
     if current_user.role != 'teacher':
         return {'success': False, 'error': '权限不足'}, 403
     
-    from flask import current_app, jsonify
+    from flask import current_app, jsonify, request
     db = current_app.db
     lesson = db.find_by_id('lessons', lesson_id)
     
     if not lesson:
         return jsonify({'success': False, 'error': '小节不存在'})
     
-    title = request.form.get('title', lesson.get('title'))
-    description = request.form.get('description', lesson.get('description', ''))
-    content = request.form.get('content', lesson.get('content', ''))
+    # 支持JSON和FormData两种格式
+    if request.is_json:
+        data = request.get_json()
+        title = data.get('title', lesson.get('title'))
+        description = data.get('description', lesson.get('description', ''))
+        content = data.get('content', lesson.get('content', ''))
+        media_files = data.get('media_files', '[]')
+    else:
+        title = request.form.get('title', lesson.get('title'))
+        description = request.form.get('description', lesson.get('description', ''))
+        content = request.form.get('content', lesson.get('content', ''))
+        media_files = request.form.get('media_files', '[]')
+    
+    print(f'[DEBUG] 保存小节 {lesson_id}')
+    print(f'[DEBUG] 标题: {title}')
+    print(f'[DEBUG] 内容长度: {len(content) if content else 0}')
+    print(f'[DEBUG] 多媒体文件数: {len(media_files) if media_files else 0}')
     
     lesson_data = {
         'title': title,
         'description': description,
-        'content': content
+        'content': content,
+        'media_files': media_files
     }
     
     success = db.update('lessons', lesson_id, lesson_data)
     
-    return jsonify({'success': success})
+    print(f'[DEBUG] 更新结果: {success}')
+    
+    if success:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': '数据库更新失败'})
 
 @teacher_bp.route('/lessons/<int:lesson_id>/update-title', methods=['POST'])
 @login_required
@@ -237,6 +377,73 @@ def upload_document():
     url = f"/uploads/{folder}/{filename}"
     return jsonify({'success': True, 'url': url, 'filename': filename})
 
+@teacher_bp.route('/upload-file', methods=['POST'])
+@login_required
+def upload_file():
+    if current_user.role != 'teacher':
+        return jsonify({'success': False, 'error': '权限不足'}), 403
+    
+    from flask import current_app, jsonify
+    import os
+    
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': '没有上传文件'})
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': '没有选择文件'})
+    
+    filename = secure_filename(file.filename)
+    if not filename:
+        return jsonify({'success': False, 'error': '文件名包含非法字符'})
+    
+    file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    
+    image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
+    video_extensions = ['mp4', 'webm', 'ogg', 'avi', 'mov']
+    pdf_extensions = ['pdf']
+    document_extensions = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md']
+    
+    if file_ext in image_extensions:
+        folder = 'images'
+        file_type = 'image'
+    elif file_ext in video_extensions:
+        folder = 'videos'
+        file_type = 'video'
+    elif file_ext in pdf_extensions:
+        folder = 'documents'
+        file_type = 'pdf'
+    elif file_ext in document_extensions:
+        folder = 'documents'
+        file_type = 'document'
+    else:
+        folder = 'documents'
+        file_type = 'other'
+    
+    max_size = 50 * 1024 * 1024
+    file_content = file.read()
+    if len(file_content) > max_size:
+        return jsonify({'success': False, 'error': '文件大小超过限制(50MB)'})
+    
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    unique_filename = f"{timestamp}_{filename}"
+    
+    save_path = os.path.join(current_app.config['UPLOAD_FOLDER'], folder)
+    os.makedirs(save_path, exist_ok=True)
+    
+    with open(os.path.join(save_path, unique_filename), 'wb') as f:
+        f.write(file_content)
+    
+    url = f"/uploads/{folder}/{unique_filename}"
+    
+    return jsonify({
+        'success': True,
+        'url': url,
+        'filename': filename,
+        'file_type': file_type,
+        'message': '文件上传成功'
+    })
+
 @teacher_bp.route('/courses/create', methods=['GET', 'POST'])
 @login_required
 def create_course():
@@ -251,6 +458,8 @@ def create_course():
         title = request.form.get('title')
         description = request.form.get('description')
         category = request.form.get('category', '')
+        duration = request.form.get('duration', '')
+        difficulty = request.form.get('difficulty', '')
         cover = request.files.get('cover_image')
         
         cover_path = ''
@@ -272,6 +481,9 @@ def create_course():
         course_data = {
             'title': title,
             'description': description,
+            'category': category,
+            'duration': duration,
+            'difficulty': difficulty,
             'teacher_id': current_user.id,
             'cover': cover_path
         }
@@ -281,6 +493,41 @@ def create_course():
         return redirect(url_for('teacher.dashboard'))
     
     return render_template('teacher/create_course.html')
+
+@teacher_bp.route('/courses/<int:course_id>/delete', methods=['POST'])
+@login_required
+def delete_course(course_id):
+    if current_user.role != 'teacher':
+        flash('您没有权限执行此操作', 'error')
+        return redirect(url_for('student.dashboard'))
+    
+    from flask import current_app
+    db = current_app.db
+    course = db.find_by_id('courses', course_id)
+    
+    if not course or int(course['teacher_id']) != current_user.id:
+        flash('课程不存在或您没有权限操作', 'error')
+        return redirect(url_for('teacher.dashboard'))
+    
+    # 删除所有相关章节
+    chapters = db.find_all('chapters', {'course_id': course_id})
+    for chapter in chapters:
+        # 删除章节下的所有小节
+        lessons = db.find_all('lessons', {'chapter_id': chapter['id']})
+        for lesson in lessons:
+            db.delete('lessons', lesson['id'])
+        db.delete('chapters', chapter['id'])
+    
+    # 删除所有相关资料
+    materials = db.find_all('materials', {'course_id': course_id})
+    for material in materials:
+        db.delete('materials', material['id'])
+    
+    # 删除课程本身
+    db.delete('courses', course_id)
+    
+    flash('课程删除成功', 'success')
+    return redirect(url_for('teacher.dashboard'))
 
 @teacher_bp.route('/courses/<int:course_id>/chapters/create', methods=['POST'])
 @login_required
@@ -587,25 +834,6 @@ def unpublish_course(course_id):
     
     db.update('courses', course_id, {'status': 'draft'})
     flash('课程已取消发布', 'success')
-    return redirect(url_for('teacher.dashboard'))
-
-@teacher_bp.route('/courses/<int:course_id>/delete', methods=['POST'])
-@login_required
-def delete_course(course_id):
-    if current_user.role != 'teacher':
-        flash('您没有权限执行此操作', 'error')
-        return redirect(url_for('student.dashboard'))
-    
-    from flask import current_app
-    db = current_app.db
-    course = db.find_by_id('courses', course_id)
-    
-    if not course or int(course['teacher_id']) != current_user.id:
-        flash('课程不存在或您没有权限操作', 'error')
-        return redirect(url_for('teacher.dashboard'))
-    
-    db.delete('courses', course_id)
-    flash('课程已删除', 'success')
     return redirect(url_for('teacher.dashboard'))
 
 @teacher_bp.route('/assignments')

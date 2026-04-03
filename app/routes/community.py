@@ -8,6 +8,7 @@
 from flask import Blueprint, jsonify, request, render_template, current_app
 from flask_login import login_required, current_user
 from datetime import datetime
+from app.utils import get_consecutive_learning_days
 import os
 import json
 
@@ -161,7 +162,9 @@ def get_discussion_detail(discussion_id):
             'like_count': d.get('like_count', 0),
             'is_liked': is_liked,
             'created_at': d.get('created_at'),
-            'user': user_info
+            'user': user_info,
+            'is_owner': current_user.is_authenticated and current_user.id == d.get('user_id'),
+            'current_user_id': current_user.id if current_user.is_authenticated else None
         }
         
         # 获取评论（抖音风格 - 嵌套回复）
@@ -207,6 +210,7 @@ def build_reply_tree(discussion_id):
             'created_at': r.get('created_at'),
             'user': user_info,
             'parent_id': r.get('parent_id'),
+            'is_comment_owner': current_user.is_authenticated and current_user.id == r.get('user_id'),
             'children': []
         }
         reply_dict[r.get('id')] = reply_obj
@@ -855,7 +859,7 @@ def community_page():
     return render_template('community.html',
                           greeting=greeting,
                           week_day=week_day,
-                          consecutive_days=8,
+                          consecutive_days=get_consecutive_learning_days(current_user),
                           user_role=current_user.role)
 
 
@@ -877,7 +881,7 @@ def post_detail_page(discussion_id):
                           discussion_id=discussion_id,
                           greeting=greeting,
                           week_day=week_day,
-                          consecutive_days=8,
+                          consecutive_days=get_consecutive_learning_days(current_user),
                           user_role=current_user.role)
 
 

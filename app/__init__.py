@@ -62,8 +62,9 @@ def create_app(config_class=Config):
     
     Config.init_app(app)
     
-    from app.utils import ensure_url_path
+    from app.utils import ensure_url_path, from_json
     app.add_template_filter(ensure_url_path, 'ensure_url_path')
+    app.add_template_filter(from_json, 'from_json')
     
     @app.errorhandler(BusinessException)
     def handle_business_exception(error):
@@ -125,6 +126,7 @@ def create_app(config_class=Config):
             return 'Invalid filename', 400
         import os
         
+        filename = filename.replace('\\', '/')
         if filename.startswith('uploads/'):
             filename = filename[8:]
         
@@ -138,36 +140,53 @@ def create_app(config_class=Config):
             print(f'Current user count: {user_count}')
             if user_count == -1:
                 print('[ERR] Failed to count users, skipping default user creation')
-            elif user_count == 0:
+            else:
                 from werkzeug.security import generate_password_hash
                 default_users = [
                     {
                         'username': 'admin',
                         'email': 'admin@example.com',
-                        'password_hash': generate_password_hash('admin123'),
+                        'password': 'admin123',
                         'role': 'admin',
                         'nickname': 'Admin'
                     },
                     {
                         'username': 'teacher',
                         'email': 'teacher@example.com',
-                        'password_hash': generate_password_hash('teacher123'),
+                        'password': 'teacher123',
                         'role': 'teacher',
                         'nickname': 'Teacher'
                     },
                     {
                         'username': 'student',
                         'email': 'student@example.com',
-                        'password_hash': generate_password_hash('student123'),
+                        'password': 'student123',
                         'role': 'student',
                         'nickname': 'Student'
                     }
                 ]
+                
+                created_count = 0
                 for user_data in default_users:
-                    db.insert('users', user_data)
-                print('[OK] Default users created successfully')
-            else:
-                print('[OK] Users already exist, skipping default user creation')
+                    existing_users = db.find_by_field('users', 'username', user_data['username'])
+                    if not existing_users:
+                        user_data_to_insert = {
+                            'username': user_data['username'],
+                            'email': user_data['email'],
+                            'password_hash': generate_password_hash(user_data['password']),
+                            'role': user_data['role'],
+                            'nickname': user_data['nickname']
+                        }
+                        db.insert('users', user_data_to_insert)
+                        created_count += 1
+                        print(f'[OK] Created default user: {user_data["username"]}')
+                    else:
+                        print(f'[INFO] User {user_data["username"]} already exists, skipping')
+                
+                if created_count > 0:
+                    print(f'[OK] Created {created_count} default users successfully')
+                else:
+                    print('[OK] All default users already exist')
     except Exception as e:
         print(f'[ERR] Failed to initialize default users: {e}')
     

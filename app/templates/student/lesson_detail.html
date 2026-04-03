@@ -1,728 +1,1402 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ lesson.title }} - C++学习平台</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f7fa;
-            height: 100vh;
-            overflow: hidden;
-        }
-        
-        .learning-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-        
-        .top-header {
-            background: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            padding: 0 24px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-            z-index: 100;
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .logo {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1a1a1a;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .course-title {
-            font-size: 15px;
-            color: #666;
-            padding-left: 16px;
-            border-left: 2px solid #e0e0e0;
-        }
-        
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .back-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            background: #f5f7fa;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            color: #333;
-            transition: all 0.2s;
-        }
-        
-        .back-btn:hover {
-            background: #e8eaed;
-        }
-        
-        .main-content {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-        
+{% extends "base.html" %}
+
+{% block title %}{{ lesson.title }} - C++学习平台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .learning-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+    }
+    
+    .top-bar {
+        background: white;
+        padding: 15px 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+        z-index: 100;
+    }
+    
+    .top-bar-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    
+    .top-bar-logo {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .top-bar-logo i {
+        color: #667eea;
+    }
+    
+    .course-name {
+        font-size: 15px;
+        color: #7f8c8d;
+        padding-left: 16px;
+        border-left: 2px solid #e9ecef;
+    }
+    
+    .top-bar-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .back-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: #f8f9fa;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #2c3e50;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+    
+    .back-button:hover {
+        background: #e9ecef;
+        color: #667eea;
+    }
+    
+    .main-wrapper {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        background: #f8f9fa;
+    }
+    
+    .sidebar {
+        width: 320px;
+        background: white;
+        border-right: 1px solid #e9ecef;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+    }
+    
+    .sidebar-tabs {
+        display: flex;
+        border-bottom: 1px solid #e9ecef;
+        padding: 0 10px;
+    }
+    
+    .sidebar-tab {
+        flex: 1;
+        padding: 12px 8px;
+        text-align: center;
+        font-size: 13px;
+        color: #7f8c8d;
+        cursor: pointer;
+        border: none;
+        background: none;
+        transition: all 0.3s;
+        position: relative;
+        font-weight: 500;
+    }
+    
+    .sidebar-tab:hover {
+        color: #667eea;
+    }
+    
+    .sidebar-tab.active {
+        color: #667eea;
+        font-weight: 700;
+    }
+    
+    .sidebar-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 3px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        border-radius: 3px 3px 0 0;
+    }
+    
+    .sidebar-search {
+        padding: 16px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .search-box {
+        position: relative;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #95a5a6;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 12px 14px 12px 40px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.3s;
+        background: #fafafa;
+    }
+    
+    .search-input:focus {
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+    
+    .sidebar-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px;
+    }
+    
+    .chapter-group {
+        margin-bottom: 8px;
+    }
+    
+    .chapter-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 14px;
+        cursor: pointer;
+        border-radius: 10px;
+        transition: all 0.3s;
+        user-select: none;
+    }
+    
+    .chapter-header:hover {
+        background: #f8f9fa;
+    }
+    
+    .chapter-toggle {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        color: #95a5a6;
+        transition: transform 0.3s;
+    }
+    
+    .chapter-group.collapsed .chapter-toggle {
+        transform: rotate(-90deg);
+    }
+    
+    .chapter-title {
+        flex: 1;
+        font-size: 14px;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .chapter-lessons {
+        margin-top: 4px;
+    }
+    
+    .chapter-group.collapsed .chapter-lessons {
+        display: none;
+    }
+    
+    .lesson-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 14px 10px 48px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-bottom: 4px;
+    }
+    
+    .lesson-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .lesson-item.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .lesson-status {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .lesson-status i {
+        font-size: 16px;
+    }
+    
+    .lesson-item:not(.active) .lesson-status.completed {
+        color: #2ecc71;
+    }
+    
+    .lesson-item:not(.active) .lesson-status.pending {
+        color: #f39c12;
+    }
+    
+    .lesson-item.active .lesson-status {
+        color: white;
+    }
+    
+    .lesson-name {
+        flex: 1;
+        font-size: 14px;
+    }
+    
+    .lesson-item:not(.active) .lesson-name {
+        color: #34495e;
+    }
+    
+    .content-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #f8f9fa;
+    }
+    
+    .content-header {
+        padding: 24px 40px;
+        border-bottom: 1px solid #e9ecef;
+        background: white;
+    }
+    
+    .lesson-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
+    .lesson-title-block {
+        flex: 1;
+    }
+    
+    .breadcrumb {
+        font-size: 14px;
+        color: #95a5a6;
+        margin-bottom: 12px;
+    }
+    
+    .breadcrumb a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+    
+    .lesson-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .content-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 40px;
+    }
+    
+    .content-card {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .content-inner {
+        padding: 48px;
+    }
+    
+    .document-content {
+        font-size: 16px;
+        line-height: 1.8;
+        color: #34495e;
+    }
+    
+    .document-content h1,
+    .document-content h2,
+    .document-content h3,
+    .document-content h4 {
+        margin-top: 28px;
+        margin-bottom: 14px;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .document-content p {
+        margin-bottom: 18px;
+    }
+    
+    .document-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 12px;
+        margin: 20px 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .document-content iframe {
+        width: 100%;
+        border: none;
+        border-radius: 8px;
+        margin: 20px 0;
+    }
+    
+    .document-content video {
+        max-width: 100%;
+        border-radius: 12px;
+        margin: 20px 0;
+    }
+    
+    .video-container {
+        position: relative;
+        padding-top: 56.25%;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+    
+    .video-container video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .image-container {
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .image-container img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .pdf-container {
+        width: 100%;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin: 24px 0;
+    }
+    
+    .pdf-header {
+        padding: 14px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        font-size: 15px;
+    }
+    
+    .pdf-viewer {
+        background: #f5f5f5;
+        padding: 20px;
+        min-height: 600px;
+    }
+    
+    .pdf-footer {
+        padding: 12px 20px;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+    
+    .pdf-footer a {
+        color: #667eea;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .pdf-footer a:hover {
+        color: #764ba2;
+    }
+    
+    .document-container {
+        background: #fafafa;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        border: 2px dashed #e9ecef;
+    }
+    
+    .document-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+    
+    .document-icon i {
+        font-size: 36px;
+        color: white;
+    }
+    
+    .document-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+    
+    .document-desc {
+        color: #7f8c8d;
+        margin-bottom: 24px;
+    }
+    
+    .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 28px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+    
+    .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .empty-content {
+        padding: 80px 40px;
+        text-align: center;
+        color: #95a5a6;
+    }
+    
+    .empty-content i {
+        font-size: 72px;
+        margin-bottom: 24px;
+        opacity: 0.3;
+    }
+    
+    .empty-content h3 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #7f8c8d;
+        margin-bottom: 10px;
+    }
+    
+    .empty-content p {
+        font-size: 15px;
+        color: #95a5a6;
+    }
+    
+    .content-footer {
+        padding: 24px 40px;
+        border-top: 1px solid #e9ecef;
+        background: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    
+    .nav-button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 24px;
+        border: 2px solid #e9ecef;
+        background: white;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #34495e;
+        transition: all 0.3s;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .nav-button:hover:not(:disabled) {
+        border-color: #667eea;
+        color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .nav-button.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+    
+    .nav-button.primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .nav-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .progress-section {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .complete-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 28px;
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .complete-btn:hover:not(.completed) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(46, 204, 113, 0.4);
+    }
+    
+    .complete-btn.completed {
+        background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        cursor: default;
+    }
+    
+    .progress-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+    }
+    
+    .progress-text {
+        font-size: 13px;
+        color: #7f8c8d;
+        font-weight: 500;
+    }
+    
+    .progress-bar-wrap {
+        width: 140px;
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px;
+        transition: width 0.5s;
+    }
+    
+    @media (max-width: 1200px) {
         .sidebar {
-            width: 300px;
-            background: #fff;
-            border-right: 1px solid #e8eaed;
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
+            width: 280px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .top-bar {
+            padding: 12px 20px;
         }
         
-        .sidebar-tabs {
-            display: flex;
-            border-bottom: 1px solid #e8eaed;
-            padding: 0 8px;
-        }
-        
-        .sidebar-tab {
-            flex: 1;
-            padding: 12px 8px;
-            text-align: center;
-            font-size: 13px;
-            color: #666;
-            cursor: pointer;
-            border: none;
-            background: none;
-            transition: all 0.2s;
-            position: relative;
-        }
-        
-        .sidebar-tab:hover {
-            color: #333;
-        }
-        
-        .sidebar-tab.active {
-            color: #667eea;
-            font-weight: 600;
-        }
-        
-        .sidebar-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 2px;
-            background: #667eea;
-            border-radius: 2px 2px 0 0;
-        }
-        
-        .sidebar-search {
-            padding: 16px;
-            border-bottom: 1px solid #e8eaed;
-        }
-        
-        .search-input {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid #e8eaed;
-            border-radius: 8px;
-            font-size: 13px;
-            outline: none;
-            transition: all 0.2s;
-        }
-        
-        .search-input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .sidebar-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px 12px;
-        }
-        
-        .chapter-group {
-            margin-bottom: 8px;
-        }
-        
-        .chapter-header {
-            display: flex;
-            align-items: center;
-            padding: 10px 12px;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.2s;
-            user-select: none;
-        }
-        
-        .chapter-header:hover {
-            background: #f5f7fa;
-        }
-        
-        .chapter-toggle {
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 8px;
-            color: #999;
-            transition: transform 0.2s;
-        }
-        
-        .chapter-group.collapsed .chapter-toggle {
-            transform: rotate(-90deg);
-        }
-        
-        .chapter-title {
-            flex: 1;
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .chapter-lessons {
-            margin-top: 4px;
-        }
-        
-        .chapter-group.collapsed .chapter-lessons {
+        .course-name {
             display: none;
         }
         
-        .lesson-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px 8px 40px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 2px;
+        .sidebar {
+            position: fixed;
+            left: -100%;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transition: left 0.3s;
         }
         
-        .lesson-item:hover {
-            background: #f5f7fa;
-        }
-        
-        .lesson-item.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .lesson-status {
-            width: 18px;
-            height: 18px;
-            margin-right: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .lesson-status i {
-            font-size: 14px;
-        }
-        
-        .lesson-item:not(.active) .lesson-status.completed {
-            color: #28a745;
-        }
-        
-        .lesson-item:not(.active) .lesson-status.pending {
-            color: #ffc107;
-        }
-        
-        .lesson-item.active .lesson-status {
-            color: white;
-        }
-        
-        .lesson-name {
-            flex: 1;
-            font-size: 13px;
-        }
-        
-        .lesson-item:not(.active) .lesson-name {
-            color: #555;
-        }
-        
-        .content-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: #fff;
-        }
-        
-        .content-header {
-            padding: 20px 32px;
-            border-bottom: 1px solid #e8eaed;
-            background: #fff;
-        }
-        
-        .lesson-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1a1a1a;
-            margin-bottom: 8px;
-        }
-        
-        .lesson-breadcrumb {
-            font-size: 13px;
-            color: #999;
-        }
-        
-        .lesson-breadcrumb a {
-            color: #667eea;
-            text-decoration: none;
+        .sidebar.open {
+            left: 0;
         }
         
         .content-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 32px;
-            background: #f8f9fa;
-        }
-        
-        .content-wrapper {
-            max-width: 900px;
-            margin: 0 auto;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            overflow: hidden;
+            padding: 20px;
         }
         
         .content-inner {
-            padding: 40px;
-        }
-        
-        .document-content {
-            font-size: 16px;
-            line-height: 1.8;
-            color: #333;
-        }
-        
-        .document-content h1,
-        .document-content h2,
-        .document-content h3,
-        .document-content h4 {
-            margin-top: 24px;
-            margin-bottom: 12px;
-            font-weight: 600;
-            color: #1a1a1a;
-        }
-        
-        .document-content p {
-            margin-bottom: 16px;
-        }
-        
-        .document-content img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin: 16px 0;
-        }
-        
-        .video-container {
-            position: relative;
-            padding-top: 56.25%;
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        
-        .video-container video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .empty-content {
-            padding: 80px 40px;
-            text-align: center;
-            color: #999;
-        }
-        
-        .empty-content i {
-            font-size: 64px;
-            margin-bottom: 20px;
-            opacity: 0.3;
+            padding: 24px;
         }
         
         .content-footer {
-            padding: 20px 32px;
-            border-top: 1px solid #e8eaed;
-            background: #fff;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 16px 20px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
         
-        .nav-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border: 1px solid #e8eaed;
-            background: #fff;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            color: #333;
-            transition: all 0.2s;
+        .progress-section {
+            width: 100%;
+            justify-content: center;
         }
-        
-        .nav-btn:hover:not(:disabled) {
-            border-color: #667eea;
-            color: #667eea;
-        }
-        
-        .nav-btn.primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-        }
-        
-        .nav-btn.primary:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        
-        .nav-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .complete-section {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .complete-btn {
-            padding: 10px 24px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        
-        .complete-btn:hover {
-            background: #218838;
-            transform: translateY(-1px);
-        }
-        
-        .complete-btn.completed {
-            background: #6c757d;
-            cursor: default;
-        }
-        
-        .progress-info {
-            font-size: 13px;
-            color: #666;
-        }
-        
-        .progress-bar-wrap {
-            width: 120px;
-            height: 6px;
-            background: #e8eaed;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 3px;
-            transition: width 0.3s;
-        }
-        
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #d0d0d0;
-            border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #b0b0b0;
-        }
-    </style>
-</head>
-<body>
-    <div class="learning-container">
-        <header class="top-header">
-            <div class="header-left">
-                <div class="logo">
-                    <i class="fas fa-graduation-cap" style="color: #667eea;"></i>
-                    C++学习平台
-                </div>
-                <div class="course-title">{{ course.title }}</div>
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if is_preview_mode %}
+<div class="preview-banner" style="
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 20px;
+    text-align: center;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+">
+    <i class="fas fa-eye"></i> 学生视图预览模式 - 这是学生看到的本节内容效果
+    <a href="{{ url_for('teacher.course_edit', course_id=course.id) }}" style="
+        color: white;
+        margin-left: 20px;
+        text-decoration: underline;
+        font-size: 14px;
+    ">
+        <i class="fas fa-arrow-left"></i> 返回编辑器
+    </a>
+</div>
+{% endif %}
+
+<div class="learning-container">
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <div class="top-bar-logo">
+                <i class="fas fa-graduation-cap"></i>
+                C++学习平台
             </div>
-            <div class="header-right">
-                <a href="{{ url_for('student.course_detail', course_id=course.id) }}" class="back-btn">
-                    <i class="fas fa-arrow-left"></i>
-                    返回课程
-                </a>
-            </div>
-        </header>
-        
-        <div class="main-content">
-            <aside class="sidebar">
-                <div class="sidebar-tabs">
-                    <button class="sidebar-tab active" data-tab="catalog">
-                        <i class="fas fa-list"></i> 目录
-                    </button>
-                    <button class="sidebar-tab" data-tab="discussion">
-                        <i class="fas fa-comments"></i> 讨论
-                    </button>
-                    <button class="sidebar-tab" data-tab="notes">
-                        <i class="fas fa-sticky-note"></i> 笔记
-                    </button>
-                    <button class="sidebar-tab" data-tab="bookmark">
-                        <i class="fas fa-bookmark"></i> 标注
-                    </button>
-                </div>
-                
-                <div class="sidebar-search">
-                    <input type="text" class="search-input" placeholder="搜索小节..." id="searchInput">
-                </div>
-                
-                <div class="sidebar-content" id="catalogContent">
-                    {% for ch in chapters %}
-                    <div class="chapter-group {% if not loop.first %}collapsed{% endif %}" data-chapter-id="{{ ch.id }}">
-                        <div class="chapter-header" onclick="toggleChapter({{ ch.id }})">
-                            <div class="chapter-toggle">
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                            <div class="chapter-title">{{ ch.title }}</div>
-                        </div>
-                        <div class="chapter-lessons">
-                            {% for l in ch.lessons %}
-                            <div class="lesson-item {% if l.id == lesson.id %}active{% endif %}" 
-                                 onclick="location.href='{{ url_for('student.lesson_detail', lesson_id=l.id) }}'"
-                                 data-lesson-title="{{ l.title }}">
-                                <div class="lesson-status {% if l.completed %}completed{% else %}pending{% endif %}">
-                                    <i class="fas {% if l.completed %}fa-check-circle{% else %}fa-circle{% endif %}"></i>
-                                </div>
-                                <div class="lesson-name">{{ l.title }}</div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                
-                <div class="sidebar-content" id="discussionContent" style="display: none;">
-                    <div style="padding: 20px; text-align: center; color: #999;">
-                        <i class="fas fa-comments fa-3x mb-3" style="opacity: 0.3;"></i>
-                        <p>讨论功能开发中...</p>
-                    </div>
-                </div>
-                
-                <div class="sidebar-content" id="notesContent" style="display: none;">
-                    <div style="padding: 20px; text-align: center; color: #999;">
-                        <i class="fas fa-sticky-note fa-3x mb-3" style="opacity: 0.3;"></i>
-                        <p>笔记功能开发中...</p>
-                    </div>
-                </div>
-                
-                <div class="sidebar-content" id="bookmarkContent" style="display: none;">
-                    <div style="padding: 20px; text-align: center; color: #999;">
-                        <i class="fas fa-bookmark fa-3x mb-3" style="opacity: 0.3;"></i>
-                        <p>标注功能开发中...</p>
-                    </div>
-                </div>
-            </aside>
-            
-            <main class="content-area">
-                <div class="content-header">
-                    <div class="lesson-breadcrumb">
-                        <a href="{{ url_for('student.course_detail', course_id=course.id) }}">{{ course.title }}</a>
-                        <span> / </span>
-                        <span>{{ chapter.title }}</span>
-                    </div>
-                    <h1 class="lesson-title">{{ lesson.title }}</h1>
-                </div>
-                
-                <div class="content-body">
-                    <div class="content-wrapper">
-                        <div class="content-inner">
-                            {% if lesson.content %}
-                            <div class="document-content">
-                                {{ lesson.content|safe }}
-                            </div>
-                            {% elif lesson.content_path %}
-                                {% set content_src = lesson.content_path %}
-                                {% if content_src.startswith('uploads/') %}
-                                    {% set content_src = '/' + content_src %}
-                                {% elif not content_src.startswith('/') %}
-                                    {% set content_src = '/uploads/' + content_src %}
-                                {% endif %}
-                                {% if lesson.content_type == 'video' %}
-                                <div class="video-container">
-                                    <video controls>
-                                        <source src="{{ content_src }}" type="video/mp4">
-                                        您的浏览器不支持视频播放。
-                                    </video>
-                                </div>
-                                {% elif lesson.content_type == 'image' %}
-                                <div style="text-align: center;">
-                                    <img src="{{ content_src }}" 
-                                         class="img-fluid" alt="{{ lesson.title }}" style="max-width: 100%; border-radius: 8px;">
-                                </div>
-                                {% else %}
-                                <div class="empty-content">
-                                    <i class="fas fa-file-alt"></i>
-                                    <h3 style="margin-bottom: 8px;">{{ lesson.title }}</h3>
-                                    <p>文档内容预览</p>
-                                    <a href="{{ content_src }}" 
-                                       class="btn btn-primary mt-4" target="_blank">
-                                        <i class="fas fa-download"></i> 下载查看
-                                    </a>
-                                </div>
-                                {% endif %}
-                            {% else %}
-                            <div class="empty-content">
-                                <i class="fas fa-file-alt"></i>
-                                <h3>本小节暂无内容</h3>
-                                <p>敬请期待</p>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="content-footer">
-                    <div>
-                        {% if prev_lesson %}
-                        <a href="{{ url_for('student.lesson_detail', lesson_id=prev_lesson.id) }}" class="nav-btn">
-                            <i class="fas fa-chevron-left"></i>
-                            上一节
-                        </a>
-                        {% else %}
-                        <button class="nav-btn" disabled>
-                            <i class="fas fa-chevron-left"></i>
-                            上一节
-                        </button>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="complete-section">
-                        <div>
-                            <div class="progress-info">{{ completed_lessons }}/{{ total_lessons }} 已完成</div>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar" style="width: {{ (completed_lessons/total_lessons)*100 if total_lessons > 0 else 0 }}%"></div>
-                            </div>
-                        </div>
-                        {% if not lesson.completed %}
-                        <form method="POST" action="{{ url_for('student.complete_lesson', lesson_id=lesson.id) }}">
-                            <button type="submit" class="complete-btn">
-                                <i class="fas fa-check"></i> 标记完成
-                            </button>
-                        </form>
-                        {% else %}
-                        <button class="complete-btn completed">
-                            <i class="fas fa-check-circle"></i> 已完成
-                        </button>
-                        {% endif %}
-                    </div>
-                    
-                    <div>
-                        {% if next_lesson %}
-                        <a href="{{ url_for('student.lesson_detail', lesson_id=next_lesson.id) }}" class="nav-btn primary">
-                            下一节
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-                        {% else %}
-                        <button class="nav-btn" disabled>
-                            下一节
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        {% endif %}
-                    </div>
-                </div>
-            </main>
+            <div class="course-name">{{ course.title }}</div>
+        </div>
+        <div class="top-bar-right">
+            <a href="{{ url_for('student.course_detail', course_id=course.id) }}" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+                返回课程
+            </a>
         </div>
     </div>
     
-    <script>
-        function toggleChapter(chapterId) {
-            const group = document.querySelector(`.chapter-group[data-chapter-id="${chapterId}"]`);
-            if (group) {
-                group.classList.toggle('collapsed');
-            }
-        }
-        
-        document.querySelectorAll('.sidebar-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                
-                const tabName = this.dataset.tab;
-                document.querySelectorAll('.sidebar-content').forEach(content => {
-                    content.style.display = 'none';
-                });
-                document.getElementById(tabName + 'Content').style.display = 'block';
-            });
-        });
-        
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            document.querySelectorAll('.lesson-item').forEach(item => {
-                const title = item.dataset.lessonTitle.toLowerCase();
-                if (title.includes(searchTerm)) {
-                    item.style.display = 'flex';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
+    <div class="main-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-tabs">
+                <button class="sidebar-tab active" data-tab="catalog">
+                    <i class="fas fa-list"></i> 目录
+                </button>
+                <button class="sidebar-tab" data-tab="discussion">
+                    <i class="fas fa-comments"></i> 讨论
+                </button>
+                <button class="sidebar-tab" data-tab="notes">
+                    <i class="fas fa-sticky-note"></i> 笔记
+                </button>
+                <button class="sidebar-tab" data-tab="bookmark">
+                    <i class="fas fa-bookmark"></i> 标注
+                </button>
+            </div>
             
-            document.querySelectorAll('.chapter-group').forEach(group => {
-                const hasVisibleLessons = Array.from(group.querySelectorAll('.lesson-item')).some(
-                    item => item.style.display !== 'none'
-                );
-                group.style.display = hasVisibleLessons ? 'block' : 'none';
-                if (hasVisibleLessons) {
-                    group.classList.remove('collapsed');
-                }
-            });
+            <div class="sidebar-search">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="search-input" placeholder="搜索小节..." id="searchInput">
+                </div>
+            </div>
+            
+            <div class="sidebar-content" id="catalogContent">
+                {% for ch in chapters %}
+                <div class="chapter-group {% if not loop.first %}collapsed{% endif %}" data-chapter-id="{{ ch.id }}">
+                    <div class="chapter-header" onclick="toggleChapter({{ ch.id }})">
+                        <div class="chapter-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="chapter-title">{{ ch.title }}</div>
+                    </div>
+                    <div class="chapter-lessons">
+                        {% for l in ch.lessons %}
+                        <div class="lesson-item {% if l.id == lesson.id %}active{% endif %}" 
+                             onclick="location.href='{{ url_for('student.lesson_detail', lesson_id=l.id) }}'"
+                             data-lesson-title="{{ l.title }}">
+                            <div class="lesson-status {% if l.completed %}completed{% else %}pending{% endif %}">
+                                <i class="fas {% if l.completed %}fa-check-circle{% else %}fa-circle{% endif %}"></i>
+                            </div>
+                            <div class="lesson-name">{{ l.title }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="sidebar-content" id="discussionContent" style="display: none;">
+                <div class="discussion-container">
+                    <div class="discussion-form">
+                        <h4 style="margin-bottom: 15px; color: #2c3e50;">
+                            <i class="fas fa-plus-circle" style="color: #667eea;"></i> 发起讨论
+                        </h4>
+                        <form id="discussionForm" onsubmit="submitDiscussion(event)">
+                            <input type="text" name="title" placeholder="讨论标题..." required
+                                   style="width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 10px; font-size: 14px;">
+                            <textarea name="content" placeholder="分享你的想法或问题..." required
+                                      rows="3"
+                                      style="width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 10px; font-size: 14px; resize: vertical;"></textarea>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 10px; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; cursor: pointer; font-weight: 600;">
+                                <i class="fas fa-paper-plane"></i> 发布讨论
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="discussions-list" id="discussionsList" style="margin-top: 20px;">
+                        <div class="loading-text" style="text-align: center; color: #95a5a6; padding: 20px;">
+                            <i class="fas fa-spinner fa-spin"></i> 加载中...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-content" id="notesContent" style="display: none;">
+                <div class="notes-container">
+                    <div class="notes-header" style="margin-bottom: 15px;">
+                        <h4 style="color: #2c3e50; margin: 0;">
+                            <i class="fas fa-sticky-note" style="color: #f39c12;"></i> 我的笔记
+                        </h4>
+                        <p style="font-size: 13px; color: #7f8c8d; margin: 5px 0 0 0;">记录学习要点和个人理解</p>
+                    </div>
+                    <textarea id="notesEditor" placeholder="在这里记录你的学习笔记..."
+                              rows="15"
+                              style="width: 100%; padding: 15px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 14px; line-height: 1.6; resize: vertical; font-family: inherit;"></textarea>
+                    <div style="margin-top: 10px; display: flex; gap: 10px;">
+                        <button onclick="saveNotes()" class="btn btn-primary" style="flex: 1; padding: 10px; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; cursor: pointer; font-weight: 600;">
+                            <i class="fas fa-save"></i> 保存笔记
+                        </button>
+                    </div>
+                    <div id="notesStatus" style="margin-top: 10px; text-align: center; font-size: 13px;"></div>
+                </div>
+            </div>
+
+            <div class="sidebar-content" id="bookmarkContent" style="display: none;">
+                <div class="bookmarks-container">
+                    <div class="bookmarks-header" style="margin-bottom: 15px;">
+                        <h4 style="color: #2c3e50; margin: 0;">
+                            <i class="fas fa-bookmark" style="color: #e74c3c;"></i> 我的标注
+                        </h4>
+                        <p style="font-size: 13px; color: #7f8c8d; margin: 5px 0 0 0;">标记重点内容和疑问</p>
+                    </div>
+
+                    <form id="bookmarkForm" onsubmit="submitBookmark(event)" style="margin-bottom: 15px;">
+                        <textarea name="content" placeholder="输入标注内容..." required
+                                  rows="2"
+                                  style="width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 8px; font-size: 14px; resize: vertical;"></textarea>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <select name="color" style="padding: 6px 10px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 13px;">
+                                <option value="#667eea">🔵 蓝色</option>
+                                <option value="#e74c3c">🔴 红色</option>
+                                <option value="#27ae60">🟢 绿色</option>
+                                <option value="#f39c12">🟡 黄色</option>
+                                <option value="#9b59b6">🟣 紫色</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary" style="flex: 1; padding: 8px 12px; border-radius: 6px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; cursor: pointer; font-weight: 600; font-size: 13px;">
+                                <i class="fas fa-plus"></i> 添加
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="bookmarks-list" id="bookmarksList">
+                        <div class="loading-text" style="text-align: center; color: #95a5a6; padding: 20px;">
+                            <i class="fas fa-spinner fa-spin"></i> 加载中...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="content-area">
+            <div class="content-header">
+                <div class="lesson-header">
+                    <div class="lesson-title-block">
+                        <div class="breadcrumb">
+                            <a href="{{ url_for('student.course_detail', course_id=course.id) }}">{{ course.title }}</a>
+                            <span> / </span>
+                            <span>{{ chapter.title }}</span>
+                        </div>
+                        <h1 class="lesson-title">{{ lesson.title }}</h1>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-body">
+                <div class="content-card">
+                    <div class="content-inner">
+                        {% if lesson.content %}
+                        <div class="document-content">
+                            {{ lesson.content|safe }}
+                        </div>
+
+                        {% endif %}
+                        
+                        {# 显示多媒体文件（PDF、视频等） #}
+                        {% if lesson.media_files %}
+                        <div class="media-section" style="margin-top: 30px;">
+                            <h3 style="font-size: 18px; color: #2c3e50; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #667eea;">
+                                <i class="fas fa-paperclip"></i> 附件资料
+                            </h3>
+                            
+                            {% set media_list = lesson.media_files if lesson.media_files is string else (lesson.media_files | tojson if lesson.media_files else '[]') %}
+                            {% set files = media_list | from_json if media_list is string else media_list %}
+                            
+                            {% for file in files %}
+                            <div class="media-item">
+                                {% if file.type == 'pdf' %}
+                                <div class="pdf-container">
+                                    <div class="pdf-header">
+                                        <i class="fas fa-file-pdf"></i>
+                                        <span>{{ file.name }}</span>
+                                    </div>
+                                    <div class="pdf-viewer">
+                                        <object data="{{ file.url }}" 
+                                               type="application/pdf"
+                                               style="width: 100%; height: 600px; min-height: 600px;"
+                                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                        </object>
+                                        <div class="pdf-fallback" style="display: none; text-align: center; padding: 60px 40px;">
+                                            <div style="font-size: 64px; margin-bottom: 16px;">📄</div>
+                                            <h3 style="margin-bottom: 12px; color: #2c3e50;">PDF文档</h3>
+                                            <p style="color: #666; margin-bottom: 24px;">您的浏览器不支持直接预览PDF，请点击下方链接查看或下载</p>
+                                            <a href="{{ file.url }}" target="_blank" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
+                                                📥 查看或下载 PDF 文档
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="pdf-footer">
+                                        <a href="{{ file.url }}" target="_blank"><i class="fas fa-external-link-alt"></i> 在新窗口中打开</a>
+                                        <a href="{{ file.url }}" download><i class="fas fa-download"></i> 下载文件</a>
+                                    </div>
+                                </div>
+                                
+                                {% elif file.type == 'video' %}
+                                <div style="margin: 24px 0; background: black; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
+                                    <div style="padding: 14px 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                                        <i class="fas fa-video"></i> {{ file.name }}
+                                    </div>
+                                    <video controls style="width: 100%; max-height: 500px;">
+                                        <source src="{{ file.url }}" type="video/mp4">
+                                    </video>
+                                </div>
+                                
+                                {% elif file.type == 'image' %}
+                                <figure style="margin: 24px 0;">
+                                    <img src="{{ file.url }}" alt="{{ file.name }}" style="max-width: 100%; height: auto; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+                                    <figcaption style="text-align: center; color: #666; margin-top: 8px;">{{ file.name }}</figcaption>
+                                </figure>
+                                
+                                {% else %}
+                                <div style="margin: 24px 0; padding: 30px; background: #f8f9fa; border-radius: 12px; text-align: center;">
+                                    <i class="fas fa-file" style="font-size: 48px; color: #667eea;"></i>
+                                    <h3 style="color: #2c3e50; margin: 12px 0 8px;">{{ file.name }}</h3>
+                                    <a href="{{ file.url }}" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
+                                        📥 下载文件
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if lesson.content_path %}
+                            {% set content_src = lesson.content_path %}
+                            {% if content_src.startswith('uploads/') %}
+                                {% set content_src = '/' + content_src %}
+                            {% elif not content_src.startswith('/') %}
+                                {% set content_src = '/uploads/' + content_src %}
+                            {% endif %}
+                            
+                            {% if lesson.content_type == 'video' %}
+                            <div class="video-container">
+                                <video controls>
+                                    <source src="{{ content_src }}" type="video/mp4">
+                                    <source src="{{ content_src }}" type="video/webm">
+                                    <source src="{{ content_src }}" type="video/ogg">
+                                    您的浏览器不支持视频播放。
+                                </video>
+                            </div>
+                            
+                            {% elif lesson.content_type == 'image' %}
+                            <div class="image-container">
+                                <img src="{{ content_src }}" alt="{{ lesson.title }}">
+                            </div>
+                            
+                            {% elif lesson.content_type == 'document' %}
+                                {% if content_src.lower().endswith('.pdf') %}
+                                <div class="pdf-container">
+                                    <div class="pdf-header">
+                                        <i class="fas fa-file-pdf"></i>
+                                        <span>PDF 文档预览</span>
+                                    </div>
+                                    <div class="pdf-viewer">
+                                        <object data="{{ content_src }}" 
+                                               type="application/pdf"
+                                               style="width: 100%; height: 600px; min-height: 600px;"
+                                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                        </object>
+                                        <div class="pdf-fallback" style="display: none; text-align: center; padding: 60px 40px;">
+                                            <div style="font-size: 64px; margin-bottom: 16px;">📄</div>
+                                            <h3 style="margin-bottom: 12px; color: #2c3e50;">PDF文档</h3>
+                                            <p style="color: #666; margin-bottom: 24px;">您的浏览器不支持直接预览PDF，请点击下方链接查看或下载</p>
+                                            <a href="{{ content_src }}" target="_blank" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
+                                                📥 查看或下载 PDF 文档
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="pdf-footer">
+                                        <a href="{{ content_src }}" target="_blank"><i class="fas fa-external-link-alt"></i> 在新窗口中打开</a>
+                                        <a href="{{ content_src }}" download><i class="fas fa-download"></i> 下载文件</a>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="document-container">
+                                    <div class="document-icon">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div class="document-title">{{ lesson.title }}</div>
+                                    <div class="document-desc">该文档格式暂不支持在线预览，请下载查看</div>
+                                    <a href="{{ content_src }}" class="download-btn" target="_blank">
+                                        <i class="fas fa-download"></i> 下载文档
+                                    </a>
+                                </div>
+                                {% endif %}
+                                <div style="margin-top: 24px; text-align: center;">
+                                    <a href="{{ content_src }}" class="download-btn" target="_blank">
+                                        <i class="fas fa-download"></i> 下载文件
+                                    </a>
+                                </div>
+                                
+                            {% else %}
+                            <div class="document-container">
+                                <div class="document-icon">
+                                    <i class="fas fa-file"></i>
+                                </div>
+                                <div class="document-title">{{ lesson.title }}</div>
+                                <div class="document-desc">点击下方按钮下载查看</div>
+                                <a href="{{ content_src }}" class="download-btn" target="_blank">
+                                    <i class="fas fa-download"></i> 下载文件
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                        {% else %}
+                        <div class="empty-content">
+                            <i class="fas fa-file-alt"></i>
+                            <h3>本小节暂无内容</h3>
+                            <p>敬请期待</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-footer">
+                <div>
+                    {% if prev_lesson %}
+                    <a href="{{ url_for('student.lesson_detail', lesson_id=prev_lesson.id) }}" class="nav-button">
+                        <i class="fas fa-chevron-left"></i>
+                        上一节
+                    </a>
+                    {% else %}
+                    <button class="nav-button" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                        上一节
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <div class="progress-section">
+                    <div class="progress-info">
+                        <div class="progress-text">{{ completed_lessons }}/{{ total_lessons }} 已完成</div>
+                        <div class="progress-bar-wrap">
+                            <div class="progress-bar-fill" style="width: {{ (completed_lessons/total_lessons)*100 if total_lessons > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    {% if not lesson.completed %}
+                    <form method="POST" action="{{ url_for('student.complete_lesson', lesson_id=lesson.id) }}">
+                        <button type="submit" class="complete-btn">
+                            <i class="fas fa-check"></i> 标记完成
+                        </button>
+                    </form>
+                    {% else %}
+                    <button class="complete-btn completed">
+                        <i class="fas fa-check-circle"></i> 已完成
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    {% if next_lesson %}
+                    <a href="{{ url_for('student.lesson_detail', lesson_id=next_lesson.id) }}" class="nav-button primary">
+                        下一节
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% else %}
+                    <button class="nav-button" disabled>
+                        下一节
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+function toggleChapter(chapterId) {
+    const group = document.querySelector(`.chapter-group[data-chapter-id="${chapterId}"]`);
+    if (group) {
+        group.classList.toggle('collapsed');
+    }
+}
+
+document.querySelectorAll('.sidebar-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        const tabName = this.dataset.tab;
+        document.querySelectorAll('.sidebar-content').forEach(content => {
+            content.style.display = 'none';
         });
-    </script>
-</body>
-</html>
+        document.getElementById(tabName + 'Content').style.display = 'block';
+    });
+});
+
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    document.querySelectorAll('.lesson-item').forEach(item => {
+        const title = item.dataset.lessonTitle.toLowerCase();
+        if (title.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+
+    document.querySelectorAll('.chapter-group').forEach(group => {
+        const hasVisibleLessons = Array.from(group.querySelectorAll('.lesson-item')).some(
+            item => item.style.display !== 'none'
+        );
+        group.style.display = hasVisibleLessons ? 'block' : 'none';
+        if (hasVisibleLessons) {
+            group.classList.remove('collapsed');
+        }
+    });
+});
+
+// 讨论功能
+let lessonIdForAPI = {{ lesson.id }};
+
+function loadDiscussions() {
+    fetch(`/student/lessons/${lessonIdForAPI}/discussions/api`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderDiscussions(data.discussions);
+            }
+        })
+        .catch(error => console.error('加载讨论失败:', error));
+}
+
+function renderDiscussions(discussions) {
+    const container = document.getElementById('discussionsList');
+
+    if (!discussions || discussions.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; color: #95a5a6; padding: 30px 20px;">
+                <i class="fas fa-comments" style="font-size: 40px; margin-bottom: 10px; opacity: 0.5;"></i>
+                <p>暂无讨论，来发起第一个吧！</p>
+            </div>`;
+        return;
+    }
+
+    let html = '';
+    discussions.forEach(disc => {
+        html += `
+            <div class="discussion-item" style="
+                background: #f8f9fa;
+                border-radius: 10px;
+                padding: 15px;
+                margin-bottom: 12px;
+                border-left: 4px solid #667eea;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                    <h5 style="margin: 0; font-size: 14px; color: #2c3e50; font-weight: 600;">${disc.title}</h5>
+                    <span style="font-size: 11px; color: #95a5a6;">${disc.created_at}</span>
+                </div>
+                <p style="margin: 0 0 8px 0; font-size: 13px; color: #7f8c8d; line-height: 1.5;">${disc.content}</p>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #667eea;">
+                    <i class="fas fa-user-circle"></i>
+                    <span>${disc.user_name}</span>
+                </div>
+            </div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+function submitDiscussion(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch(`/student/lessons/${lessonIdForAPI}/discussions/api/create`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            form.reset();
+            loadDiscussions();
+
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> 发布成功！';
+            btn.style.background = '#27ae60';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '';
+            }, 2000);
+        } else {
+            alert(data.error || '发布失败');
+        }
+    })
+    .catch(error => console.error('发布讨论失败:', error));
+}
+
+// 笔记功能
+function loadNotes() {
+    fetch(`/student/lessons/${lessonIdForAPI}/notes/api`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.notes) {
+                document.getElementById('notesEditor').value = data.notes.content;
+            }
+        })
+        .catch(error => console.error('加载笔记失败:', error));
+}
+
+function saveNotes() {
+    const content = document.getElementById('notesEditor').value;
+    const statusEl = document.getElementById('notesStatus');
+
+    statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+    statusEl.style.color = '#667eea';
+
+    const formData = new FormData();
+    formData.append('content', content);
+
+    fetch(`/student/lessons/${lessonIdForAPI}/notes/api/save`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusEl.innerHTML = '<i class="fas fa-check-circle"></i> 笔记保存成功！';
+            statusEl.style.color = '#27ae60';
+
+            setTimeout(() => {
+                statusEl.innerHTML = '';
+            }, 3000);
+        } else {
+            statusEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> 保存失败';
+            statusEl.style.color = '#e74c3c';
+        }
+    })
+    .catch(error => {
+        console.error('保存笔记失败:', error);
+        statusEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> 网络错误';
+        statusEl.style.color = '#e74c3c';
+    });
+}
+
+// 标注功能
+function loadBookmarks() {
+    fetch(`/student/lessons/${lessonIdForAPI}/bookmarks/api`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderBookmarks(data.bookmarks);
+            }
+        })
+        .catch(error => console.error('加载标注失败:', error));
+}
+
+function renderBookmarks(bookmarks) {
+    const container = document.getElementById('bookmarksList');
+
+    if (!bookmarks || bookmarks.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; color: #95a5a6; padding: 30px 20px;">
+                <i class="fas fa-bookmark" style="font-size: 40px; margin-bottom: 10px; opacity: 0.5;"></i>
+                <p>暂无标注，添加你的第一个标注吧！</p>
+            </div>`;
+        return;
+    }
+
+    let html = '';
+    bookmarks.forEach(bm => {
+        html += `
+            <div class="bookmark-item" style="
+                background: white;
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 10px;
+                border-left: 4px solid ${bm.color};
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <p style="margin: 0; font-size: 13px; color: #2c3e50; line-height: 1.5; flex: 1;">${bm.content}</p>
+                    <button onclick="deleteBookmark(${bm.id})" style="
+                        background: none;
+                        border: none;
+                        color: #e74c3c;
+                        cursor: pointer;
+                        padding: 4px 8px;
+                        font-size: 16px;
+                        margin-left: 8px;"
+                        title="删除标注">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                <div style="font-size: 11px; color: #95a5a6; margin-top: 6px;">${bm.created_at}</div>
+            </div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+function submitBookmark(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch(`/student/lessons/${lessonIdForAPI}/bookmarks/api/create`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            form.reset();
+            loadBookmarks();
+
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> 已添加';
+            btn.style.background = '#27ae60';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '';
+            }, 1500);
+        } else {
+            alert(data.error || '添加失败');
+        }
+    })
+    .catch(error => console.error('添加标注失败:', error));
+}
+
+function deleteBookmark(bookmarkId) {
+    if (!confirm('确定要删除这个标注吗？')) return;
+
+    fetch(`/student/bookmarks/${bookmarkId}/api/delete`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadBookmarks();
+        } else {
+            alert(data.error || '删除失败');
+        }
+    })
+    .catch(error => console.error('删除标注失败:', error));
+}
+
+// Tab切换时加载数据
+document.querySelectorAll('.sidebar-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        const tabName = this.dataset.tab;
+
+        if (tabName === 'discussion') {
+            loadDiscussions();
+        } else if (tabName === 'notes') {
+            loadNotes();
+        } else if (tabName === 'bookmark') {
+            loadBookmarks();
+        }
+    });
+});
+</script>
+{% endblock %}

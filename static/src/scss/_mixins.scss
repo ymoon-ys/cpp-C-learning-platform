@@ -1,0 +1,369 @@
+// ============================================
+// SCSS 混入库 (Mixins Library)
+// C++学习平台 - 可复用的样式函数集合
+// ============================================
+
+@use 'variables' as *;
+
+// ------------------------------------------
+// 响应式断点混入 (Responsive Breakpoints)
+// 移动优先策略：默认为移动端，向上扩展
+// ------------------------------------------
+
+/// 媒体查询 - 最小宽度（移动优先）
+/// @param {String} $breakpoint - 断点名称 (sm, md, lg, xl, xxl)
+@mixin respond-to($breakpoint) {
+  $value: map-get($breakpoints, $breakpoint);
+
+  @if $value != null {
+    @media (min-width: $value) {
+      @content;
+    }
+  } @else {
+    @warn "未找到断点: `#{$breakpoint}`";
+  }
+}
+
+/// 媒体查询 - 最大宽度（桌面优先降级）
+/// @param {String} $breakpoint - 断点名称
+@mixin respond-below($breakpoint) {
+  $value: map-get($breakpoints, $breakpoint);
+
+  @if $value != null {
+    @media (max-width: ($value - 1px)) {
+      @content;
+    }
+  } @else {
+    @warn "未找到断点: `#{$breakpoint}`";
+  }
+}
+
+/// 媒体查询 - 介于两个断点之间
+/// @param {String} $lower - 下限断点
+/// @param {String} $upper - 上限断点
+@mixin respond-between($lower, $upper) {
+  $min: map-get($breakpoints, $lower);
+  $max: map-get($breakpoints, $upper);
+
+  @if $min and $max {
+    @media (min-width: $min) and (max-width: ($max - 1px)) {
+      @content;
+    }
+  } @else {
+    @warn "无效的断点范围: #{$lower} 到 #{$upper}";
+  }
+}
+
+// ------------------------------------------
+// Flexbox 布局混入 (Flexbox Layout)
+// ------------------------------------------
+
+/// Flex居中布局（水平+垂直居中）
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/// Flex两端对齐
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/// Flex列方向布局
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/// Flex换行容器
+@mixin flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/// 自定义Flex布局
+/// @param {String} $direction - 方向 (row/column)
+/// @param {String} $justify - 主轴对齐
+/// @param {String} $align - 交叉轴对齐
+/// @param {String} $wrap - 是否换行
+@mixin flex-layout(
+  $direction: row,
+  $justify: flex-start,
+  $align: stretch,
+  $wrap: nowrap
+) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+  flex-wrap: $wrap;
+}
+
+// ------------------------------------------
+// 文本处理混入 (Text Utilities)
+// ------------------------------------------
+
+/// 单行文本截断（省略号）
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/// 多行文本截断
+/// @param {Number} $lines - 显示的行数
+@mixin text-clamp($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/// 文本不换行
+@mixin text-no-wrap {
+  white-space: nowrap;
+}
+
+/// 隐藏文字但保留可访问性
+@mixin text-hide {
+  font: 0/0 a;
+  color: transparent;
+  text-shadow: none;
+  background-color: transparent;
+  border: 0;
+}
+
+// ------------------------------------------
+// 按钮样式混入 (Button Styles)
+// ------------------------------------------
+
+/// 按钮基础样式
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-sm $spacing-lg;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  border: 2px solid transparent;
+  border-radius: $radius-md;
+  cursor: pointer;
+  transition: all $transition-base;
+  user-select: none;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-color;
+    outline-offset: 2px;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+/// 主要按钮样式
+@mixin button-primary {
+  @include button-base;
+  color: $text-white;
+  background: $primary-gradient;
+  box-shadow: $shadow-sm;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+}
+
+/// 次要按钮样式
+@mixin button-secondary {
+  @include button-base;
+  color: $primary-color;
+  background: $bg-white;
+  border-color: $border-color;
+
+  &:hover:not(:disabled) {
+    color: $text-white;
+    background: $primary-gradient;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: $shadow-sm;
+  }
+}
+
+/// 幽灵按钮样式（透明背景）
+@mixin button-ghost {
+  @include button-base;
+  color: $text-secondary;
+  background: transparent;
+  border: none;
+
+  &:hover:not(:disabled) {
+    color: $primary-color;
+    background: rgba($primary-color, 0.08);
+  }
+}
+
+/// 危险按钮样式
+@mixin button-danger {
+  @include button-base;
+  color: $text-white;
+  background: $danger-gradient;
+  box-shadow: $shadow-sm;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+}
+
+// ------------------------------------------
+// 卡片组件混入 (Card Component)
+// ------------------------------------------
+
+/// 基础卡片样式
+@mixin card-base {
+  background: $bg-white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  padding: $spacing-xl;
+  transition: all $transition-base;
+
+  &:hover {
+    box-shadow: $shadow-md;
+  }
+}
+
+/// 可交互卡片（带悬停效果）
+@mixin card-interactive {
+  @include card-base;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $shadow-lg;
+  }
+}
+
+// ------------------------------------------
+// 输入框混入 (Form Inputs)
+// ------------------------------------------
+
+/// 输入框基础样式
+@mixin input-base {
+  width: 100%;
+  padding: $spacing-sm $spacing-lg;
+  font-size: $font-size-md;
+  line-height: 1.5;
+  color: $text-primary;
+  background: $bg-white;
+  border: 2px solid $border-color;
+  border-radius: $radius-md;
+  transition: all $transition-fast;
+
+  &::placeholder {
+    color: $text-muted;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.15);
+  }
+
+  &:disabled {
+    background: $bg-light;
+    cursor: not-allowed;
+  }
+}
+
+// ------------------------------------------
+// 视觉效果混入 (Visual Effects)
+// ------------------------------------------
+
+/// 渐变文字
+@mixin gradient-text($gradient: $primary-gradient) {
+  background: $gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/// 玻璃拟态效果
+@mixin glass-effect {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/// 平滑滚动
+@mixin smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+// ------------------------------------------
+// 定位混入 (Positioning Utilities)
+// ------------------------------------------
+
+/// 绝对定位居中
+@mixin absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/// 固定定位全屏覆盖
+@mixin fixed-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/// 清除浮动
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+// ------------------------------------------
+// 可访问性混入 (Accessibility)
+// ------------------------------------------
+
+/// 焦点可见样式增强
+@mixin focus-ring($color: $primary-color) {
+  &:focus-visible {
+    outline: 2px solid $color;
+    outline-offset: 2px;
+  }
+}
+
+/// 屏幕阅读器专用文本（视觉隐藏但可被屏幕阅读器读取）
+@mixin sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

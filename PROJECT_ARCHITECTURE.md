@@ -73,17 +73,31 @@
 
 ### 2.3 AI 集成
 
-支持三种 AI 模型 API：
-- Google Gemini
-- OpenAI ChatGPT
-- Deepseek
+支持四种 AI 模型 API：
 
-### 2.4 开发环境
+| 提供者 | 类型 | 用途 | 配置 |
+|--------|------|------|------|
+| Google Gemini | 云端 API | 智能问答、代码解释 | `GEMINI_API_KEY` |
+| OpenAI ChatGPT | 云端 API | 智能问答、代码解释 | `OPENAI_API_KEY` |
+| Deepseek | 云端 API | 智能问答、代码解释 | `DEEPSEEK_API_KEY` |
+| Ollama (Qwen3-Coder) | 本地模型 | CAIGPT 助手、代码分析 | `OLLAMA_BASE_URL`, `OLLAMA_MODEL` |
 
-- Python 3.8+
-- MySQL 5.7+
+**AI Provider 架构**：采用抽象工厂模式，通过 `BaseAIProvider` 基类统一接口。
+
+### 2.4 部署技术
+
+| 类别 | 技术 | 用途 |
+|------|------|------|
+| 容器化 | Docker + Python 3.11-slim | 生产环境部署 |
+| WSGI 服务器 | Gunicorn (gthread) | 多进程多线程服务 |
+| 进程管理 | Gunicorn workers:3, threads:4 | 并发处理 |
+
+### 2.5 开发环境
+
+- Python 3.8+ (Docker: 3.11)
+- MySQL 5.7+ 或 SQLite (开发/测试)
 - g++ 编译器（用于代码评测）
-- 运行端口：5001
+- 运行端口：开发 5001 / 生产 8000
 
 ---
 
@@ -96,7 +110,8 @@ C-learning-platform/
 │   ├── __init__.py                   # 应用工厂函数 create_app()
 │   ├── config.py                     # 配置类（开发/生产/测试）
 │   ├── models.py                     # 数据模型层（User, Problem, Submission 等）
-│   ├── mysql_database.py             # 自定义 MySQL 数据库操作类
+│   ├── mysql_database.py             # MySQL 数据库操作类
+│   ├── sqlite_database.py            # SQLite 数据库操作类（开发/测试备选）
 │   ├── utils.py                      # 通用工具函数
 │   ├── cache_utils.py                # 缓存相关工具
 │   ├── exceptions.py                 # 自定义业务异常类
@@ -121,7 +136,11 @@ C-learning-platform/
 │   │   ├── __init__.py
 │   │   ├── auth_service.py           # 认证服务
 │   │   ├── learning_progress_service.py  # 学习进度服务
-│   │   └── user_service.py           # 用户服务
+│   │   ├── user_service.py           # 用户服务
+│   │   └── ai_providers/             # AI 提供者模块（抽象工厂模式）
+│   │       ├── __init__.py
+│   │       ├── base.py               # BaseAIProvider 抽象基类
+│   │       └── ollama_provider.py    # Ollama 本地模型实现
 │   │
 │   └── templates/                    # Jinja2 模板层
 │       ├── base.html                 # 基础布局模板
@@ -163,7 +182,9 @@ C-learning-platform/
 │   ├── materials/                    # 课程资料
 │   └── community/                    # 社区图片
 │
-├── run.py                            # 应用入口文件
+├── run.py                            # 应用入口文件（开发环境）
+├── gunicorn.conf.py                  # Gunicorn 配置（生产环境）
+├── Dockerfile                        # Docker 容器化配置
 ├── requirements.txt                  # Python 依赖
 ├── requirements-dev.txt              # 开发依赖
 ├── .env.example                      # 环境变量示例
@@ -195,25 +216,45 @@ C-learning-platform/
 │  │  AuthService │ UserService │ LearningProgressService    │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                            │                                    │
-│                            ▼                                    │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                    Models（模型层）                       │   │
-│  │  User │ Problem │ Submission │ LearningProgress │ ...   │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                            │                                    │
-│                            ▼                                    │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │               MySQLDatabase（数据访问层）                 │   │
-│  └─────────────────────────────────────────────────────────┘   │
+│              ┌─────────────┴─────────────┐                     │
+│              ▼                           ▼                     │
+│  ┌───────────────────────┐   ┌───────────────────────┐        │
+│  │     Models（模型层）    │   │   AI Providers 层     │        │
+│  │ User │ Problem │ ...   │   │ BaseAIProvider (抽象)  │        │
+│  └───────────────────────┘   │ ├─ OllamaProvider      │        │
+│              │                │ └─ (可扩展其他Provider)│        │
+│              ▼                └───────────────────────┘        │
+│  ┌───────────────────────────────────────────────────┐         │
+│  │           数据库访问层（双数据库支持）                 │         │
+│  │  MySQLDatabase (生产) │ SQLiteDatabase (开发/测试)   │         │
+│  └───────────────────────────────────────────────────┘         │
 └─────────────────────────────────────────────────────────────────┘
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                         MySQL 数据库                             │
+│            MySQL 数据库 (生产) / SQLite 数据库 (开发)             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 请求处理流程
+### 4.2 AI Provider 架构
+
+```
+BaseAIProvider (抽象基类)
+    ├── chat()           - 非流式对话
+    ├── chat_stream()    - 流式对话（生成器）
+    ├── analyze_code()   - 代码分析
+    ├── build_system_prompt() - 构建 System Prompt
+    └── handle_error()   - 统一错误处理
+         │
+         ├── OllamaProvider (本地模型)
+         │       ├── 模型: qwen3-coder:30b (默认)
+         │       ├── 端点: http://localhost:11434
+         │       └── 特性: 支持流式输出、本地部署
+         │
+         └── (可扩展: GeminiProvider, OpenAIProvider, DeepseekProvider...)
+```
+
+### 4.3 请求处理流程
 
 ```
 HTTP 请求
@@ -243,7 +284,7 @@ Flask 路由匹配（Blueprint）
     └──▶ jsonify() → JSON 数据
 ```
 
-### 4.3 路由蓝图注册
+### 4.4 路由蓝图注册
 
 ```python
 # app/__init__.py
@@ -267,7 +308,7 @@ app.register_blueprint(community_bp, url_prefix='/community')
 app.register_blueprint(recommendation_bp, url_prefix='/recommendation')
 ```
 
-### 4.4 认证机制
+### 4.5 认证机制
 
 ```python
 # 使用 Flask-Login 的 Session 机制
@@ -544,6 +585,161 @@ def some_route():
     pass
 ```
 
+### 5.9 添加新的 AI Provider
+
+#### 步骤 1：创建 Provider 类
+
+```python
+# app/services/ai_providers/new_provider.py
+
+import requests
+from typing import Dict, Any, List, Generator
+from .base import BaseAIProvider
+import logging
+
+logger = logging.getLogger(__name__)
+
+class NewProvider(BaseAIProvider):
+    """新 AI 提供者实现"""
+
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
+        self.api_url = config.get('api_url', '')
+        self.timeout = config.get('timeout', 60)
+
+    def chat(self, messages: List[Dict], **kwargs) -> str:
+        """非流式对话"""
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False
+        }
+        response = requests.post(f"{self.api_url}/chat", json=payload, timeout=self.timeout)
+        return response.json().get('content', '')
+
+    def chat_stream(self, messages: List[Dict], **kwargs) -> Generator[str, None, None]:
+        """流式对话"""
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": True
+        }
+        response = requests.post(f"{self.api_url}/chat", json=payload, timeout=self.timeout, stream=True)
+        for line in response.iter_lines():
+            if line:
+                data = line.decode('utf-8')
+                yield data
+
+    def analyze_code(self, code: str, context: str = '', **kwargs) -> str:
+        """代码分析"""
+        messages = [{
+            'role': 'user',
+            'content': f"{context}\n\n请分析以下C++代码：\n\n```cpp\n{code}\n```"
+        }]
+        return self.chat(messages)
+```
+
+#### 步骤 2：在路由中注册使用
+
+```python
+# app/routes/ai_assistant.py
+from app.services.ai_providers.new_provider import NewProvider
+
+# 初始化 provider
+provider_config = {
+    'name': 'NewAI',
+    'api_url': current_app.config.get('NEW_AI_URL'),
+    'api_key': current_app.config.get('NEW_AI_API_KEY'),
+    'model': current_app.config.get('NEW_AI_MODEL', 'default-model')
+}
+new_provider = NewProvider(provider_config)
+
+# 使用 provider
+response = new_provider.chat(messages)
+
+# 流式输出
+for chunk in new_provider.chat_stream(messages):
+    yield f"data: {chunk}\n\n"
+```
+
+### 5.10 Docker 部署规范
+
+#### 构建镜像
+
+```bash
+# 构建镜像
+docker build -t c-learning-platform .
+
+# 运行容器
+docker run -d \
+  --name learning-platform \
+  -p 8000:8000 \
+  -e MYSQL_HOST=host.docker.internal \
+  -e MYSQL_USER=root \
+  -e MYSQL_PASSWORD=your_password \
+  -e MYSQL_DATABASE=learning_platform \
+  -e SECRET_KEY=your_secret_key \
+  c-learning-platform
+```
+
+#### Docker Compose（推荐）
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root123
+      - MYSQL_DATABASE=learning_platform
+      - SECRET_KEY=dev-secret-key-change-me
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - db
+    volumes:
+      - ./uploads:/app/uploads
+
+  db:
+    image: mysql:5.7
+    environment:
+      - MYSQL_ROOT_PASSWORD=root123
+      - MYSQL_DATABASE=learning_platform
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  mysql_data:
+  ollama_data:
+```
+
+#### Gunicorn 配置说明
+
+```python
+# gunicorn.conf.py 关键配置项
+bind = "0.0.0.0:8000"       # 监听地址和端口
+workers = 3                   # 工作进程数（建议 CPU 核心数 * 2 + 1）
+threads = 4                   # 每个进程的线程数
+worker_class = 'gthread'      # 使用 gthread 异步工作模式
+timeout = 60                  # 请求超时时间（秒）
+max_requests = 1000           # 每个工作进程处理的最大请求数（用于内存回收）
+preload_app = True            # 预加载应用代码
+```
+
 ---
 
 ## 6. 常见开发场景指南
@@ -740,13 +936,50 @@ def like_post(post_id):
 | `learning_progress` | 学习进度 | id, user_id, course_id, lesson_id, progress, completed |
 | `materials` | 课程资料 | id, course_id, title, file_path, file_type |
 | `problems` | 题库 | id, title, description, difficulty, test_cases, time_limit |
+| `problem_categories` | 题目分类 | id, name, parent_id, description |
 | `submissions` | 代码提交 | id, user_id, problem_id, code, status, submit_time |
 | `discussions` | 社区帖子 | id, user_id, title, content, images, created_at |
 | `replies` | 帖子回复 | id, discussion_id, user_id, content, parent_id |
+| `code_shares` | 代码分享 | id, user_id, title, code, language, tags |
+| `reviews` | 课程评价 | id, course_id, user_id, rating, comment |
 | `ai_conversations` | AI 对话 | id, user_id, question, answer, model_name |
+| `caigpt_dialog_history` | CAIGPT 对话历史 | id, user_id, role, content, images |
 | `teacher_assignments` | 教师作业 | id, teacher_id, problem_id, title, start_time, end_time |
+| `teacher_selected_problems` | 教师选题 | id, teacher_id, problem_id, course_id, notes |
+| `problem_import_logs` | 题目导入日志 | id, admin_id, source, count, status |
 
-### 7.2 数据库连接配置
+### 7.2 数据库双模式支持
+
+项目支持两种数据库后端，通过配置切换：
+
+```python
+# app/__init__.py 或 config.py
+import os
+
+if os.getenv('USE_SQLITE', 'false').lower() == 'true':
+    from app.sqlite_database import SQLiteDatabase
+    db = SQLiteDatabase(os.getenv('SQLITE_PATH', 'data/learning_platform.db'))
+else:
+    from app.mysql_database import MySQLDatabase
+    db = MySQLDatabase(
+        host=os.getenv('MYSQL_HOST', 'localhost'),
+        user=os.getenv('MYSQL_USER', 'root'),
+        password=os.getenv('MYSQL_PASSWORD', '123456'),
+        database=os.getenv('MYSQL_DATABASE', 'learning_platform')
+    )
+```
+
+**数据库选择建议**：
+
+| 场景 | 推荐数据库 | 原因 |
+|------|-----------|------|
+| 生产环境 | MySQL | 性能好、并发支持强、成熟稳定 |
+| 开发/测试 | SQLite | 零配置、无需安装、便于调试 |
+| Docker 容器 | MySQL | 与生产环境一致 |
+
+**接口一致性**：两个数据库类提供相同的 API（read_table, find_by_id, insert, update, delete 等），业务代码无需修改。
+
+### 7.3 数据库连接配置
 
 ```python
 # 从环境变量读取
@@ -758,7 +991,7 @@ db = MySQLDatabase(
 )
 ```
 
-### 7.3 重要说明
+### 7.4 重要说明
 
 - 项目**不使用 ORM**，使用自定义的 `MySQLDatabase` 类
 - 所有数据库操作通过 `current_app.db` 访问
@@ -851,6 +1084,24 @@ pip install -r requirements.txt
 
 # 检查数据库连接
 python check_db.py
+
+# Docker 构建
+docker build -t c-learning-platform .
+
+# Docker 运行（单容器）
+docker run -d -p 8000:8000 c-learning-platform
+
+# Docker Compose 启动（推荐）
+docker-compose up -d
+
+# Docker Compose 停止
+docker-compose down
+
+# 查看 Gunicorn 日志
+docker logs learning-platform
+
+# 进入容器调试
+docker exec -it learning-platform /bin/bash
 ```
 
 ### 9.2 默认账户
@@ -869,11 +1120,16 @@ python check_db.py
 | 应用工厂 | `app/__init__.py` |
 | 配置文件 | `app/config.py` |
 | 数据模型 | `app/models.py` |
-| 数据库操作 | `app/mysql_database.py` |
+| MySQL 操作 | `app/mysql_database.py` |
+| SQLite 操作 | `app/sqlite_database.py` |
 | 表单定义 | `app/forms/forms.py` |
+| AI Provider 基类 | `app/services/ai_providers/base.py` |
+| Ollama 实现 | `app/services/ai_providers/ollama_provider.py` |
 | 全局样式 | `static/style.css` |
 | 全局脚本 | `static/script.js` |
 | 基础模板 | `app/templates/base.html` |
+| Docker 配置 | `Dockerfile` |
+| Gunicorn 配置 | `gunicorn.conf.py` |
 
 ### 9.4 URL 前缀速查
 
@@ -907,14 +1163,34 @@ python check_db.py
 
 ```env
 # .env 文件配置
+
+# ===== 基础配置 =====
 SECRET_KEY=your_secret_key
+
+# ===== 数据库配置（MySQL - 生产环境） =====
 MYSQL_HOST=localhost
 MYSQL_USER=root
 MYSQL_PASSWORD=your_password
 MYSQL_DATABASE=learning_platform
+
+# ===== 数据库配置（SQLite - 开发/测试） =====
+USE_SQLITE=false
+SQLITE_PATH=data/learning_platform.db
+
+# ===== 部署配置（Docker/Gunicorn） =====
+PORT=8000
+GUNICORN_WORKERS=3
+GUNICORN_THREADS=4
+
+# ===== AI 配置 - 云端 API =====
 GEMINI_API_KEY=your_gemini_key
 OPENAI_API_KEY=your_openai_key
 DEEPSEEK_API_KEY=your_deepseek_key
+
+# ===== AI 配置 - Ollama 本地模型 =====
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen3-coder:30b
+OLLAMA_TIMEOUT=120
 ```
 
 ---
@@ -924,6 +1200,7 @@ DEEPSEEK_API_KEY=your_deepseek_key
 | 日期 | 版本 | 更新内容 |
 |------|------|---------|
 | 2024-03-24 | 1.0 | 初始版本 |
+| 2025-01-XX | 2.0 | 新增：Docker 容器化部署、Gunicorn 生产配置、AI Provider 架构（Ollama 本地模型）、SQLite 数据库支持、6 个新数据表、Docker Compose 部署指南 |
 
 ---
 

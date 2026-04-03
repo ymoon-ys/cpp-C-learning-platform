@@ -1,74 +1,61 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - C++学习平台</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <style>
-        .flash-messages {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            max-width: 400px;
-        }
-        .flash-message {
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            animation: slideIn 0.3s ease;
-        }
-        .flash-message.success {
-            background-color: #4caf50;
-            color: white;
-        }
-        .flash-message.error {
-            background-color: #f44336;
-            color: white;
-        }
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-    </style>
-</head>
-<body class="login-body">
-    <div class="flash-messages">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                <div class="flash-message {{ 'success' if category == 'success' else 'error' }}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
+{% extends "base.html" %}
 
-    <div class="login-container">
-        <div class="login-box">
-            <div class="login-header">
-                <h1>C++学习平台</h1>
-                <p>欢迎回来，请登录您的账户</p>
+{% block title %}登录 - C++学习平台{% endblock %}
+
+{% block content_unauthenticated %}
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-left">
+            <div class="auth-left-content">
+                <h1><i class="fas fa-graduation-cap"></i> C++学习平台</h1>
+                <p>开启您的编程学习之旅，掌握C++核心技能，成为优秀的软件开发者</p>
+
+                <div class="auth-features">
+                    <div class="feature-item">
+                        <i class="fas fa-book-open"></i>
+                        <span>系统化的课程体系</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-code"></i>
+                        <span>丰富的编程练习</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-users"></i>
+                        <span>活跃的学习社区</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-robot"></i>
+                        <span>AI智能助手辅导</span>
+                    </div>
+                </div>
             </div>
-            <form class="login-form" id="loginForm" method="POST" action="{{ url_for('auth.login') }}">
+        </div>
+
+        <div class="auth-right">
+            <div class="auth-header">
+                <h2>欢迎回来</h2>
+                <p>登录您的账户继续学习</p>
+            </div>
+
+            <form class="login-form" method="POST" action="{{ url_for('auth.login') }}">
                 {{ form.hidden_tag() }}
+
                 <div class="form-group">
                     <label for="username">用户名</label>
-                    <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+                    </div>
                 </div>
+
                 <div class="form-group">
                     <label for="password">密码</label>
-                    <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                    </div>
                 </div>
+
                 <div class="form-options">
                     <label class="remember-me">
                         <input type="checkbox" id="remember">
@@ -76,13 +63,31 @@
                     </label>
                     <a href="#" class="forgot-password">忘记密码？</a>
                 </div>
-                <button type="submit" class="login-btn">登录</button>
+
+                <button type="submit" class="btn btn-primary login-btn">
+                    <i class="fas fa-sign-in-alt"></i> 登录
+                </button>
+
+                <div class="divider">
+                    <span>或使用以下方式登录</span>
+                </div>
+
+                <div class="social-login">
+                    <button type="button" class="social-btn">
+                        <i class="fab fa-weixin" style="color: #07c160;"></i>
+                        微信登录
+                    </button>
+                    <button type="button" class="social-btn">
+                        <i class="fab fa-qq" style="color: #12b7f5;"></i>
+                        QQ登录
+                    </button>
+                </div>
+
                 <div class="register-link">
                     <p>还没有账户？<a href="{{ url_for('auth.register') }}">立即注册</a></p>
                 </div>
             </form>
         </div>
     </div>
-    <script src="/static/script.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

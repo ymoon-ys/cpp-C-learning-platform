@@ -2,181 +2,83 @@
 
 {% block title %}{{ course.title }} - C++学习平台{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    
-    body {
-        background: #f0f2f5;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    }
-    
-    .course-page {
+    .course-layout {
         display: flex;
-        min-height: calc(100vh - 60px);
+        gap: 20px;
+        margin-top: 20px;
     }
     
     .course-sidebar {
-        width: 220px;
-        background: #fff;
-        border-right: 1px solid #e8e8e8;
-        flex-shrink: 0;
-        padding: 20px 0;
+        width: 300px;
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        height: fit-content;
+        position: sticky;
+        top: 20px;
     }
     
-    .course-cover {
-        padding: 0 16px 20px;
+    .course-info {
+        margin-bottom: 20px;
+        padding-bottom: 20px;
         border-bottom: 1px solid #f0f0f0;
-        margin-bottom: 16px;
     }
     
-    .course-cover-img {
-        width: 100%;
-        border-radius: 8px;
-        margin-bottom: 12px;
+    .course-info h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
     }
     
-    .course-cover-title {
-        font-size: 15px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 4px;
+    .course-meta {
+        display: flex;
+        gap: 15px;
+        font-size: 13px;
+        color: #95a5a6;
     }
     
-    .course-cover-info {
-        font-size: 12px;
-        color: #999;
-    }
-    
-    .sidebar-menu {
-        padding: 0 8px;
-    }
-    
-    .menu-item {
+    .course-meta span {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 10px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 4px;
-        transition: all 0.2s;
-    }
-    
-    .menu-item:hover {
-        background: #f5f7fa;
-        color: #333;
-    }
-    
-    .menu-item.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-    
-    .menu-item i {
-        width: 18px;
-        text-align: center;
-    }
-    
-    .course-content {
-        flex: 1;
-        padding: 24px 32px;
-        overflow-y: auto;
-    }
-    
-    .content-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-    }
-    
-    .progress-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    
-    .progress-text {
-        font-size: 14px;
-        color: #666;
-    }
-    
-    .progress-bar {
-        width: 200px;
-        height: 8px;
-        background: #e8e8e8;
-        border-radius: 4px;
-        overflow: hidden;
-    }
-    
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 4px;
-        transition: width 0.3s;
-    }
-    
-    .search-box {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        background: #fff;
-        border-radius: 20px;
-        border: 1px solid #e8e8e8;
-    }
-    
-    .search-box input {
-        border: none;
-        outline: none;
-        font-size: 14px;
-        width: 200px;
-    }
-    
-    .search-box i {
-        color: #999;
+        gap: 5px;
     }
     
     .chapter-list {
-        background: #fff;
-        border-radius: 12px;
-        padding: 8px;
+        max-height: 600px;
+        overflow-y: auto;
     }
     
     .chapter-item {
-        margin-bottom: 4px;
+        margin-bottom: 10px;
     }
     
     .chapter-header {
         display: flex;
         align-items: center;
-        padding: 14px 16px;
+        padding: 12px;
         cursor: pointer;
-        border-radius: 8px;
-        transition: all 0.2s;
-        user-select: none;
+        border-radius: 10px;
+        transition: all 0.3s;
+        background: #f8f9fa;
     }
     
     .chapter-header:hover {
-        background: #f5f7fa;
+        background: #e9ecef;
     }
     
     .chapter-toggle {
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 12px;
-        color: #999;
-        transition: transform 0.2s;
+        margin-right: 10px;
+        color: #667eea;
+        transition: transform 0.3s;
     }
     
     .chapter-item.collapsed .chapter-toggle {
@@ -185,13 +87,13 @@
     
     .chapter-title {
         flex: 1;
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 600;
-        color: #333;
+        color: #2c3e50;
     }
     
     .chapter-lessons {
-        padding: 0 16px 8px 52px;
+        padding: 10px 0 0 30px;
     }
     
     .chapter-item.collapsed .chapter-lessons {
@@ -201,166 +103,333 @@
     .lesson-item {
         display: flex;
         align-items: center;
+        gap: 10px;
         padding: 10px 12px;
-        border-radius: 6px;
+        margin-bottom: 5px;
+        border-radius: 8px;
         cursor: pointer;
-        margin-bottom: 2px;
-        transition: all 0.2s;
+        transition: all 0.3s;
         text-decoration: none;
         color: inherit;
     }
     
     .lesson-item:hover {
-        background: #f5f7fa;
+        background: #f8f9fa;
+    }
+    
+    .lesson-item.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .lesson-item.completed {
+        opacity: 0.7;
+    }
+    
+    .lesson-item i {
+        font-size: 16px;
+    }
+    
+    .lesson-title {
+        flex: 1;
+        font-size: 14px;
     }
     
     .lesson-status {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: #e9ecef;
+    }
+    
+    .lesson-item.active .lesson-status {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .course-main {
+        flex: 1;
+    }
+    
+    .content-card {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .content-card h3 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+    
+    .content-card p {
+        font-size: 15px;
+        line-height: 1.8;
+        color: #7f8c8d;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+
+    .materials-section {
+        margin-top: 30px;
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .materials-section h3 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .materials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .material-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .material-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        border-color: #667eea;
+    }
+
+    .material-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .material-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 12px;
-        font-size: 11px;
-    }
-    
-    .lesson-status.completed {
-        background: #52c41a;
         color: white;
+        font-size: 24px;
     }
-    
-    .lesson-status.pending {
-        background: #faad14;
-        color: white;
+
+    .material-info h5 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0 0 5px 0;
     }
-    
-    .lesson-name {
+
+    .material-info p {
+        font-size: 13px;
+        color: #95a5a6;
+        margin: 0;
+    }
+
+    .material-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .material-actions .btn {
         flex: 1;
-        font-size: 14px;
-        color: #333;
+        padding: 8px 15px;
+        font-size: 13px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-view {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-view:hover {
+        background: #5568d3;
+        color: white;
+    }
+
+    .btn-download {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    .btn-download:hover {
+        background: #dee2e6;
+        color: #495057;
+    }
+
+    .empty-materials {
+        text-align: center;
+        padding: 40px 20px;
+        color: #95a5a6;
+    }
+
+    .empty-materials i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.5;
     }
 </style>
+{% endblock %}
 
-<div class="course-page">
+{% block content %}
+{% if is_preview_mode %}
+<div class="preview-banner" style="
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 20px;
+    text-align: center;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+">
+    <i class="fas fa-eye"></i> 学生视图预览模式 - 这是学生看到的页面效果
+    <a href="{{ url_for('teacher.course_detail', course_id=course.id) }}" style="
+        color: white;
+        margin-left: 20px;
+        text-decoration: underline;
+        font-size: 14px;
+    ">
+        <i class="fas fa-arrow-left"></i> 返回教师管理
+    </a>
+</div>
+{% endif %}
+
+<div class="top-bar">
+    <div class="greeting">
+        <h1>{{ course.title }}</h1>
+        <p>{{ course.description }}</p>
+    </div>
+</div>
+
+<div class="course-layout">
     <aside class="course-sidebar">
-        <div class="course-cover">
-            {% if course.cover %}
-            {% set cover_path = course.cover %}
-            {% if cover_path.startswith('/uploads/') %}
-            {% set cover_path = cover_path %}
-            {% elif cover_path.startswith('uploads/') %}
-            {% set cover_path = '/' + cover_path %}
-            {% else %}
-            {% set cover_path = '/uploads/' + cover_path %}
-            {% endif %}
-            <img src="{{ cover_path }}" class="course-cover-img" alt="{{ course.title }}">
-            {% else %}
-            <div class="course-cover-img" style="height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-book fa-3x" style="color: white;"></i>
-            </div>
-            {% endif %}
-            <div class="course-cover-title">{{ course.title }}</div>
-            <div class="course-cover-info">
-                {% if course.description %}{{ course.description[:30] }}...{% endif %}
+        <div class="course-info">
+            <h2>课程目录</h2>
+            <div class="course-meta">
+                <span><i class="fas fa-book"></i> {{ chapters|length }} 章节</span>
+                <span><i class="fas fa-clock"></i> 12小时</span>
             </div>
         </div>
         
-        <div class="sidebar-menu">
-            <div class="menu-item active">
-                <i class="fas fa-list"></i>
-                <span>章节</span>
-            </div>
-            <div class="menu-item">
-                <i class="fas fa-comments"></i>
-                <span>讨论</span>
-            </div>
-            <div class="menu-item">
-                <i class="fas fa-file-alt"></i>
-                <span>资料</span>
-            </div>
-        </div>
-    </aside>
-    
-    <main class="course-content">
-        <div class="content-header">
-            <div class="progress-info">
-                <span class="progress-text">已完成任务点 {{ completed_lessons }}/{{ total_lessons }}</span>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: {{ (completed_lessons/total_lessons)*100 if total_lessons > 0 else 0 }}%"></div>
-                </div>
-            </div>
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="搜索" id="searchLesson">
-            </div>
-        </div>
-        
-        <div class="chapter-list" id="chapterList">
-            {% if chapters %}
+        <div class="chapter-list">
             {% for chapter in chapters %}
-            <div class="chapter-item {% if loop.first %} {% else %}collapsed{% endif %}" data-chapter-id="{{ chapter.id }}">
-                <div class="chapter-header" onclick="toggleChapter({{ chapter.id }})">
+            <div class="chapter-item {% if not loop.first %}collapsed{% endif %}">
+                <div class="chapter-header" onclick="toggleChapter(this)">
                     <div class="chapter-toggle">
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="chapter-title">{{ chapter.title }}</div>
                 </div>
+                
                 <div class="chapter-lessons">
-                    {% if chapter.lessons %}
                     {% for lesson in chapter.lessons %}
                     <a href="{{ url_for('student.lesson_detail', lesson_id=lesson.id) }}" 
-                       class="lesson-item"
-                       data-lesson-title="{{ lesson.title }}">
-                        <div class="lesson-status {% if lesson.completed %}completed{% else %}pending{% endif %}">
-                            <i class="fas {% if lesson.completed %}fa-check{% else %}fa-play{% endif %}"></i>
-                        </div>
-                        <div class="lesson-name">{{ lesson.title }}</div>
+                       class="lesson-item {% if lesson.id == current_lesson_id %}active{% endif %}">
+                        <i class="fas fa-play-circle"></i>
+                        <span class="lesson-title">{{ lesson.title }}</span>
+                        {% if lesson.completed %}
+                        <span class="lesson-status">已完成</span>
+                        {% endif %}
                     </a>
                     {% endfor %}
-                    {% endif %}
                 </div>
             </div>
             {% endfor %}
-            {% else %}
-            <div style="text-align: center; padding: 60px 20px; color: #999;">
-                <i class="fas fa-book-open fa-3x mb-3" style="opacity: 0.3;"></i>
-                <p>暂无章节</p>
-            </div>
-            {% endif %}
         </div>
+    </aside>
+    
+    <main class="course-main">
+        <div class="content-card">
+            <h3>课程简介</h3>
+            <p>{{ course.description }}</p>
+
+            <div class="action-buttons">
+                <a href="{{ url_for('student.lesson_detail', lesson_id=chapters[0].lessons[0].id) }}"
+                   class="btn btn-primary">
+                    <i class="fas fa-play"></i> 开始学习
+                </a>
+                <button class="btn btn-secondary">
+                    <i class="fas fa-bookmark"></i> 收藏课程
+                </button>
+            </div>
+        </div>
+
+        {% if materials %}
+        <div class="materials-section">
+            <h3><i class="fas fa-folder-open"></i> 课程资料</h3>
+            <div class="materials-grid">
+                {% for material in materials %}
+                <div class="material-card">
+                    <div class="material-header">
+                        <div class="material-icon">
+                            {% if material.type == 'pdf' %}
+                                <i class="fas fa-file-pdf"></i>
+                            {% elif material.type in ['doc', 'docx'] %}
+                                <i class="fas fa-file-word"></i>
+                            {% elif material.type in ['ppt', 'pptx'] %}
+                                <i class="fas fa-file-powerpoint"></i>
+                            {% elif material.type in ['xls', 'xlsx'] %}
+                                <i class="fas fa-file-excel"></i>
+                            {% else %}
+                                <i class="fas fa-file-alt"></i>
+                            {% endif %}
+                        </div>
+                        <div class="material-info">
+                            <h5>{{ material.title }}</h5>
+                            <p>{{ material.type|upper }} 文档</p>
+                        </div>
+                    </div>
+                    <div class="material-actions">
+                        <a href="/{{ material.file_url }}" class="btn btn-view" target="_blank">
+                            <i class="fas fa-eye"></i> 查看
+                        </a>
+                        <a href="{{ url_for('course.download_material', material_id=material.id) }}" class="btn btn-download">
+                            <i class="fas fa-download"></i> 下载
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </main>
 </div>
 
 <script>
-    function toggleChapter(chapterId) {
-        const item = document.querySelector(`.chapter-item[data-chapter-id="${chapterId}"]`);
-        if (item) {
-            item.classList.toggle('collapsed');
-        }
-    }
-    
-    const searchInput = document.getElementById('searchLesson');
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        document.querySelectorAll('.lesson-item').forEach(item => {
-            const title = item.dataset.lessonTitle.toLowerCase();
-            if (title.includes(searchTerm)) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-        
-        document.querySelectorAll('.chapter-item').forEach(chapter => {
-            const hasVisibleLessons = Array.from(chapter.querySelectorAll('.lesson-item')).some(
-                item => item.style.display !== 'none'
-            );
-            chapter.style.display = hasVisibleLessons ? 'block' : 'none';
-            if (hasVisibleLessons) {
-                chapter.classList.remove('collapsed');
-            }
-        });
-    });
+function toggleChapter(header) {
+    const chapterItem = header.parentElement;
+    chapterItem.classList.toggle('collapsed');
+}
 </script>
 {% endblock %}

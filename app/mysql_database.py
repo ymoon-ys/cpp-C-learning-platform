@@ -57,8 +57,12 @@ class MySQLDatabase:
     
     def get_connection(self):
         try:
-            if self.conn and self.conn.is_connected():
-                return self.conn
+            if self.conn is not None:
+                try:
+                    if self.conn.is_connected():
+                        return self.conn
+                except Exception:
+                    self.conn = None
             
             if MySQLDatabase._connection_pool:
                 try:
@@ -87,7 +91,7 @@ class MySQLDatabase:
         conn = self.get_connection()
         if not conn:
             return
-        
+
         tables = {
             'users': '''
                 CREATE TABLE IF NOT EXISTS users (
@@ -95,12 +99,16 @@ class MySQLDatabase:
                     username VARCHAR(255) NOT NULL,
                     email VARCHAR(255) NOT NULL,
                     password_hash VARCHAR(255) NOT NULL,
-                    role VARCHAR(50) NOT NULL,
+                    role VARCHAR(50) NOT NULL DEFAULT 'student',
                     nickname VARCHAR(255),
-                    avatar VARCHAR(255),
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    avatar VARCHAR(500),
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY uk_username (username),
+                    UNIQUE KEY uk_email (email),
+                    KEY idx_role (role),
+                    KEY idx_created_at (created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表'
             ''',
             'courses': '''
                 CREATE TABLE IF NOT EXISTS courses (
@@ -110,128 +118,182 @@ class MySQLDatabase:
                     teacher_id INT,
                     category VARCHAR(100),
                     cover VARCHAR(255),
-                    status VARCHAR(50),
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    status VARCHAR(50) DEFAULT 'draft',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_teacher_id (teacher_id),
+                    KEY idx_category (category),
+                    KEY idx_status (status),
+                    CONSTRAINT fk_courses_teacher FOREIGN KEY (teacher_id) REFERENCES users (id) ON DELETE SET NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课程表'
             ''',
             'chapters': '''
                 CREATE TABLE IF NOT EXISTS chapters (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    course_id INT,
+                    course_id INT NOT NULL,
                     title VARCHAR(255) NOT NULL,
-                    order_index INT,
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    order_index INT DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_course_id (course_id),
+                    CONSTRAINT fk_chapters_course FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='章节表'
             ''',
             'lessons': '''
                 CREATE TABLE IF NOT EXISTS lessons (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    chapter_id INT,
+                    chapter_id INT NOT NULL,
                     title VARCHAR(255) NOT NULL,
                     description TEXT,
                     content TEXT,
-                    content_type VARCHAR(50),
+                    content_type VARCHAR(50) DEFAULT 'text',
                     content_path VARCHAR(255),
                     duration VARCHAR(50),
-                    order_index INT,
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    order_index INT DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_chapter_id (chapter_id),
+                    CONSTRAINT fk_lessons_chapter FOREIGN KEY (chapter_id) REFERENCES chapters (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课时表'
             ''',
             'learning_progress': '''
                 CREATE TABLE IF NOT EXISTS learning_progress (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    user_id INT,
-                    course_id INT,
+                    user_id INT NOT NULL,
+                    course_id INT NOT NULL,
                     chapter_id INT,
                     lesson_id INT,
-                    progress INT,
-                    completed TINYINT(1),
-                    updated_at DATETIME
-                )
+                    progress INT DEFAULT 0,
+                    completed TINYINT(1) DEFAULT 0,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY uk_user_lesson (user_id, lesson_id),
+                    KEY idx_user_id (user_id),
+                    KEY idx_course_id (course_id),
+                    CONSTRAINT fk_progress_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_progress_course FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_progress_lesson FOREIGN KEY (lesson_id) REFERENCES lessons (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='学习进度表'
             ''',
             'materials': '''
                 CREATE TABLE IF NOT EXISTS materials (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    course_id INT,
+                    course_id INT NOT NULL,
                     title VARCHAR(255) NOT NULL,
-                    file_url VARCHAR(255),
+                    file_url VARCHAR(255) NOT NULL,
                     type VARCHAR(50),
-                    uploader_id INT,
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    uploader_id INT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_course_id (course_id),
+                    KEY idx_uploader_id (uploader_id),
+                    CONSTRAINT fk_materials_course FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_materials_uploader FOREIGN KEY (uploader_id) REFERENCES users (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课程资料表'
             ''',
             'discussions': '''
                 CREATE TABLE IF NOT EXISTS discussions (
                     id INT PRIMARY KEY AUTO_INCREMENT,
                     course_id INT,
-                    user_id INT,
+                    user_id INT NOT NULL,
                     title VARCHAR(255) NOT NULL,
                     content TEXT,
-                    images TEXT,
-                    category VARCHAR(100),
-                    tags TEXT,
+                    images JSON,
+                    category VARCHAR(100) DEFAULT 'general',
+                    tags VARCHAR(500),
                     view_count INT DEFAULT 0,
                     like_count INT DEFAULT 0,
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    is_sticky TINYINT(1) DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_course_id (course_id),
+                    KEY idx_user_id (user_id),
+                    KEY idx_category (category),
+                    KEY idx_created_at (created_at),
+                    KEY idx_is_sticky (is_sticky),
+                    FULLTEXT KEY ft_title_content (title, content),
+                    CONSTRAINT fk_discussions_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_discussions_course FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE SET NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='讨论区帖子表'
             ''',
             'replies': '''
                 CREATE TABLE IF NOT EXISTS replies (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    discussion_id INT,
-                    user_id INT,
+                    discussion_id INT NOT NULL,
+                    user_id INT NOT NULL,
                     parent_id INT,
                     content TEXT NOT NULL,
                     like_count INT DEFAULT 0,
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_discussion_id (discussion_id),
+                    KEY idx_user_id (user_id),
+                    KEY idx_parent_id (parent_id),
+                    KEY idx_created_at (created_at),
+                    CONSTRAINT fk_replies_discussion FOREIGN KEY (discussion_id) REFERENCES discussions (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_replies_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_replies_parent FOREIGN KEY (parent_id) REFERENCES replies (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评论回复表'
             ''',
             'discussion_likes': '''
                 CREATE TABLE IF NOT EXISTS discussion_likes (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    discussion_id INT,
-                    user_id INT,
-                    created_at DATETIME
-                )
+                    discussion_id INT NOT NULL,
+                    user_id INT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY uk_discussion_user (discussion_id, user_id),
+                    KEY idx_discussion_id (discussion_id),
+                    KEY idx_user_id (user_id),
+                    CONSTRAINT fk_dlikes_discussion FOREIGN KEY (discussion_id) REFERENCES discussions (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_dlikes_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子点赞表'
             ''',
             'reply_likes': '''
                 CREATE TABLE IF NOT EXISTS reply_likes (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    reply_id INT,
-                    user_id INT,
-                    created_at DATETIME
-                )
+                    reply_id INT NOT NULL,
+                    user_id INT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY uk_reply_user (reply_id, user_id),
+                    KEY idx_reply_id (reply_id),
+                    KEY idx_user_id (user_id),
+                    CONSTRAINT fk_rlikes_reply FOREIGN KEY (reply_id) REFERENCES replies (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_rlikes_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评论点赞表'
             ''',
             'code_shares': '''
                 CREATE TABLE IF NOT EXISTS code_shares (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    user_id INT,
+                    user_id INT NOT NULL,
                     title VARCHAR(255) NOT NULL,
-                    code TEXT,
+                    code TEXT NOT NULL,
                     description TEXT,
-                    language VARCHAR(50),
-                    tags TEXT,
-                    view_count INT,
-                    like_count INT,
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    language VARCHAR(50) DEFAULT 'cpp',
+                    tags VARCHAR(500),
+                    view_count INT DEFAULT 0,
+                    like_count INT DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_user_id (user_id),
+                    KEY idx_language (language),
+                    KEY idx_created_at (created_at),
+                    FULLTEXT KEY ft_title_code (title, description),
+                    CONSTRAINT fk_codeshares_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='代码分享表'
             ''',
             'reviews': '''
                 CREATE TABLE IF NOT EXISTS reviews (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    course_id INT,
-                    user_id INT,
-                    rating INT,
+                    course_id INT NOT NULL,
+                    user_id INT NOT NULL,
+                    rating INT NOT NULL,
                     comment TEXT,
-                    created_at DATETIME
-                )
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY uk_user_course (user_id, course_id),
+                    KEY idx_course_id (course_id),
+                    KEY idx_rating (rating),
+                    CONSTRAINT fk_reviews_course FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课程评价表'
             ''',
             'problem_categories': '''
                 CREATE TABLE IF NOT EXISTS problem_categories (
@@ -239,9 +301,11 @@ class MySQLDatabase:
                     name VARCHAR(255) NOT NULL,
                     parent_id INT,
                     description TEXT,
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_parent_id (parent_id),
+                    CONSTRAINT fk_categories_parent FOREIGN KEY (parent_id) REFERENCES problem_categories (id) ON DELETE SET NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='题目分类表'
             ''',
             'problems': '''
                 CREATE TABLE IF NOT EXISTS problems (
@@ -252,61 +316,86 @@ class MySQLDatabase:
                     output_format TEXT,
                     sample_input TEXT,
                     sample_output TEXT,
-                    difficulty VARCHAR(50),
+                    difficulty VARCHAR(50) DEFAULT 'medium',
                     category_id INT,
-                    time_limit INT,
-                    memory_limit INT,
-                    test_cases TEXT,
+                    time_limit INT DEFAULT 1,
+                    memory_limit INT DEFAULT 256,
+                    test_cases JSON,
                     source VARCHAR(100),
                     source_id VARCHAR(100),
                     source_url VARCHAR(500),
                     is_public TINYINT(1) DEFAULT 0,
                     tags VARCHAR(500),
                     hint TEXT,
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_category_id (category_id),
+                    KEY idx_difficulty (difficulty),
+                    KEY idx_source (source),
+                    KEY idx_is_public (is_public),
+                    KEY idx_title (title),
+                    FULLTEXT KEY ft_title_description (title, description),
+                    CONSTRAINT fk_problems_category FOREIGN KEY (category_id) REFERENCES problem_categories (id) ON DELETE SET NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='编程题目表'
             ''',
             'submissions': '''
                 CREATE TABLE IF NOT EXISTS submissions (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    user_id INT,
-                    problem_id INT,
+                    user_id INT NOT NULL,
+                    problem_id INT NOT NULL,
                     code TEXT NOT NULL,
-                    status VARCHAR(50),
+                    status VARCHAR(50) DEFAULT 'pending',
                     error_message TEXT,
-                    submit_time DATETIME,
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    submit_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_user_id (user_id),
+                    KEY idx_problem_id (problem_id),
+                    KEY idx_status (status),
+                    KEY idx_submit_time (submit_time),
+                    CONSTRAINT fk_submissions_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_submissions_problem FOREIGN KEY (problem_id) REFERENCES problems (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='代码提交记录表'
             ''',
             'ai_conversations': '''
                 CREATE TABLE IF NOT EXISTS ai_conversations (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    user_id INT,
+                    user_id INT NOT NULL,
                     problem_id INT,
                     question TEXT,
                     answer TEXT,
                     model_name VARCHAR(100),
-                    conversation_type VARCHAR(100),
-                    has_code TINYINT(1),
-                    has_image TINYINT(1),
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    conversation_type VARCHAR(100) DEFAULT 'general',
+                    has_code TINYINT(1) DEFAULT 0,
+                    has_image TINYINT(1) DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_user_id (user_id),
+                    KEY idx_problem_id (problem_id),
+                    KEY idx_model_name (model_name),
+                    KEY idx_conversation_type (conversation_type),
+                    KEY idx_created_at (created_at),
+                    CONSTRAINT fk_aiconv_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_aiconv_problem FOREIGN KEY (problem_id) REFERENCES problems (id) ON DELETE SET NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI对话记录表'
             ''',
             'teacher_assignments': '''
                 CREATE TABLE IF NOT EXISTS teacher_assignments (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    teacher_id INT,
-                    problem_id INT,
+                    teacher_id INT NOT NULL,
+                    problem_id INT NOT NULL,
                     title VARCHAR(255),
                     description TEXT,
                     start_time DATETIME,
                     end_time DATETIME,
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    KEY idx_teacher_id (teacher_id),
+                    KEY idx_problem_id (problem_id),
+                    KEY idx_end_time (end_time),
+                    CONSTRAINT fk_assignments_teacher FOREIGN KEY (teacher_id) REFERENCES users (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_assignments_problem FOREIGN KEY (problem_id) REFERENCES problems (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='教师作业表'
             ''',
             'teacher_selected_problems': '''
                 CREATE TABLE IF NOT EXISTS teacher_selected_problems (
@@ -318,9 +407,15 @@ class MySQLDatabase:
                     visible_start DATETIME,
                     visible_end DATETIME,
                     notes TEXT,
-                    created_at DATETIME,
-                    updated_at DATETIME
-                )
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY uk_teacher_problem (teacher_id, problem_id),
+                    KEY idx_teacher_id (teacher_id),
+                    KEY idx_course_id (course_id),
+                    CONSTRAINT fk_selected_teacher FOREIGN KEY (teacher_id) REFERENCES users (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_selected_problem FOREIGN KEY (problem_id) REFERENCES problems (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_selected_course FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE SET NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='教师选中题目表'
             ''',
             'problem_import_logs': '''
                 CREATE TABLE IF NOT EXISTS problem_import_logs (
@@ -328,10 +423,14 @@ class MySQLDatabase:
                     admin_id INT NOT NULL,
                     source VARCHAR(100),
                     count INT,
-                    status VARCHAR(50),
+                    status VARCHAR(50) DEFAULT 'pending',
                     error_message TEXT,
-                    created_at DATETIME
-                )
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    KEY idx_admin_id (admin_id),
+                    KEY idx_status (status),
+                    KEY idx_created_at (created_at),
+                    CONSTRAINT fk_importlogs_admin FOREIGN KEY (admin_id) REFERENCES users (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='题目导入日志表'
             ''',
             'caigpt_dialog_history': '''
                 CREATE TABLE IF NOT EXISTS caigpt_dialog_history (
@@ -339,9 +438,13 @@ class MySQLDatabase:
                     user_id INT NOT NULL,
                     role VARCHAR(50) NOT NULL,
                     content TEXT NOT NULL,
-                    images TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
+                    images JSON,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    KEY idx_user_id (user_id),
+                    KEY idx_role (role),
+                    KEY idx_created_at (created_at),
+                    CONSTRAINT fk_caigpt_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='CaiGPT对话历史表'
             ''',
         }
         

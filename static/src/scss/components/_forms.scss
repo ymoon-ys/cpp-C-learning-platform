@@ -1,0 +1,404 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ============================================
+// 表单组件 (Form Components)
+// 输入框 / 选择器 / 复选框 / 密码强度
+// ============================================
+
+// ------------------------------------------
+// 表单组基础
+// ------------------------------------------
+.form-group {
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    font-size: $font-size-sm;
+    color: $text-primary;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $spacing-sm;
+  }
+
+  // 错误状态
+  &--error {
+    label {
+      color: $danger-color;
+    }
+
+    input,
+    textarea,
+    select {
+      border-color: $danger-color;
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba($danger-color, 0.15);
+      }
+    }
+
+    .form-error {
+      display: block;
+    }
+  }
+
+  // 成功状态
+  &--success {
+    input,
+    textarea,
+    select {
+      border-color: $success-color;
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba($success-color, 0.15);
+      }
+    }
+  }
+}
+
+// ------------------------------------------
+// 输入框基础样式
+// ------------------------------------------
+.form-control,
+.form-input,
+.form-textarea,
+.form-select {
+  @include input-base;
+}
+
+// 文本域特殊处理
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+// 选择器特殊处理
+.form-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2395a5a6' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  padding-right: 40px;
+}
+
+// ------------------------------------------
+// 带图标的输入框
+// ------------------------------------------
+.input-wrapper {
+  position: relative;
+
+  i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $text-muted;
+    font-size: 18px;
+    z-index: 1;
+  }
+
+  input,
+  select,
+  textarea {
+    padding-left: 45px;
+  }
+
+  // 聚焦时图标变色
+  &:focus-within i {
+    color: $primary-color;
+  }
+}
+
+// 右侧图标（如密码显示/隐藏、清除等）
+.input-action {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: $text-muted;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: $primary-color;
+  }
+}
+
+// ------------------------------------------
+// 表单错误提示
+// ------------------------------------------
+.form-error {
+  display: none;
+  font-size: $font-size-xs;
+  color: $danger-color;
+  margin-top: 4px;
+
+  i {
+    margin-right: 4px;
+  }
+}
+
+// 表单帮助文本
+.form-help {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  margin-top: 4px;
+}
+
+// ------------------------------------------
+// 复选框和单选按钮自定义样式
+// ------------------------------------------
+.form-check,
+.form-radio {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  user-select: none;
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid $border-color;
+    border-radius: $radius-sm;
+    cursor: pointer;
+    transition: all $transition-fast;
+    position: relative;
+    flex-shrink: 0;
+
+    &:checked {
+      background: $primary-gradient;
+      border-color: $primary-color;
+    }
+  }
+
+  input[type="radio"] {
+    border-radius: $radius-full;
+
+    &:checked::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      background: $text-white;
+      border-radius: $radius-full;
+    }
+  }
+
+  input[type="checkbox"] {
+    &:checked::after {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 12px;
+      color: $text-white;
+    }
+  }
+
+  &:has(input:checked) {
+    color: $text-primary;
+  }
+}
+
+// 单选按钮组
+.radio-group,
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+// ------------------------------------------
+// 密码强度指示器
+// ------------------------------------------
+.password-strength {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+
+  .strength-bar {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: $border-color;
+    transition: background $transition-fast;
+
+    &.active {
+      &--weak   { background: $danger-color; }
+      &--medium { background: $warning-color; }
+      &--strong { background: $success-color; }
+    }
+  }
+}
+
+.strength-text {
+  font-size: $font-size-xs;
+  margin-top: 4px;
+
+  &--weak   { color: $danger-color; }
+  &--medium { color: $warning-color; }
+  &--strong { color: $success-color; }
+}
+
+// ------------------------------------------
+// 开关控件 (Toggle Switch)
+// ------------------------------------------
+.form-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  cursor: pointer;
+
+  .switch-track {
+    width: 44px;
+    height: 24px;
+    background: $border-color;
+    border-radius: 12px;
+    position: relative;
+    transition: background $transition-fast;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: $bg-white;
+      border-radius: $radius-full;
+      transition: transform $transition-fast;
+      box-shadow: $shadow-sm;
+    }
+  }
+
+  input {
+    @include sr-only;
+  }
+
+  input:checked + .switch-track {
+    background: $primary-gradient;
+
+    &::after {
+      transform: translateX(20px);
+    }
+  }
+
+  .switch-label {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+  }
+}
+
+// ------------------------------------------
+// 表单操作区
+// ------------------------------------------
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+// ------------------------------------------
+// 图片上传区域
+// ------------------------------------------
+.image-upload-area {
+  border: 2px dashed $border-color;
+  border-radius: $radius-md;
+  padding: 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all $transition-base;
+  background: $bg-light;
+
+  &:hover {
+    border-color: $primary-color;
+    background: #f0f4ff;
+  }
+
+  i {
+    font-size: 40px;
+    color: #ccc;
+    margin-bottom: 10px;
+  }
+
+  p {
+    color: #999;
+    font-size: $font-size-sm;
+  }
+}
+
+.image-preview-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.image-preview-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: $radius-sm;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.image-preview-remove {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  background: rgba(0,0,0,0.6);
+  color: $text-white;
+  border: none;
+  border-radius: $radius-full;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  @include flex-center;
+}
+
+// ============================================
+// 响应式适配
+// ============================================
+
+@include respond-below('sm') {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}

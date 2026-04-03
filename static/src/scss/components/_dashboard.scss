@@ -1,0 +1,267 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ============================================
+// 仪表盘页面 (Dashboard Page)
+// 学生/教师/管理员 仪表盘通用 + 特定样式
+// ============================================
+
+// ------------------------------------------
+// 仪表盘统计概览
+// ------------------------------------------
+.dashboard-overview {
+  margin-bottom: 30px;
+}
+
+// 欢迎区域增强
+.welcome-banner {
+  background: $primary-gradient;
+  border-radius: $radius-xl;
+  padding: 30px 40px;
+  color: $text-white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  position: relative;
+  overflow: hidden;
+
+  // 装饰背景
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: $radius-full;
+  }
+
+  .welcome-text {
+    position: relative;
+    z-index: 1;
+
+    h2 {
+      font-size: 28px;
+      font-weight: $font-weight-bold;
+      margin-bottom: 8px;
+      color: $text-white;
+    }
+
+    p {
+      opacity: 0.9;
+      font-size: $font-size-md;
+    }
+  }
+
+  .welcome-actions {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 12px;
+
+    .btn-welcome {
+      padding: 10px 24px;
+      background: rgba(255,255,255,0.2);
+      color: $text-white;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: $radius-full;
+      font-size: $font-size-sm;
+      cursor: pointer;
+      transition: all $transition-base;
+      backdrop-filter: blur(5px);
+
+      &:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
+
+// 快捷操作区
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.quick-action-item {
+  @include card-base;
+  text-align: center;
+  padding: 20px 16px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+
+  i {
+    font-size: 28px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  span {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    font-weight: $font-weight-medium;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+
+    i { color: $primary-color; }
+  }
+}
+
+// ------------------------------------------
+// 最近活动 / 时间线
+// ------------------------------------------
+.activity-feed {
+  background: $bg-white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+  padding: 25px;
+}
+
+.activity-item {
+  display: flex;
+  gap: 15px;
+  padding: 15px 0;
+  border-bottom: 1px solid $border-light;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .activity-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-full;
+    @include flex-center;
+    flex-shrink: 0;
+    font-size: 14px;
+
+    &--learn   { background: rgba($primary-color, 0.1); color: $primary-color; }
+    &--success { background: rgba($success-color, 0.1); color: $success-color; }
+    &--warning { background: rgba($warning-color, 0.1); color: $warning-color; }
+  }
+
+  .activity-content {
+    flex: 1;
+
+    p {
+      font-size: $font-size-sm;
+      color: $text-primary;
+      line-height: 1.5;
+      margin-bottom: 4px;
+    }
+
+    time {
+      font-size: $font-size-xs;
+      color: $text-muted;
+    }
+  }
+}
+
+// ------------------------------------------
+// 学习进度图表区域
+// ------------------------------------------
+.progress-chart {
+  @include card-base;
+  padding: 25px;
+
+  &__header {
+    @include flex-between;
+    margin-bottom: 20px;
+  }
+
+  &__title {
+    font-size: 18px;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+  }
+
+  &__body {
+    min-height: 200px;
+  }
+}
+
+// ------------------------------------------
+// 排行榜
+// ------------------------------------------
+.leaderboard {
+  @include card-base;
+  padding: 25px;
+}
+
+.leaderboard-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 0;
+  border-bottom: 1px solid $border-light;
+
+  &:last-child { border-bottom: none; }
+
+  .rank {
+    width: 28px;
+    height: 28px;
+    border-radius: $radius-full;
+    @include flex-center;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-bold;
+    flex-shrink: 0;
+
+    &--top-1 { background: #ffd700; color: #7c6a00; }
+    &--top-2 { background: #c0c0c0; color: #555; }
+    &--top-3 { background: #cd7f32; color: #5c3d00; }
+    &--default { background: $bg-light; color: $text-muted; }
+  }
+
+  .rank-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-full;
+    object-fit: cover;
+  }
+
+  .rank-info {
+    flex: 1;
+
+    .rank-name {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      color: $text-primary;
+    }
+
+    .rank-score {
+      font-size: $font-size-xs;
+      color: $text-muted;
+    }
+  }
+
+  .rank-value {
+    font-size: $font-size-md;
+    font-weight: $font-weight-bold;
+    color: $primary-color;
+  }
+}
+
+// ============================================
+// 响应式适配
+// ============================================
+
+@include respond-below('md') {
+  .welcome-banner {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+    padding: 25px;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

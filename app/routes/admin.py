@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
 from flask_login import login_required, current_user
 from app.models import User
+from app.utils import get_greeting, get_week_day_chinese
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -23,7 +24,8 @@ def dashboard():
     users = User.get_all()
     courses = db.read_table('courses')
     
-    return render_template('admin/dashboard.html', stats=stats, users=users, courses=courses)
+    return render_template('admin/dashboard.html', stats=stats, users=users, courses=courses,
+                         greeting=get_greeting(), week_day=get_week_day_chinese())
 
 @admin_bp.route('/users')
 @login_required
@@ -183,7 +185,7 @@ def add_problem():
         if test_cases_input:
             try:
                 test_cases = json.loads(test_cases_input)
-            except:
+            except (json.JSONDecodeError, ValueError):
                 test_cases = []
         
         tags = None
@@ -265,7 +267,7 @@ def edit_problem(problem_id):
         if test_cases_input:
             try:
                 problem.test_cases = json.loads(test_cases_input)
-            except:
+            except (json.JSONDecodeError, ValueError):
                 pass
         
         problem.save()

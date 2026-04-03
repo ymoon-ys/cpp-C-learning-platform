@@ -1,194 +1,289 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户管理 - C++学习平台</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <!-- 顶部导航栏 -->
-    <header class="header">
-        <div class="header-left">
-            <h1>C++学习平台</h1>
-        </div>
-        <div class="header-right">
-            <div class="greeting">
-                <p>上午好，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
-                <p class="sub-greeting">管理员后台</p>
-            </div>
-            <div class="user-icon">
-                {% if current_user.avatar %}
-                <img src="{{ current_user.avatar }}" alt="用户头像">
-                {% else %}
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
-                {% endif %}
-            </div>
-        </div>
-    </header>
+{% extends "base.html" %}
 
-    <div class="container">
-        <!-- 左侧边栏 -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="learning-stats">
-                    <p class="days">管理员</p>
-                    <p class="number">后台</p>
-                </div>
-            </div>
-            <nav class="sidebar-nav">
-                <ul>
-                    <li><a href="/admin/dashboard">仪表盘</a></li>
-                    <li class="active"><a href="/admin/users">用户管理</a></li>
-                    <li><a href="/admin/courses">课程管理</a></li>
-                    <li><a href="/admin/problems">题目管理</a></li>
-                    <li><a href="/community">社区管理</a></li>
-                    <li><a href="/admin/settings">设置</a></li>
-                    <li><a href="/logout">退出登录</a></li>
-                </ul>
-            </nav>
-        </aside>
-        
-        <!-- 主内容区 -->
-        <main class="main-content">
-            <div class="section-header">
-                <h2>用户管理</h2>
-            </div>
-            
-            <!-- 角色统计卡片 -->
-            <div class="stats-cards mb-6">
-                <div class="stat-card">
-                    <h3>管理员</h3>
-                    <p>{{ admins|length }}</p>
-                </div>
-                <div class="stat-card">
-                    <h3>教师</h3>
-                    <p>{{ teachers|length }}</p>
-                </div>
-                <div class="stat-card">
-                    <h3>学生</h3>
-                    <p>{{ students|length }}</p>
-                </div>
-                <div class="stat-card">
-                    <h3>总用户</h3>
-                    <p>{{ users|length }}</p>
-                </div>
-            </div>
-            
-            <!-- 管理员列表 -->
-            {% if admins %}
-            <div class="content-card mb-6">
-                <h3 class="card-title">
-                    <i class="fas fa-user-shield"></i>
-                    管理员
-                </h3>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>用户名</th>
-                                <th>邮箱</th>
-                                <th>注册时间</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in admins %}
-                            <tr>
-                                <td>{{ user.id }}</td>
-                                <td>{{ user.username }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.created_at[:10] if user.created_at else '未知' }}</td>
-                                <td>
-                                    <form action="/admin/users/{{ user.id }}/delete" method="POST" style="display: inline;">
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- 教师列表 -->
-            {% if teachers %}
-            <div class="content-card mb-6">
-                <h3 class="card-title">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    教师
-                </h3>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>用户名</th>
-                                <th>邮箱</th>
-                                <th>注册时间</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in teachers %}
-                            <tr>
-                                <td>{{ user.id }}</td>
-                                <td>{{ user.username }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.created_at[:10] if user.created_at else '未知' }}</td>
-                                <td>
-                                    <form action="/admin/users/{{ user.id }}/delete" method="POST" style="display: inline;">
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- 学生列表 -->
-            {% if students %}
-            <div class="content-card">
-                <h3 class="card-title">
-                    <i class="fas fa-user-graduate"></i>
-                    学生
-                </h3>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>用户名</th>
-                                <th>邮箱</th>
-                                <th>注册时间</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in students %}
-                            <tr>
-                                <td>{{ user.id }}</td>
-                                <td>{{ user.username }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.created_at[:10] if user.created_at else '未知' }}</td>
-                                <td>
-                                    <form action="/admin/users/{{ user.id }}/delete" method="POST" style="display: inline;">
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
-        </main>
+{% block title %}用户管理 - C++学习平台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .search-box {
+        flex: 1;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .search-box input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .filter-select {
+        padding: 10px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+    }
+    
+    .users-table {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .users-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .users-table th,
+    .users-table td {
+        padding: 15px 20px;
+        text-align: left;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .users-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 14px;
+    }
+    
+    .users-table td {
+        color: #7f8c8d;
+        font-size: 14px;
+    }
+    
+    .users-table tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .user-avatar-small {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .user-name {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .role-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .role-admin {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .role-teacher {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .role-student {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+    
+    .action-btns {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-edit {
+        background: #667eea;
+        color: white;
+    }
+    
+    .btn-edit:hover {
+        background: #764ba2;
+    }
+    
+    .btn-delete {
+        background: #e74c3c;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background: #c0392b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">用户管理</h1>
+    <button class="btn btn-primary" onclick="showAddUserModal()">
+        <i class="fas fa-plus"></i> 添加用户
+    </button>
+</div>
+
+<div class="filter-section">
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="搜索用户名或邮箱...">
+        <button class="btn btn-primary" onclick="searchUsers()">
+            <i class="fas fa-search"></i> 搜索
+        </button>
     </div>
-</body>
-</html>
+    <select class="filter-select" id="roleFilter" onchange="filterByRole()">
+        <option value="">全部角色</option>
+        <option value="admin">管理员</option>
+        <option value="teacher">教师</option>
+        <option value="student">学生</option>
+    </select>
+</div>
+
+<div class="users-table">
+    <table>
+        <thead>
+            <tr>
+                <th>用户信息</th>
+                <th>邮箱</th>
+                <th>角色</th>
+                <th>状态</th>
+                <th>注册时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>
+                    <div class="user-info">
+                        <img src="{{ user.avatar if user.avatar else 'https://via.placeholder.com/40' }}" 
+                             alt="用户头像" class="user-avatar-small">
+                        <span class="user-name">{{ user.nickname or user.username }}</span>
+                    </div>
+                </td>
+                <td>{{ user.email }}</td>
+                <td>
+                    <span class="role-badge role-{{ user.role }}">
+                        {% if user.role == 'admin' %}管理员
+                        {% elif user.role == 'teacher' %}教师
+                        {% else %}学生{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge status-{{ 'active' if user.is_active else 'inactive' }}">
+                        {{ '活跃' if user.is_active else '未激活' }}
+                    </span>
+                </td>
+                <td>{{ user.created_at }}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-sm btn-edit" onclick="editUser({{ user.id }})">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button class="btn-sm btn-delete" onclick="deleteUser({{ user.id }})">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function searchUsers() {
+    const search = document.getElementById('searchInput').value;
+    const role = document.getElementById('roleFilter').value;
+    window.location.href = `{{ url_for('admin.users') }}?search=${search}&role=${role}`;
+}
+
+function filterByRole() {
+    const search = document.getElementById('searchInput').value;
+    const role = document.getElementById('roleFilter').value;
+    window.location.href = `{{ url_for('admin.users') }}?search=${search}&role=${role}`;
+}
+
+function showAddUserModal() {
+    alert('添加用户功能开发中...');
+}
+
+function editUser(userId) {
+    alert('编辑用户: ' + userId);
+}
+
+function deleteUser(userId) {
+    if (confirm('确定要删除这个用户吗？')) {
+        alert('删除用户: ' + userId);
+    }
+}
+</script>
+{% endblock %}

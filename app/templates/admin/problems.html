@@ -1,402 +1,243 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>题目管理 - C++学习平台</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <!-- 顶部导航栏 -->
-    <header class="header">
-        <div class="header-left">
-            <h1>C++学习平台</h1>
-        </div>
-        <div class="header-right">
-            <div class="greeting">
-                <p>上午好，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
-                <p class="sub-greeting">管理员后台</p>
-            </div>
-            <div class="user-icon">
-                {% if current_user.avatar %}
-                <img src="{{ current_user.avatar }}" alt="用户头像">
-                {% else %}
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
-                {% endif %}
-            </div>
-        </div>
-    </header>
+{% extends "base.html" %}
 
-    <div class="container">
-        <!-- 左侧边栏 -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="learning-stats">
-                    <p class="days">管理员</p>
-                    <p class="number">后台</p>
-                </div>
-            </div>
-            <nav class="sidebar-nav">
-                <ul>
-                    <li><a href="/admin/dashboard">仪表盘</a></li>
-                    <li><a href="/admin/users">用户管理</a></li>
-                    <li><a href="/admin/courses">课程管理</a></li>
-                    <li class="active"><a href="/admin/problems">题目管理</a></li>
-                    <li><a href="/community">社区管理</a></li>
-                    <li><a href="/admin/settings">设置</a></li>
-                    <li><a href="/logout">退出登录</a></li>
-                </ul>
-            </nav>
-        </aside>
-        
-        <!-- 主内容区 -->
-        <main class="main-content">
-            <div class="section-header">
-                <div class="section-title">
-                    <h2>题目管理</h2>
-                </div>
-                <div class="section-actions">
-                    <a href="/admin/problems/import" class="btn btn-primary">批量导入</a>
-                    <a href="/admin/import-logs" class="btn btn-secondary">导入日志</a>
-                </div>
-            </div>
-            
-            <!-- 题目分类模块 -->
-            <div class="problem-categories">
-                <!-- 顺序结构 -->
-                {% set category_problems = problems|selectattr('category', 'equalto', '顺序结构')|list %}
-                {% if category_problems %}
-                <div class="category-section">
-                    <div class="category-header">
-                        <h3>顺序结构</h3>
-                        <span class="category-count">({{ category_problems|length }})</span>
-                    </div>
-                    <div class="problem-list">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>标题</th>
-                                    <th>难度</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for problem in category_problems %}
-                                <tr>
-                                    <td>{{ problem.id }}</td>
-                                    <td>{{ problem.title }}</td>
-                                    <td>{{ problem.difficulty }}</td>
-                                    <td>
-                                        <form action="/admin/problems/{{ problem.id }}/delete" method="POST" style="display: inline;">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
+{% block title %}题目管理 - C++学习平台{% endblock %}
 
-                <!-- 分支结构 -->
-                {% set category_problems = problems|selectattr('category', 'equalto', '分支结构')|list %}
-                {% if category_problems %}
-                <div class="category-section">
-                    <div class="category-header">
-                        <h3>分支结构</h3>
-                        <span class="category-count">({{ category_problems|length }})</span>
-                    </div>
-                    <div class="problem-list">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>标题</th>
-                                    <th>难度</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for problem in category_problems %}
-                                <tr>
-                                    <td>{{ problem.id }}</td>
-                                    <td>{{ problem.title }}</td>
-                                    <td>{{ problem.difficulty }}</td>
-                                    <td>
-                                        <form action="/admin/problems/{{ problem.id }}/delete" method="POST" style="display: inline;">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .search-box {
+        flex: 1;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .search-box input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .problems-table {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .problems-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .problems-table th,
+    .problems-table td {
+        padding: 15px 20px;
+        text-align: left;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .problems-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 14px;
+    }
+    
+    .problems-table td {
+        color: #7f8c8d;
+        font-size: 14px;
+    }
+    
+    .problems-table tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .difficulty-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .difficulty-easy {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .difficulty-medium {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .difficulty-hard {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .action-btns {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .btn-edit {
+        background: #667eea;
+        color: white;
+    }
+    
+    .btn-edit:hover {
+        background: #764ba2;
+    }
+    
+    .btn-delete {
+        background: #e74c3c;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background: #c0392b;
+    }
+</style>
+{% endblock %}
 
-                <!-- 循环结构 -->
-                {% set category_problems = problems|selectattr('category', 'equalto', '循环结构')|list %}
-                {% if category_problems %}
-                <div class="category-section">
-                    <div class="category-header">
-                        <h3>循环结构</h3>
-                        <span class="category-count">({{ category_problems|length }})</span>
-                    </div>
-                    <div class="problem-list">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>标题</th>
-                                    <th>难度</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for problem in category_problems %}
-                                <tr>
-                                    <td>{{ problem.id }}</td>
-                                    <td>{{ problem.title }}</td>
-                                    <td>{{ problem.difficulty }}</td>
-                                    <td>
-                                        <form action="/admin/problems/{{ problem.id }}/delete" method="POST" style="display: inline;">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">题目管理</h1>
+</div>
 
-                <!-- 数组 -->
-                {% set category_problems = problems|selectattr('category', 'equalto', '数组')|list %}
-                {% if category_problems %}
-                <div class="category-section">
-                    <div class="category-header">
-                        <h3>数组</h3>
-                        <span class="category-count">({{ category_problems|length }})</span>
-                    </div>
-                    <div class="problem-list">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>标题</th>
-                                    <th>难度</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for problem in category_problems %}
-                                <tr>
-                                    <td>{{ problem.id }}</td>
-                                    <td>{{ problem.title }}</td>
-                                    <td>{{ problem.difficulty }}</td>
-                                    <td>
-                                        <form action="/admin/problems/{{ problem.id }}/delete" method="POST" style="display: inline;">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- 函数 -->
-                {% set category_problems = problems|selectattr('category', 'equalto', '函数')|list %}
-                {% if category_problems %}
-                <div class="category-section">
-                    <div class="category-header">
-                        <h3>函数</h3>
-                        <span class="category-count">({{ category_problems|length }})</span>
-                    </div>
-                    <div class="problem-list">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>标题</th>
-                                    <th>难度</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for problem in category_problems %}
-                                <tr>
-                                    <td>{{ problem.id }}</td>
-                                    <td>{{ problem.title }}</td>
-                                    <td>{{ problem.difficulty }}</td>
-                                    <td>
-                                        <form action="/admin/problems/{{ problem.id }}/delete" method="POST" style="display: inline;">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- 指针 -->
-                {% set category_problems = problems|selectattr('category', 'equalto', '指针')|list %}
-                {% if category_problems %}
-                <div class="category-section">
-                    <div class="category-header">
-                        <h3>指针</h3>
-                        <span class="category-count">({{ category_problems|length }})</span>
-                    </div>
-                    <div class="problem-list">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>标题</th>
-                                    <th>难度</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for problem in category_problems %}
-                                <tr>
-                                    <td>{{ problem.id }}</td>
-                                    <td>{{ problem.title }}</td>
-                                    <td>{{ problem.difficulty }}</td>
-                                    <td>
-                                        <form action="/admin/problems/{{ problem.id }}/delete" method="POST" style="display: inline;">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- 结构体 -->
-                {% set category_problems = problems|selectattr('category', 'equalto', '结构体')|list %}
-                {% if category_problems %}
-                <div class="category-section">
-                    <div class="category-header">
-                        <h3>结构体</h3>
-                        <span class="category-count">({{ category_problems|length }})</span>
-                    </div>
-                    <div class="problem-list">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>标题</th>
-                                    <th>难度</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for problem in category_problems %}
-                                <tr>
-                                    <td>{{ problem.id }}</td>
-                                    <td>{{ problem.title }}</td>
-                                    <td>{{ problem.difficulty }}</td>
-                                    <td>
-                                        <form action="/admin/problems/{{ problem.id }}/delete" method="POST" style="display: inline;">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- 类 -->
-                {% set category_problems = problems|selectattr('category', 'equalto', '类')|list %}
-                {% if category_problems %}
-                <div class="category-section">
-                    <div class="category-header">
-                        <h3>类</h3>
-                        <span class="category-count">({{ category_problems|length }})</span>
-                    </div>
-                    <div class="problem-list">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>标题</th>
-                                    <th>难度</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for problem in category_problems %}
-                                <tr>
-                                    <td>{{ problem.id }}</td>
-                                    <td>{{ problem.title }}</td>
-                                    <td>{{ problem.difficulty }}</td>
-                                    <td>
-                                        <form action="/admin/problems/{{ problem.id }}/delete" method="POST" style="display: inline;">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- 模板库 -->
-                {% set category_problems = problems|selectattr('category', 'equalto', '模板库')|list %}
-                {% if category_problems %}
-                <div class="category-section">
-                    <div class="category-header">
-                        <h3>模板库</h3>
-                        <span class="category-count">({{ category_problems|length }})</span>
-                    </div>
-                    <div class="problem-list">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>标题</th>
-                                    <th>难度</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for problem in category_problems %}
-                                <tr>
-                                    <td>{{ problem.id }}</td>
-                                    <td>{{ problem.title }}</td>
-                                    <td>{{ problem.difficulty }}</td>
-                                    <td>
-                                        <form action="/admin/problems/{{ problem.id }}/delete" method="POST" style="display: inline;">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除吗？');">删除</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </main>
+<div class="filter-section">
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="搜索题目名称...">
+        <button class="btn btn-primary" onclick="searchProblems()">
+            <i class="fas fa-search"></i> 搜索
+        </button>
     </div>
-</body>
-</html>
+    <select class="filter-select" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; background: white;" onchange="filterByDifficulty()">
+        <option value="">全部难度</option>
+        <option value="easy">简单</option>
+        <option value="medium">中等</option>
+        <option value="hard">困难</option>
+    </select>
+</div>
+
+<div class="problems-table">
+    <table>
+        <thead>
+            <tr>
+                <th>题目名称</th>
+                <th>难度</th>
+                <th>分类</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for problem in problems %}
+            <tr>
+                <td><strong style="color: #2c3e50;">{{ problem.title }}</strong></td>
+                <td>
+                    <span class="difficulty-badge difficulty-{{ problem.difficulty }}">
+                        {% if problem.difficulty == 'easy' %}简单
+                        {% elif problem.difficulty == 'medium' %}中等
+                        {% else %}困难{% endif %}
+                    </span>
+                </td>
+                <td>{{ problem.category or '未分类' }}</td>
+                <td>{{ problem.created_at }}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-sm btn-edit" onclick="alert('编辑功能开发中...')">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button class="btn-sm btn-delete" onclick="deleteProblem({{ problem.id }})">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if not problems %}
+<div class="empty-state" style="text-align: center; padding: 60px 20px; background: white; border-radius: 16px;">
+    <i class="fas fa-tasks" style="font-size: 64px; color: #d0d0d0; margin-bottom: 20px;"></i>
+    <h3 style="font-size: 20px; color: #7f8c8d; margin-bottom: 10px;">还没有任何题目</h3>
+    <p style="color: #95a5a6; font-size: 14px;">暂无题目</p>
+</div>
+{% endif %}
+
+<script>
+function searchProblems() {
+    const search = document.getElementById('searchInput').value;
+    window.location.href = `{{ url_for('admin.problems') }}?search=${search}`;
+}
+
+function filterByDifficulty() {
+    const search = document.getElementById('searchInput').value;
+    const difficulty = event.target.value;
+    window.location.href = `{{ url_for('admin.problems') }}?search=${search}&difficulty=${difficulty}`;
+}
+
+function deleteProblem(problemId) {
+    if (confirm('确定要删除这个题目吗？')) {
+        fetch(`/admin/problems/${problemId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('删除失败，请重试');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

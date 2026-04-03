@@ -20,7 +20,7 @@ class SQLiteDatabase:
                 try:
                     self.conn.execute('SELECT 1')
                     return self.conn
-                except:
+                except Exception:
                     self.conn.close()
                     self.conn = None
             

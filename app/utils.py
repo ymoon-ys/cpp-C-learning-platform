@@ -139,16 +139,75 @@ def get_week_day_chinese():
 
 def get_learning_days(user):
     """
-    计算用户学习天数
+    计算用户学习天数（从注册到现在的总天数）
     """
     if hasattr(user, 'created_at') and user.created_at:
         try:
             created_date = datetime.strptime(user.created_at, '%Y-%m-%d %H:%M:%S')
             return (datetime.now() - created_date).days
-        except:
+        except (ValueError, TypeError):
             return 15
     else:
         return 15
+
+def get_consecutive_learning_days(user):
+    """
+    计算用户连续学习天数（基于实际学习记录）
+    逻辑：从今天开始往前查找，计算连续有学习记录的天数
+    """
+    from flask import current_app
+    
+    try:
+        db = current_app.db
+        
+        learning_dates = set()
+        
+        progress_records = db.find_field('learning_progress', 'user_id', user.id)
+        if progress_records:
+            for record in progress_records:
+                updated_at = record.get('updated_at')
+                if updated_at:
+                    try:
+                        date_str = datetime.strptime(updated_at, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
+                        learning_dates.add(date_str)
+                    except (ValueError, TypeError):
+                        pass
+        
+        submissions = db.find_field('submissions', 'user_id', user.id)
+        if submissions:
+            for submission in submissions:
+                submit_time = submission.get('submit_time')
+                if submit_time:
+                    try:
+                        date_str = datetime.strptime(submit_time, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
+                        learning_dates.add(date_str)
+                    except (ValueError, TypeError):
+                        pass
+        
+        if not learning_dates:
+            return 0
+        
+        today = datetime.now().strftime('%Y-%m-%d')
+        consecutive_days = 0
+        check_date = datetime.now()
+        
+        max_check_days = 365
+        for _ in range(max_check_days):
+            date_str = check_date.strftime('%Y-%m-%d')
+            
+            if date_str in learning_dates:
+                consecutive_days += 1
+                check_date = check_date.replace(day=check_date.day - 1)
+            elif date_str == today:
+                check_date = check_date.replace(day=check_date.day - 1)
+            else:
+                break
+        
+        return consecutive_days
+        
+    except Exception as e:
+        print(f"计算连续学习天数时出错: {e}")
+        return 0
 
 def check_role_and_redirect(required_role):
     """
@@ -176,7 +235,7 @@ def get_user_context(user):
         'greeting': get_greeting(),
         'week_day': get_week_day_chinese(),
         'learning_days': get_learning_days(user),
-        'consecutive_days': 8,
+        'consecutive_days': get_consecutive_learning_days(user),
         'now': datetime.now(),
         'today_date': datetime.now().strftime('%Y-%m-%d')
     }
@@ -427,3 +486,18 @@ def ensure_url_path(path):
     if path.startswith('uploads/'):
         return '/' + path
     return '/' + path
+
+import json
+
+def from_json(value):
+    """
+    将JSON字符串转换为Python对象（Jinja2模板过滤器）
+    """
+    if value is None:
+        return []
+    if isinstance(value, (list, dict)):
+        return value
+    try:
+        return json.loads(value)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return []

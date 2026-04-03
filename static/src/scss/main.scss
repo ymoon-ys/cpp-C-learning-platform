@@ -1,0 +1,37 @@
+// ============================================
+// SCSS主入口文件 (Main Entry Point)
+// C++学习平台 - 样式系统入口
+//
+// 加载顺序（重要）：
+// 1. 变量定义 (Variables) - 设计令牌
+// 2. 混入函数 (Mixins) - 可复用工具
+// 3. 基础样式 (Base) - 全局重置与工具类
+// 4. 组件样式 (Components) - UI组件库
+// 5. 页面样式 (Pages) - 特定页面样式
+// ============================================
+
+// 基础层：变量和混入
+@use 'variables';
+@use 'mixins';
+
+// 重置层：全局重置和基础样式
+@use 'base';
+
+// ============================================
+// 组件层 (Components Layer)
+// UI组件库 - 从HTML内联样式迁移而来
+// ============================================
+@use 'components/auth';
+@use 'components/sidebar';
+@use 'components/cards';
+@use 'components/forms';
+@use 'components/loading';
+@use 'components/toast';
+
+// ============================================
+// 页面层 (Pages Layer)
+// 特定页面的组合样式
+// ============================================
+@use 'components/dashboard';
+@use 'components/ai-assistant';
+@use 'components/community';
