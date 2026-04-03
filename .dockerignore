@@ -5,9 +5,6 @@ node_modules/
 static/dist/
 dist/
 
-# Source files (built in Stage 1)
-static/src/
-
 # Python
 __pycache__/
 *.pyc
