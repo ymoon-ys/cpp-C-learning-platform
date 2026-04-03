@@ -6,7 +6,7 @@ WORKDIR /app/static
 COPY package.json package-lock.json* ./
 RUN npm ci
 
-COPY src/ ./src/
+COPY static/src/ ./src/
 RUN npm run build
 
 # Stage 2: Python运行环境
@@ -31,7 +31,7 @@ COPY --from=frontend-builder /app/static/dist ./static/dist
 
 COPY . .
 
-RUN mkdir -p uploads/covers uploads/videos uploads/images \
+RUN mkdir -p uploads/covers uploads/videos/uploads/images \
              uploads/documents uploads/materials uploads/community
 
 EXPOSE 8000
