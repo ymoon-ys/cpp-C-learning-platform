@@ -886,20 +886,36 @@
             <div class="content-body">
                 <div class="content-card">
                     <div class="content-inner">
+                        {# 调试信息（部署后可删除） #}
+                        <div style="background: #f0f0f0; padding: 10px; margin-bottom: 20px; border-radius: 8px; font-size: 12px; color: #666;">
+                            <strong>[DEBUG]</strong> content长度: {{ lesson.content|length if lesson.content else 0 }} |
+                            media_files类型: {{ lesson.media_files.__class__.__name__ if lesson.media_files else 'None' }} |
+                            media_files值: {{ lesson.media_files|default('空')[:150] if lesson.media_files else '空' }}
+                        </div>
+
                         {% if lesson.content %}
                         <div class="document-content">
                             {{ lesson.content|safe }}
                         </div>
 
                         {% endif %}
-                        
+
                         {# 显示多媒体文件（PDF、视频等） #}
+                        {% set show_media = false %}
                         {% if lesson.media_files %}
+                            {% if lesson.media_files is string and lesson.media_files|length > 2 and lesson.media_files != '[]' and lesson.media_files != 'null' %}
+                                {% set show_media = true %}
+                            {% elif lesson.media_files is not string and lesson.media_files|length > 0 %}
+                                {% set show_media = true %}
+                            {% endif %}
+                        {% endif %}
+
+                        {% if show_media %}
                         <div class="media-section" style="margin-top: 30px;">
                             <h3 style="font-size: 18px; color: #2c3e50; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #667eea;">
                                 <i class="fas fa-paperclip"></i> 附件资料
                             </h3>
-                            
+
                             {% set media_list = lesson.media_files if lesson.media_files is string else (lesson.media_files | tojson if lesson.media_files else '[]') %}
                             {% set files = media_list | from_json if media_list is string else media_list %}
                             
@@ -1042,14 +1058,8 @@
                                 </a>
                             </div>
                             {% endif %}
-                            
-                        {% else %}
-                        <div class="empty-content">
-                            <i class="fas fa-file-alt"></i>
-                            <h3>本小节暂无内容</h3>
-                            <p>敬请期待</p>
-                        </div>
-                        {% endif %}
+
+                        {# 内容区域 - 已移除空状态提示 #}
                     </div>
                 </div>
             </div>
