@@ -18,7 +18,7 @@
             </div>
             <div class="user-icon">
                 {% if current_user.avatar %}
-                <img src="{{ current_user.avatar }}" alt="用户头像">
+                <img src="{{ current_user.avatar }}" alt="用户头像" onerror="this.src='https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square'">
                 {% else %}
                 <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
                 {% endif %}

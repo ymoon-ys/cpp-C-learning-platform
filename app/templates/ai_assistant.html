@@ -2028,7 +2028,7 @@ function addMessageToChat(type, content, isStreaming = false, customHtml = null)
 
     let avatarHtml = '';
     if (type === 'user') {
-        avatarHtml = `<img src="{{ current_user.avatar or 'https://via.placeholder.com/40' }}" alt="用户" class="message-avatar">`;
+        avatarHtml = `<img src="{{ current_user.avatar or 'https://via.placeholder.com/40' }}" alt="用户" class="message-avatar" onerror="this.src='https://via.placeholder.com/40'">`;
     } else if (type === 'ai') {
         avatarHtml = `<img src="{{ url_for('static', filename='images/ai-avatar.png') }}" alt="AI" class="message-avatar" onerror="this.src='https://via.placeholder.com/40'">`;
     }

@@ -842,7 +842,7 @@
                 </div>
 
                 <div class="comment-form-row">
-                    <img src="{{ current_user.avatar or '/static/default-avatar.png' }}" alt="" class="commenter-avatar">
+                    <img src="{{ current_user.avatar or '/static/default-avatar.png' }}" alt="" class="commenter-avatar" onerror="this.src='/static/default-avatar.png'">
                     <div class="comment-input-group">
                         <textarea class="comment-textarea" id="mainCommentInput" placeholder="写下你的评论..." rows="1"></textarea>
                         <button class="submit-comment-btn" onclick="submitMainComment()">发送</button>

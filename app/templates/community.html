@@ -564,7 +564,7 @@
     <!-- 发帖区域 -->
     <div class="create-post-section">
         <div class="create-post-header">
-            <img src="{{ current_user.avatar or '/static/default-avatar.png' }}" alt="头像" class="create-post-avatar">
+            <img src="{{ current_user.avatar or '/static/default-avatar.png' }}" alt="头像" class="create-post-avatar" onerror="this.src='/static/default-avatar.png'">
             <input type="text" class="create-post-input" id="createPostInput" placeholder="分享你的想法..." readonly onclick="showCreatePostForm()">
         </div>
 
