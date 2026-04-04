@@ -1,4 +1,5 @@
 import os
+import sys
 from flask import Flask, redirect, url_for, render_template, request, flash
 from flask_login import LoginManager
 from flask_caching import Cache
@@ -27,6 +28,35 @@ limiter = Limiter(
 def load_user(user_id):
     return User.get_by_id(user_id)
 
+def validate_database_config():
+    db_type = os.getenv('DB_TYPE', 'mysql').lower()
+    
+    if db_type == 'mysql':
+        required_vars = ['MYSQL_HOST', 'MYSQL_USER', 'MYSQL_PASSWORD', 'MYSQL_DATABASE']
+        missing = [var for var in required_vars if not os.getenv(var)]
+        
+        if missing:
+            print(f'\n❌ MySQL 数据库配置缺少必需的环境变量: {", ".join(missing)}')
+            print('\n请在 Koyeb 控制台或 .env 文件中设置：')
+            for var in missing:
+                print(f'  - {var}')
+            print('\n示例配置:')
+            print('  MYSQL_HOST=your-mysql-host.com')
+            print('  MYSQL_USER=your_username')
+            print('  MYSQL_PASSWORD=your_secure_password')
+            print('  MYSQL_DATABASE=learning_platform\n')
+            
+            if os.environ.get('FLASK_ENV') == 'production':
+                return False
+    
+    ollama_url = os.getenv('OLLAMA_BASE_URL', '')
+    if not ollama_url:
+        print('\n⚠️  未配置 OLLAMA_BASE_URL，AI 助手功能将不可用')
+        print('   如需使用 AI 功能，请设置 OLLAMA_BASE_URL 环境变量')
+        print('   示例: OLLAMA_BASE_URL=https://your-ollama-service.com\n')
+    
+    return True
+
 def create_app(config_class=Config):
     app = Flask(__name__, static_folder=config_class.STATIC_FOLDER, static_url_path='/static')
     app.config.from_object(config_class)
@@ -37,22 +67,34 @@ def create_app(config_class=Config):
     
     limiter.init_app(app)
     
+    if not validate_database_config():
+        if os.environ.get('FLASK_ENV') == 'production':
+            print('❌ 生产环境数据库配置不完整，应用无法启动！')
+            sys.exit(1)
+        else:
+            print('⚠️  开发模式继续运行，但数据库可能无法连接')
+    
     db_type = os.getenv('DB_TYPE', 'mysql').lower()
     
     if db_type == 'mysql':
         db = MySQLDatabase(
-            host=os.getenv('MYSQL_HOST', 'localhost'),
-            user=os.getenv('MYSQL_USER', 'root'),
-            password=os.getenv('MYSQL_PASSWORD', '123456'),
-            database=os.getenv('MYSQL_DATABASE', 'learning_platform'),
+            host=os.getenv('MYSQL_HOST'),
+            user=os.getenv('MYSQL_USER'),
+            password=os.getenv('MYSQL_PASSWORD'),
+            database=os.getenv('MYSQL_DATABASE'),
             port=int(os.getenv('MYSQL_PORT', '3306'))
         )
-        print(f'[OK] Using MySQL database: {os.getenv("MYSQL_DATABASE", "learning_platform")}')
-        print(f'Connection: {os.getenv("MYSQL_HOST", "localhost")}:{os.getenv("MYSQL_PORT", "3306")}')
+        
+        if db.conn:
+            print(f'[✓] MySQL 数据库连接成功')
+            print(f'    主机: {os.getenv("MYSQL_HOST")}:{os.getenv("MYSQL_PORT", "3306")}')
+            print(f'    数据库: {os.getenv("MYSQL_DATABASE")}')
+        else:
+            print(f'[✗] MySQL 数据库连接失败！请检查配置')
     else:
-        db_path = os.path.join(app.config['DATABASE_DIR'], 'learning_platform.db')
+        db_path = os.path.join(app.config.get('DATABASE_DIR', '.'), 'learning_platform.db')
         db = SQLiteDatabase(db_path)
-        print(f'[OK] Using SQLite database: {db_path}')
+        print(f'[✓] 使用 SQLite 数据库: {db_path}')
     
     app.db = db
     
@@ -67,7 +109,7 @@ def create_app(config_class=Config):
     os.makedirs(upload_folder, exist_ok=True)
     os.makedirs(os.path.join(upload_folder, 'avatars'), exist_ok=True)
     os.makedirs(os.path.join(upload_folder, 'community'), exist_ok=True)
-    print(f'[OK] Upload folder ready: {upload_folder}')
+    print(f'[✓] 上传目录已准备: {upload_folder}')
 
     from app.utils import ensure_url_path, from_json
     app.add_template_filter(ensure_url_path, 'ensure_url_path')
@@ -93,7 +135,11 @@ def create_app(config_class=Config):
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'SAMEORIGIN'
         response.headers['X-XSS-Protection'] = '1; mode=block'
-        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        
+        is_https = request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https'
+        if is_https:
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        
         return response
     
     from app.routes.auth import auth_bp
@@ -116,7 +162,7 @@ def create_app(config_class=Config):
         from app.routes.ai_assistant import init_caigpt_database
         init_caigpt_database(db)
     except Exception as e:
-        print(f'[ERR] Failed to initialize CAIgpt database: {e}')
+        print(f'[!] CAIgpt 数据库初始化失败: {e}')
     
     app.register_blueprint(recommendation_bp, url_prefix='/recommendation')
     app.register_blueprint(community_bp, url_prefix='/community')
@@ -141,12 +187,12 @@ def create_app(config_class=Config):
     
     try:
         if not db.conn:
-            print('[ERR] Database connection failed, skipping default user creation')
+            print('[!] 数据库连接失败，跳过默认用户创建')
         else:
             user_count = db.count('users')
-            print(f'Current user count: {user_count}')
+            print(f'当前用户数: {user_count}')
             if user_count == -1:
-                print('[ERR] Failed to count users, skipping default user creation')
+                print('[!] 无法统计用户数，跳过默认用户创建')
             else:
                 from werkzeug.security import generate_password_hash
                 default_users = [
@@ -186,15 +232,19 @@ def create_app(config_class=Config):
                         }
                         db.insert('users', user_data_to_insert)
                         created_count += 1
-                        print(f'[OK] Created default user: {user_data["username"]}')
+                        print(f'[✓] 创建默认用户: {user_data["username"]}')
                     else:
-                        print(f'[INFO] User {user_data["username"]} already exists, skipping')
+                        print(f'[i] 用户 {user_data["username"]} 已存在，跳过')
                 
                 if created_count > 0:
-                    print(f'[OK] Created {created_count} default users successfully')
+                    print(f'[✓] 成功创建 {created_count} 个默认用户')
                 else:
-                    print('[OK] All default users already exist')
+                    print('[✓] 所有默认用户已存在')
     except Exception as e:
-        print(f'[ERR] Failed to initialize default users: {e}')
+        print(f'[!] 默认用户初始化失败: {e}')
+    
+    print('\n' + '='*50)
+    print('🚀 应用初始化完成!')
+    print('='*50 + '\n')
     
     return app

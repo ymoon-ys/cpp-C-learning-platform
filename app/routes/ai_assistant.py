@@ -2517,17 +2517,21 @@ def find_gpp_compiler():
     import shutil
     import platform
 
+    logger.info(f"正在查找 C++ 编译器 (平台: {platform.system()})")
+
     # 1. 首先检查环境变量配置
     env_gpp = os.environ.get('GPP_PATH', '').strip()
     if env_gpp and os.path.isfile(env_gpp):
+        logger.info(f"✓ 从环境变量 GPP_PATH 找到编译器: {env_gpp}")
         return env_gpp
 
-    # 2. 使用 shutil.which 查找系统 PATH 中的 g++
+    # 2. 使用 shutil.which 查找系统 PATH 中的 g++（最可靠的方式）
     gpp_in_path = shutil.which('g++')
     if gpp_in_path:
+        logger.info(f"✓ 从系统 PATH 找到编译器: {gpp_in_path}")
         return gpp_in_path
 
-    # 3. Windows 特定路径搜索
+    # 3. 平台特定路径搜索
     if platform.system() == 'Windows':
         windows_paths = [
             # MinGW-w64 (最常见的)
@@ -2546,16 +2550,13 @@ def find_gpp_compiler():
             r'C:\TDM-GCC-64\bin\g++.exe',
             r'C:\TDM-GCC-32\bin\g++.exe',
             
-            # Visual Studio (需要通过 vcvarsall.bat 设置环境)
-            # 这里不直接查找，因为 VS 的 cl.exe 不是 g++
-            
             # LLVM/Clang (作为备选)
             r'C:\Program Files\LLVM\bin\clang++.exe',
         ]
 
         for path in windows_paths:
             if os.path.isfile(path):
-                logger.info(f"Found g++ at: {path}")
+                logger.info(f"✓ 在 Windows 常见路径找到编译器: {path}")
                 return path
 
         # 尝试在 Program Files 中递归搜索（仅一层）
@@ -2572,29 +2573,46 @@ def find_gpp_compiler():
                 if 'mingw' in item.lower() or 'gcc' in item.lower() or 'llvm' in item.lower():
                     potential_path = os.path.join(base_dir, item, 'bin', 'g++.exe')
                     if os.path.isfile(potential_path):
-                        logger.info(f"Found g++ at: {potential_path}")
+                        logger.info(f"✓ 在 Program Files 搜索到编译器: {potential_path}")
                         return potential_path
                     
-                    # 也尝试 clang++
                     clang_path = os.path.join(base_dir, item, 'bin', 'clang++.exe')
                     if os.path.isfile(clang_path):
-                        logger.info(f"Found clang++ at: {clang_path} (will use as fallback)")
+                        logger.info(f"✓ 找到 Clang++ 作为备选: {clang_path}")
                         return clang_path
-
-    # 4. Linux/macOS 常见路径
+    
     else:
+        # Linux/macOS/Docker 容器
         linux_mac_paths = [
             '/usr/bin/g++',
             '/usr/local/bin/g++',
-            '/opt/homebrew/bin/g++',
-            '/opt/local/bin/g++',  # MacPorts
+            '/opt/homebrew/bin/g++',       # macOS Homebrew
+            '/opt/local/bin/g++',           # MacPorts
+            '/usr/bin/c++',                 # 备选
         ]
         
         for path in linux_mac_paths:
             if os.path.isfile(path):
+                logger.info(f"✓ 在 Linux/macOS 路径找到编译器: {path}")
                 return path
+        
+        # Docker 容器中可能通过 apt 安装在其他位置
+        try:
+            result = subprocess.run(
+                ['dpkg', '-L', 'g++'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    if line.endswith('/g++') and os.path.isfile(line):
+                        logger.info(f"✓ 通过 dpkg 找到编译器: {line}")
+                        return line
+        except Exception as e:
+            logger.debug(f"dpkg 查询失败: {e}")
 
-    # 5. 最后尝试：使用 where/which 命令查找
+    # 4. 最后尝试：使用 where/which 命令查找
     try:
         if platform.system() == 'Windows':
             result = subprocess.run(
@@ -2607,18 +2625,26 @@ def find_gpp_compiler():
             if result.returncode == 0 and result.stdout.strip():
                 first_match = result.stdout.strip().split('\n')[0].strip()
                 if os.path.isfile(first_match):
+                    logger.info(f"✓ 通过 where 命令找到编译器: {first_match}")
                     return first_match
         else:
             result = subprocess.run(['which', 'g++'], capture_output=True, text=True, timeout=5)
             if result.returncode == 0 and result.stdout.strip():
                 first_match = result.stdout.strip()
                 if os.path.isfile(first_match):
+                    logger.info(f"✓ 通过 which 命令找到编译器: {first_match}")
                     return first_match
     except Exception as e:
-        logger.debug(f"where/which command failed: {e}")
+        logger.debug(f"where/which 命令失败: {e}")
 
     # 都找不到，返回 None
-    logger.warning("Could not find g++ compiler")
+    logger.warning("✗ 未找到 C++ 编译器 (g++)")
+    
+    if platform.system() != 'Windows':
+        logger.warning("提示：在 Docker/Linux 环境中，请确保已安装 g++：")
+        logger.warning("  - Dockerfile: RUN apt-get install -y g++")
+        logger.warning("  - 或运行时: apt-get update && apt-get install -y g++")
+    
     return None
 
 

@@ -1,36 +1,55 @@
 __pycache__/
 *.pyc
+
+# 环境变量文件（包含敏感信息，绝不能提交！）
 .env
 .env.production
 .env.mysql
-uploads/
-.trae/
-*.xlsx
-*.log
-*.db
-*.accdb
+.env.local
+.env.*.local
+deployment_check_report.json
 
+# 上传目录（用户上传的文件）
+uploads/
+
+# IDE 配置
+.trae/
 .idea/
 .vscode/
 *.swp
 *.swo
 
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# Python 虚拟环境
 venv/
 env/
 .venv/
 
-.DS_Store
-Thumbs.db
-
-# Node.js
+# Node.js 依赖
 node_modules/
 
-# Instance folder (Flask)
+# Flask 实例文件夹
 instance/
 
-# Database backups
+# 数据库备份
 *.sql
 !init_database.sql
+*.db
+*.accdb
 
-# Build outputs (keep dist for deployment)
+# 构建输出（保留 dist 用于部署）
 static/dist/assets/*.map
+
+# 日志和临时文件
+*.log
+*.xlsx
+*.tmp
+*.temp
+
+# 测试覆盖率
+htmlcov/
+.coverage
+.pytest_cache/

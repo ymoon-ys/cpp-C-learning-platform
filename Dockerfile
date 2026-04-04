@@ -10,16 +10,20 @@ COPY static/src/ ./static/src/
 COPY vite.config.js ./
 RUN npm run build
 
-# Stage 2: Python运行环境
+# Stage 2: Python运行环境（生产优化版）
 FROM python:3.11-slim
 
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV FLASK_ENV=production
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    g++ \
+    build-essential \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -36,5 +40,8 @@ RUN mkdir -p uploads/covers uploads/videos/uploads/images \
              uploads/documents uploads/materials uploads/community
 
 EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/')" || exit 1
 
 CMD ["gunicorn", "--config", "gunicorn.conf.py", "run:app"]

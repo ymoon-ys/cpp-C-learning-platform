@@ -1,14 +1,16 @@
 import os
+import sys
 from datetime import timedelta
 
+
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY', '')
 
     BAIDU_OCR_API_KEY = os.environ.get('BAIDU_OCR_API_KEY', '')
     BAIDU_OCR_SECRET_KEY = os.environ.get('BAIDU_OCR_SECRET_KEY', '')
     BAIDU_OCR_TOKEN_EXPIRE_MARGIN = 86400
 
-    OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
+    OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', '')
     OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'qwen3-coder:30b')
     OLLAMA_TIMEOUT = int(os.environ.get('OLLAMA_TIMEOUT', '180'))
 
@@ -35,13 +37,38 @@ class Config:
     JSONIFY_PRETTYPRINT_REGULAR = False
 
     @staticmethod
+    def validate_required_env():
+        required_vars = ['SECRET_KEY']
+        missing = []
+
+        for var in required_vars:
+            value = os.environ.get(var, '')
+            if not value:
+                missing.append(var)
+
+        if missing:
+            print(f'\n❌ 缺少必需的环境变量: {", ".join(missing)}')
+            print('\n请在 Koyeb 控制台或 .env 文件中设置以下环境变量：')
+            for var in missing:
+                print(f'  - {var}')
+            print('\n📖 详细配置说明请参考: DEPLOYMENT_GUIDE.md\n')
+            return False
+        return True
+
+    @staticmethod
     def init_app(app):
-        pass
+        if not Config.validate_required_env():
+            if os.environ.get('FLASK_ENV') == 'production':
+                print('⚠️  生产环境缺少必需配置，应用无法启动！')
+                sys.exit(1)
+            else:
+                print('⚠️  开发模式：使用不安全的默认配置（仅用于开发测试）')
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
     TESTING = False
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
 
 
 class ProductionConfig(Config):
