@@ -278,15 +278,23 @@
                 <li><a href="#tech">技术栈</a></li>
                 <li><a href="#roles">用户角色</a></li>
                 <li><a href="#login">立即登录</a></li>
-                <li><a href="#" onclick="enterPlatform()" style="color: var(--primary); font-weight: 700;">
-                    <i class="fas fa-sign-in-alt"></i> 进入平台
+                <li><a href="#" onclick="enterPlatform()" style="color: var(--warning); font-weight: 700;">
+                    <i class="fas fa-cloud-upload-alt"></i> 部署平台
                 </a></li>
             </ul>
             <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="菜单"><i class="fas fa-bars"></i></button>
         </div>
     </nav>
 
-    <section class="hero">
+    <div id="statusBanner" style="background: linear-gradient(90deg, #f39c12, #e67e22); color: white; text-align: center; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; position: fixed; top: 70px; left: 0; right: 0; z-index: 999; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fas fa-exclamation-triangle"></i>
+        平台尚未部署到云端 —
+        <a href="#" onclick="enterPlatform()" style="color: white; text-decoration: underline; font-weight: 700;">点击查看部署指南</a>
+        <span style="opacity: 0.7;">|</span>
+        本地运行：<code style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px;">python run.py</code> → <code style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px;">http://localhost:5001</code>
+    </div>
+
+    <section class="hero" style="padding-top: 140px;">
         <div class="hero-particles">
             <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
             <div class="particle" style="left: 20%; animation-delay: 2s;"></div>
@@ -306,10 +314,10 @@
                     </p>
                     <div class="hero-buttons">
                         <a href="#" onclick="enterPlatform()" class="btn btn-white">
-                            <i class="fas fa-sign-in-alt"></i> 进入学习平台
+                            <i class="fas fa-cloud-upload-alt"></i> 部署到云端
                         </a>
                         <a href="#login" class="btn btn-glass">
-                            <i class="fas fa-user-plus"></i> 登录 / 注册
+                            <i class="fas fa-laptop-code"></i> 本地运行指南
                         </a>
                     </div>
                     <div class="hero-stats">
@@ -457,8 +465,8 @@
         <div class="container">
             <div class="login-container fade-in">
                 <div class="login-visual">
-                    <h2>立即开始你的<br>C++ 学习之旅</h2>
-                    <p>注册即可免费使用所有功能，开启智能化编程学习新体验</p>
+                    <h2>启动你的 C++ 学习平台</h2>
+                    <p>平台尚未部署到云端，请选择以下方式启动</p>
                     <ul class="login-features-list">
                         <li><i class="fas fa-robot"></i> CAIgpt AI 智能助手实时答疑</li>
                         <li><i class="fas fa-terminal"></i> 在线 C++ 代码编译运行</li>
@@ -486,7 +494,7 @@
                             <label class="remember-me"><input type="checkbox"> 记住我</label>
                             <a href="#" class="forgot-link">忘记密码？</a>
                         </div>
-                        <button type="submit" class="login-submit"><i class="fas fa-sign-in-alt"></i> 登录平台</button>
+                        <button type="submit" class="login-submit" style="background: linear-gradient(135deg, var(--warning), #e67e22);"><i class="fas fa-cloud-upload-alt"></i> 查看部署指南</button>
                     </form>
 
                     <form id="registerForm" style="display:none;" onsubmit="handleRegister(event)">
@@ -506,12 +514,12 @@
                             <label for="reg-confirm">确认密码</label>
                             <input type="password" id="reg-confirm" placeholder="请再次输入密码" required>
                         </div>
-                        <button type="submit" class="login-submit"><i class="fas fa-user-plus"></i> 注册账号</button>
+                        <button type="submit" class="login-submit" style="background: linear-gradient(135deg, var(--warning), #e67e22);"><i class="fas fa-cloud-upload-alt"></i> 查看部署指南</button>
                     </form>
 
                     <div class="login-divider">或使用演示账号</div>
                     <div class="demo-accounts">
-                        <p>快速体验（点击自动填充）：</p>
+                        <p>平台预置账号（部署后可用）：</p>
                         <div class="demo-account-btns">
                             <button class="demo-account-btn" onclick="fillDemo('admin', 'admin123')"><i class="fas fa-user-shield"></i> 管理员</button>
                             <button class="demo-account-btn" onclick="fillDemo('teacher', 'teacher123')"><i class="fas fa-chalkboard-teacher"></i> 教师</button>
@@ -519,8 +527,15 @@
                         </div>
                     </div>
 
+                    <div style="margin-top: 20px;">
+                        <a href="#" onclick="enterPlatform()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:linear-gradient(135deg,#28a745,#229954);color:white;text-decoration:none;border-radius:12px;font-weight:700;font-size:1rem;transition:transform 0.2s;cursor:pointer;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <i class="fas fa-rocket"></i> 一键部署到 Zeabur (免费)
+                            <i class="fas fa-external-link-alt" style="font-size:0.75rem;"></i>
+                        </a>
+                    </div>
+
                     <div class="platform-url-hint">
-                        <i class="fas fa-info-circle"></i> 平台地址：<code id="platformUrlDisplay">请配置 PLATFORM_URL</code>
+                        <i class="fas fa-exclamation-circle" style="color:#f39c12;"></i> 当前状态：<strong style="color:#e74c3c;">待部署</strong> | 本地地址：<code>http://localhost:5001</code>
                     </div>
                 </div>
             </div>
@@ -530,14 +545,14 @@
     <section class="cta-section">
         <div class="container cta-content fade-in">
             <span class="section-tag" style="background: rgba(255,255,255,0.15); color: white;">🚀 立即加入</span>
-            <h2 class="section-title">准备好提升你的 C++ 编程能力了吗？</h2>
-            <p class="section-desc">无论你是初学者还是有经验的开发者，这里都有适合你的学习资源</p>
+            <h2 class="section-title">准备好部署你的 C++ 学习平台了吗？</h2>
+            <p class="section-desc">选择本地开发或一键云端部署，几分钟内即可启动你的编程学习平台</p>
             <div class="cta-buttons">
                 <a href="#" onclick="enterPlatform()" class="btn btn-primary" style="background: white; color: var(--primary);">
-                    <i class="fas fa-rocket"></i> 立即进入平台
+                    <i class="fas fa-rocket"></i> 一键部署到 Zeabur
                 </a>
-                <a href="https://github.com/ymoon-ys/cpp-C-learning-platform" target="_blank" rel="noopener noreferrer" class="btn btn-glass">
-                    <i class="fab fa-github"></i> 查看 GitHub 源码
+                <a href="#" onclick="enterPlatform()" class="btn btn-glass">
+                    <i class="fas fa-laptop-code"></i> 查看本地运行指南
                 </a>
             </div>
         </div>
@@ -563,7 +578,7 @@
                     <h4 class="footer-title">资源链接</h4>
                     <ul class="footer-links">
                         <li><a href="https://github.com/ymoon-ys/cpp-C-learning-platform" target="_blank" rel="noopener noreferrer">GitHub 仓库</a></li>
-                        <li><a href="#" onclick="enterPlatform()">进入平台</a></li>
+                        <li><a href="#" onclick="enterPlatform()">部署指南</a></li>
                         <li><a href="#">更新日志</a></li>
                         <li><a href="#">问题反馈</a></li>
                     </ul>
@@ -588,20 +603,87 @@
         </div>
     </footer>
 
-    <a href="#" onclick="enterPlatform()" class="floating-enter-btn" id="floatingBtn" title="进入学习平台">
-        <i class="fas fa-sign-in-alt"></i> 进入平台
+    <a href="#" onclick="enterPlatform()" class="floating-enter-btn" id="floatingBtn" title="进入学习平台 (待部署)">
+        <i class="fas fa-cloud-upload-alt"></i> 部署平台
     </a>
 
     <script>
-        const PLATFORM_URL = 'YOUR_PLATFORM_URL_HERE';
+        const PLATFORM_URL = 'http://localhost:5001';
+        const IS_DEPLOYED = false;
+        const ZEABUR_DEPLOY_URL = 'https://zeabur.com?referralCode=&repo=github.com/ymoon-ys/cpp-C-learning-platform';
 
         function enterPlatform() {
-            if (PLATFORM_URL === 'YOUR_PLATFORM_URL_HERE') {
-                alert('请先在 index.html 中配置你的平台地址！\n\n找到 PLATFORM_URL 变量，替换为你的实际地址，例如：\nhttps://your-app.zeabur.app');
+            if (!IS_DEPLOYED) {
+                showDeployGuide();
+                return false;
             } else {
                 window.open(PLATFORM_URL, '_self');
             }
             return false;
+        }
+
+        function showDeployGuide() {
+            const modal = document.getElementById('deployModal');
+            if (modal) { modal.style.display = 'flex'; return; }
+            const guideHTML = `
+                <div id="deployModal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)this.style.display='none'">
+                    <div style="background:white;border-radius:24px;padding:40px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,0.25);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
+                            <div>
+                                <h2 style="font-size:1.6rem;font-weight:800;color:#1a202c;margin-bottom:6px;"><i class="fas fa-cloud-upload-alt" style="color:#667eea;margin-right:10px;"></i>平台尚未部署</h2>
+                                <p style="color:#718096;font-size:0.95rem;">请选择以下方式启动你的 C++ 学习平台</p>
+                            </div>
+                            <button onclick="document.getElementById('deployModal').style.display='none'" style="width:36px;height:36px;border-radius:50%;border:none;background:#edf2f7;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#4a5568;"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div style="background:linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.08));border-radius:16px;padding:24px;margin-bottom:20px;border-left:4px solid #667eea;">
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+                                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;"><i class="fas fa-laptop-code"></i></div>
+                                <div><h3 style="font-size:1.15rem;font-weight:700;color:#1a202c;">方式一：本地运行 (推荐开发用)</h3></div>
+                            </div>
+                            <ol style="color:#4a5568;line-height:2;font-size:0.93rem;padding-left:20px;">
+                                <li>确保已安装 <strong>Python 3.9+</strong> 和 <strong>G++ 编译器</strong></li>
+                                <li>在项目目录打开终端，执行：<br><code style="background:#f7fafc;padding:4px 10px;border-radius:6px;font-size:0.88rem;color:#667eea;font-weight:600;">pip install -r requirements.txt</code></li>
+                                <li>初始化数据库并运行：<br><code style="background:#f7fafc;padding:4px 10px;border-radius:6px;font-size:0.88rem;color:#667eea;font-weight:600;">python run.py init && python run.py</code></li>
+                                <li>浏览器访问 <code style="background:#f7fafc;padding:4px 10px;border-radius:6px;font-size:0.88rem;color:#667eea;font-weight:600;">http://localhost:5001</code></li>
+                            </ol>
+                            <button onclick="document.getElementById('deployModal').style.display='none';window.open('https://github.com/ymoon-ys/cpp-C-learning-platform#readme','_blank')" style="margin-top:16px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:11px 24px;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.92rem;"><i class="fas fa-book"></i> 查看完整 README 文档</button>
+                        </div>
+
+                        <div style="background:linear-gradient(135deg, rgba(40,167,69,0.08), rgba(46,125,50,0.08));border-radius:16px;padding:24px;margin-bottom:20px;border-left:4px solid #28a745;">
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+                                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#28a745,#229954);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;"><i class="fas fa-cloud"></i></div>
+                                <div><h3 style="font-size:1.15rem;font-weight:700;color:#1a202c;">方式二：一键部署到 Zeabur (推荐生产)</h3></div>
+                            </div>
+                            <ol style="color:#4a5568;line-height:2;font-size:0.93rem;padding-left:20px;">
+                                <li>点击下方按钮跳转到 <strong>Zeabur</strong> 云平台</li>
+                                <li>使用 GitHub 账号登录 Zeabur</li>
+                                <li>选择仓库 <code style="background:#f7fafc;padding:2px 8px;border-radius:4px;font-size:0.85rem;">cpp-C-learning-platform</code></li>
+                                <li>Zeabur 会自动读取 <code style="background:#f7fafc;padding:2px 8px;border-radius:4px;font-size:0.85rem;">zeabur.yaml</code> 完成部署！</li>
+                            </ol>
+                            <a href="${ZEABUR_DEPLOY_URL}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;margin-top:16px;background:linear-gradient(135deg,#28a745,#229954);color:white;text-decoration:none;padding:11px 24px;border-radius:10px;font-weight:600;font-size:0.92rem;transition:transform 0.2s;"><i class="fas fa-rocket"></i> 前往 Zeabur 部署 <i class="fas fa-external-link-alt" style="font-size:0.75rem;"></i></a>
+                        </div>
+
+                        <div style="background:linear-gradient(135deg, rgba(23,162,184,0.08), rgba(21,128,170,0.08));border-radius:16px;padding:24px;border-left:4px solid #17a2b8;">
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+                                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#17a2b8,#138496);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;"><i class="fas fa-server"></i></div>
+                                <div><h3 style="font-size:1.15rem;font-weight:700;color:#1a202c;">方式三：其他云平台</h3></div>
+                            </div>
+                            <p style="color:#4a5568;font-size:0.93rem;line-height:1.8;">支持 Docker 容器化部署，可部署到任何支持 Docker 的云服务器或平台（阿里云、腾讯云、Vercel、Railway 等）。</p>
+                            <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+                                <span style="padding:6px 14px;background:#f7fafc;border-radius:8px;font-size:0.82rem;color:#4a5568;"><i class="fab fa-docker" style="color:#2496ed;"></i> Docker</span>
+                                <span style="padding:6px 14px;background:#f7fafc;border-radius:8px;font-size:0.82rem;color:#4a5568;"><i class="fas fa-server" style="color:#e74c3c;"></i> 阿里云</span>
+                                <span style="padding:6px 14px;background:#f7fafc;border-radius:8px;font-size:0.82rem;color:#4a5568;"><i class="fas fa-cloud" style:color:#00a4ef;"></i> 腾讯云</span>
+                                <span style="padding:6px 14px;background:#f7fafc;border-radius:8px;font-size:0.82rem;color:#4a5568;"><i class="fas fa-bolt" style="color:#5c6bc0;"></i> Railway</span>
+                            </div>
+                        </div>
+
+                        <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid #edf2f7;">
+                            <p style="color:#a0aec0;font-size:0.85rem;"><i class="fas fa-info-circle"></i> 部署成功后，请在 index.html 中将 PLATFORM_URL 改为你的实际地址</p>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', guideHTML);
         }
 
         function switchTab(tab) {
@@ -613,25 +695,12 @@
 
         function handleLogin(e) {
             e.preventDefault();
-            if (PLATFORM_URL === 'YOUR_PLATFORM_URL_HERE') {
-                alert('请先配置平台地址 (PLATFORM_URL)');
-                return;
-            }
-            const username = document.getElementById('login-username').value;
-            const password = document.getElementById('login-password').value;
-            window.location.href = `${PLATFORM_URL}/auth/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&auto=1`;
+            showDeployGuide();
         }
 
         function handleRegister(e) {
             e.preventDefault();
-            if (PLATFORM_URL === 'YOUR_PLATFORM_URL_HERE') {
-                alert('请先配置平台地址 (PLATFORM_URL)');
-                return;
-            }
-            const username = document.getElementById('reg-username').value;
-            const email = document.getElementById('reg-email').value;
-            const password = document.getElementById('reg-password').value;
-            window.location.href = `${PLATFORM_URL}/auth/register?username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&auto=1`;
+            showDeployGuide();
         }
 
         function fillDemo(username, password) {
@@ -640,9 +709,19 @@
             switchTab('login');
         }
 
-        if (PLATFORM_URL !== 'YOUR_PLATFORM_URL_HERE') {
-            document.getElementById('platformUrlDisplay').textContent = PLATFORM_URL;
-        }
+        document.getElementById('platformUrlDisplay').innerHTML = '<span style="color:#e74c3c;"><i class="fas fa-exclamation-triangle"></i> 待部署 (当前: 本地开发模式)</span>';
+
+        const statusBanner = document.getElementById('statusBanner');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 120) {
+                statusBanner.style.transform = 'translateY(-100%)';
+                statusBanner.style.opacity = '0';
+            } else {
+                statusBanner.style.transform = 'translateY(0)';
+                statusBanner.style.opacity = '1';
+            }
+        });
+        statusBanner.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
 
         const navbar = document.getElementById('navbar');
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
