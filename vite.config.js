@@ -14,9 +14,9 @@ export default defineConfig({
         main: resolve(__dirname, 'static/src/js/main.js')
       },
       output: {
-        entryFileNames: 'assets/[name].[hash].js',
-        chunkFileNames: 'assets/[name].[hash].js',
-        assetFileNames: 'assets/[name].[hash][extname]'
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name][extname]'
       }
     }
   },

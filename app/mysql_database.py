@@ -8,9 +8,6 @@ import threading
 import time
 
 class MySQLDatabase:
-    _connection_pool = None
-    _pool_lock = threading.Lock()
-    
     def __init__(self, host, user, password, database, port=3306):
         self.host = host
         self.user = user
@@ -18,11 +15,9 @@ class MySQLDatabase:
         self.database = database
         self.port = port
         self.conn = None
+        self._connection_pool = None
         
-        if MySQLDatabase._connection_pool is None:
-            with MySQLDatabase._pool_lock:
-                if MySQLDatabase._connection_pool is None:
-                    self._create_pool_with_retry()
+        self._create_pool_with_retry()
         
         try:
             self.get_connection()
@@ -34,8 +29,8 @@ class MySQLDatabase:
     def _create_pool_with_retry(self, max_retries=3, retry_delay=2):
         for attempt in range(max_retries):
             try:
-                MySQLDatabase._connection_pool = pooling.MySQLConnectionPool(
-                    pool_name='learning_platform_pool',
+                self._connection_pool = pooling.MySQLConnectionPool(
+                    pool_name=f'learning_platform_pool_{id(self)}',
                     pool_size=5,
                     pool_reset_session=True,
                     host=self.host,
@@ -52,7 +47,7 @@ class MySQLDatabase:
                 if attempt < max_retries - 1:
                     time.sleep(retry_delay)
         
-        MySQLDatabase._connection_pool = None
+        self._connection_pool = None
         return False
     
     def get_connection(self):
@@ -64,9 +59,9 @@ class MySQLDatabase:
                 except Exception:
                     self.conn = None
             
-            if MySQLDatabase._connection_pool:
+            if self._connection_pool:
                 try:
-                    self.conn = MySQLDatabase._connection_pool.get_connection()
+                    self.conn = self._connection_pool.get_connection()
                     print(f'[OK] Got database connection from pool')
                     return self.conn
                 except Exception as e:

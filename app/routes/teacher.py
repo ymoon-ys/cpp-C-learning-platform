@@ -23,12 +23,14 @@ def dashboard():
     courses = db.find_all('courses', {'teacher_id': current_user.id})
     stats = {
         'total_courses': len(courses),
+        'total_students': 0,
         'total_chapters': sum(len(db.find_all('chapters', {'course_id': course['id']})) for course in courses),
         'total_lessons': sum(len(db.find_all('lessons', {'chapter_id': chapter['id']})) for course in courses for chapter in db.find_all('chapters', {'course_id': course['id']}))
     }
     
     return render_template('teacher/dashboard.html', courses=courses, stats=stats, 
-                         greeting=get_greeting(), week_day=get_week_day_chinese())
+                         greeting=get_greeting(), week_day=get_week_day_chinese(),
+                         consecutive_days=0)
 
 @teacher_bp.route('/courses/<int:course_id>')
 @login_required
