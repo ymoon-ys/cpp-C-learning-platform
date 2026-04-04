@@ -280,6 +280,7 @@ def settings():
             update_data['bio'] = bio
 
         if avatar and avatar.filename:
+            import uuid
             filename = secure_filename(avatar.filename)
             if not filename:
                 flash('文件名包含非法字符', 'error')
@@ -290,14 +291,14 @@ def settings():
                 flash('不支持的文件类型，仅支持 PNG、JPG、GIF、WEBP 格式', 'error')
                 return redirect(url_for('student.settings'))
 
-            filename = f"avatar_{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+            safe_filename = f"avatar_{current_user.id}_{uuid.uuid4().hex[:12]}.{file_ext}"
             upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'avatars')
-            
+
             try:
                 os.makedirs(upload_path, exist_ok=True)
-                avatar.save(os.path.join(upload_path, filename))
-                update_data['avatar'] = f"/uploads/avatars/{filename}"
-                print(f'[OK] Avatar uploaded successfully: {filename}')
+                avatar.save(os.path.join(upload_path, safe_filename))
+                update_data['avatar'] = f"/uploads/avatars/{safe_filename}"
+                print(f'[OK] Avatar uploaded successfully: {safe_filename}')
             except Exception as e:
                 print(f'[ERR] Failed to save avatar: {e}')
                 flash('头像保存失败，请重试', 'error')
@@ -380,21 +381,22 @@ def update_profile():
         update_data['nickname'] = nickname
     
     if avatar and avatar.filename:
+        import uuid
         filename = secure_filename(avatar.filename)
         if not filename:
             flash('文件名包含非法字符', 'error')
             return redirect(url_for('student.settings'))
-        
+
         file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
         if file_ext not in ALLOWED_AVATAR_EXTENSIONS:
             flash('不支持的文件类型，仅支持 PNG、JPG、GIF、WEBP 格式', 'error')
             return redirect(url_for('student.settings'))
-        
-        filename = f"avatar_{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+
+        safe_filename = f"avatar_{current_user.id}_{uuid.uuid4().hex[:12]}.{file_ext}"
         upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'avatars')
         os.makedirs(upload_path, exist_ok=True)
-        avatar.save(os.path.join(upload_path, filename))
-        update_data['avatar'] = f"/uploads/avatars/{filename}"
+        avatar.save(os.path.join(upload_path, safe_filename))
+        update_data['avatar'] = f"/uploads/avatars/{safe_filename}"
     
     # 确保 current_user.id 是整数类型
     user_id = current_user.id
