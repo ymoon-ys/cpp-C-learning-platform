@@ -1287,6 +1287,15 @@
                     })
                     .then(newEditor => {
                         editor = newEditor;
+                        
+                        // 加载第一个小节的初始内容
+                        {% if chapters and chapters[0].lessons %}
+                        const initialContent = {{ chapters[0].lessons[0].content | tojson if chapters[0].lessons[0].content else '""' }};
+                        if (initialContent) {
+                            editor.setData(initialContent);
+                        }
+                        {% endif %}
+                        
                         editor.model.document.on('change:data', () => {
                             scheduleAutoSave();
                         });
