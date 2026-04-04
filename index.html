@@ -35,6 +35,8 @@
             --gray-200: #edf2f7;
             --gray-100: #f7fafc;
             --white: #ffffff;
+            --koyeb-color: #546fff;
+            --aiven-color: #ff6a00;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -73,6 +75,10 @@
         .btn-white:hover { background: var(--gray-100); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); }
         .btn-glass { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); color: white; border: 1px solid rgba(255,255,255,0.3); }
         .btn-glass:hover { background: white; color: var(--primary); }
+        .btn-koyeb { background: linear-gradient(135deg, #546fff, #3d4db8); color: white; }
+        .btn-koyeb:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(84, 111, 255, 0.4); }
+        .btn-github { background: #24292e; color: white; }
+        .btn-github:hover { background: #000; transform: translateY(-2px); }
 
         .hero {
             min-height: 100vh; display: flex; align-items: center;
@@ -124,17 +130,9 @@
 
         .tech-section { background: linear-gradient(180deg, var(--gray-100) 0%, var(--white) 100%); }
         .tech-stack { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; }
-        .tech-item { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 30px 35px; background: white; border-radius: 16px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05); border: 1px solid var(--gray-200); transition: all 0.3s ease; min-width: 140px; }
+        .tech-item { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 30px 35px; background: white; border-radius: 16px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05); border: 1px solid var(--gray-200); transition: all 0.3s ease; min-width: 130px; }
         .tech-item:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); }
         .tech-icon { font-size: 2.5rem; }
-        .tech-item:nth-child(1) .tech-icon { color: #3776ab; }
-        .tech-item:nth-child(2) .tech-icon { color: #e34c26; }
-        .tech-item:nth-child(3) .tech-icon { color: #f7df1e; }
-        .tech-item:nth-child(4) .tech-icon { color: #4479a1; }
-        .tech-item:nth-child(5) .tech-icon { color: #ff6f00; }
-        .tech-item:nth-child(6) .tech-icon { color: #e74c3c; }
-        .tech-item:nth-child(7) .tech-icon { color: #2496ed; }
-        .tech-item:nth-child(8) .tech-icon { color: #00d8ff; }
         .tech-name { font-weight: 600; color: var(--gray-800); font-size: 0.95rem; }
 
         .preview-section { background: var(--gray-900); position: relative; overflow: hidden; }
@@ -168,29 +166,59 @@
         .login-features-list li i { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); color: var(--primary); font-size: 0.9rem; flex-shrink: 0; }
 
         .login-box {
-            background: white; border-radius: 24px; padding: 45px 40px;
+            background: white; border-radius: 24px; padding: 40px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08); border: 1px solid var(--gray-200);
         }
-        .login-tabs { display: flex; margin-bottom: 30px; background: var(--gray-100); border-radius: 12px; padding: 4px; }
+        .login-tabs { display: flex; margin-bottom: 24px; background: var(--gray-100); border-radius: 12px; padding: 4px; }
         .login-tab { flex: 1; padding: 12px; text-align: center; border: none; background: none; font-size: 1rem; font-weight: 600; color: var(--gray-600); cursor: pointer; border-radius: 10px; transition: all 0.3s ease; }
         .login-tab.active { background: white; color: var(--primary); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
-        .form-group { margin-bottom: 20px; }
+        .form-group { margin-bottom: 18px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--gray-800); font-size: 0.92rem; }
-        .form-group input { width: 100%; padding: 14px 18px; border: 2px solid var(--gray-200); border-radius: 12px; font-size: 1rem; transition: all 0.3s ease; outline: none; }
+        .form-group input { width: 100%; padding: 13px 16px; border: 2px solid var(--gray-200); border-radius: 12px; font-size: 1rem; transition: all 0.3s ease; outline: none; }
         .form-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); }
-        .form-options { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; font-size: 0.9rem; }
+        .form-options { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; font-size: 0.9rem; }
         .remember-me { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--gray-600); }
         .forgot-link { color: var(--primary); text-decoration: none; font-weight: 500; }
         .forgot-link:hover { text-decoration: underline; }
-        .login-submit { width: 100%; padding: 15px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; }
+        .login-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; }
         .login-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
-        .login-divider { display: flex; align-items: center; gap: 16px; margin: 24px 0; color: var(--gray-500); font-size: 0.9rem; }
+
+        .social-login { margin: 20px 0; }
+        .social-login-btn {
+            width: 100%; padding: 13px; border: 2px solid var(--gray-200); border-radius: 12px;
+            background: white; font-size: 0.98rem; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.3s ease; color: var(--gray-800);
+        }
+        .social-login-btn:hover { border-color: var(--gray-400); background: var(--gray-100); transform: translateY(-1px); }
+        .social-login-btn.github:hover { border-color: #24292e; background: #f6f8fa; }
+        .social-login-btn.koyeb:hover { border-color: var(--koyeb-color); background: rgba(84, 111, 255, 0.04); }
+
+        .login-divider { display: flex; align-items: center; gap: 16px; margin: 20px 0; color: var(--gray-500); font-size: 0.9rem; }
         .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
-        .demo-accounts { background: var(--gray-100); border-radius: 12px; padding: 16px; }
+        .demo-accounts { background: var(--gray-100); border-radius: 12px; padding: 14px; }
         .demo-accounts p { font-size: 0.85rem; color: var(--gray-600); margin-bottom: 10px; font-weight: 600; }
         .demo-account-btns { display: flex; gap: 8px; flex-wrap: wrap; }
         .demo-account-btn { padding: 8px 14px; border: 1px solid var(--gray-300); background: white; border-radius: 8px; font-size: 0.82rem; cursor: pointer; transition: all 0.2s ease; color: var(--gray-700); }
         .demo-account-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(102, 126, 234, 0.05); }
+
+        .deploy-actions { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .deploy-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 0.96rem;
+            text-decoration: none; cursor: pointer; transition: all 0.3s ease; border: none;
+        }
+        .deploy-btn:hover { transform: translateY(-2px); }
+        .deploy-btn.koyeb-btn { background: linear-gradient(135deg, #546fff, #3d4db8); color: white; }
+        .deploy-btn.koyeb-btn:hover { box-shadow: 0 8px 25px rgba(84, 111, 255, 0.35); }
+        .deploy-btn.local-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        .deploy-btn.local-btn:hover { box-shadow: 0 8px 25px rgba(102, 126, 234, 0.35); }
+
+        .platform-url-hint {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.06), rgba(118, 75, 162, 0.06));
+            border: 1px dashed var(--primary); border-radius: 12px; padding: 12px 16px;
+            text-align: center; font-size: 0.86rem; color: var(--gray-700); margin-top: 16px;
+        }
 
         .cta-section { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); text-align: center; position: relative; overflow: hidden; }
         .cta-section::before { content: ''; position: absolute; top: -100px; left: -100px; width: 300px; height: 300px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; }
@@ -220,22 +248,26 @@
 
         .floating-enter-btn {
             position: fixed; bottom: 30px; right: 30px; z-index: 999;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white; padding: 16px 28px; border-radius: 50px;
-            font-weight: 700; font-size: 1rem; text-decoration: none;
+            background: linear-gradient(135deg, #546fff, #3d4db8);
+            color: white; padding: 15px 26px; border-radius: 50px;
+            font-weight: 700; font-size: 0.95rem; text-decoration: none;
             display: flex; align-items: center; gap: 10px;
-            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 30px rgba(84, 111, 255, 0.4);
             transition: all 0.3s ease; animation: pulse 2s infinite;
         }
-        .floating-enter-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 40px rgba(102, 126, 234, 0.5); }
-        @keyframes pulse { 0%, 100% { box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4); } 50% { box-shadow: 0 8px 40px rgba(102, 126, 234, 0.6); } }
+        .floating-enter-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 40px rgba(84, 111, 255, 0.5); }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 8px 30px rgba(84, 111, 255, 0.4); } 50% { box-shadow: 0 8px 40px rgba(84, 111, 255, 0.6); } }
 
-        .platform-url-hint {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
-            border: 1px dashed var(--primary); border-radius: 12px; padding: 12px 20px;
-            text-align: center; font-size: 0.88rem; color: var(--gray-700); margin-top: 16px;
+        .status-banner {
+            background: linear-gradient(90deg, #f39c12, #e67e22); color: white;
+            text-align: center; padding: 10px 20px; font-size: 0.88rem; font-weight: 600;
+            position: fixed; top: 70px; left: 0; right: 0; z-index: 998;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
         }
-        .platform-url-hint code { background: white; padding: 2px 8px; border-radius: 4px; font-family: monospace; color: var(--primary); font-weight: 600; }
+        .status-banner a { color: white; text-decoration: underline; font-weight: 700; }
+        .status-banner a:hover { opacity: 0.85; }
+        .status-banner code { background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; }
 
         @media (max-width: 992px) {
             .hero-content { grid-template-columns: 1fr; text-align: center; gap: 40px; }
@@ -259,7 +291,8 @@
             .footer-grid { grid-template-columns: 1fr; text-align: center; }
             .footer-bottom { flex-direction: column; text-align: center; }
             .cta-section .section-title { font-size: 2rem; }
-            .floating-enter-btn { bottom: 20px; right: 20px; padding: 14px 22px; font-size: 0.9rem; }
+            .floating-enter-btn { bottom: 20px; right: 20px; padding: 13px 20px; font-size: 0.88rem; }
+            .status-banner { font-size: 0.8rem; padding: 8px 14px; gap: 6px; flex-wrap: wrap; }
         }
 
         .fade-in { opacity: 0; transform: translateY(30px); transition: all 0.6s ease; }
@@ -270,31 +303,27 @@
 
     <nav class="navbar" id="navbar">
         <div class="container navbar-container">
-            <a href="#" class="navbar-brand">
-                <i class="fas fa-code"></i> C++学习平台
-            </a>
+            <a href="#" class="navbar-brand"><i class="fas fa-code"></i> C++学习平台</a>
             <ul class="navbar-nav" id="navMenu">
                 <li><a href="#features">功能特性</a></li>
                 <li><a href="#tech">技术栈</a></li>
                 <li><a href="#roles">用户角色</a></li>
                 <li><a href="#login">立即登录</a></li>
-                <li><a href="#" onclick="enterPlatform()" style="color: var(--warning); font-weight: 700;">
-                    <i class="fas fa-cloud-upload-alt"></i> 部署平台
-                </a></li>
+                <li><a href="#" onclick="enterPlatform()" style="color: var(--koyeb-color); font-weight: 700;"><i class="fas fa-cloud"></i> 部署到 Koyeb</a></li>
             </ul>
             <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="菜单"><i class="fas fa-bars"></i></button>
         </div>
     </nav>
 
-    <div id="statusBanner" style="background: linear-gradient(90deg, #f39c12, #e67e22); color: white; text-align: center; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; position: fixed; top: 70px; left: 0; right: 0; z-index: 999; display: flex; align-items: center; justify-content: center; gap: 8px;">
+    <div id="statusBanner" class="status-banner">
         <i class="fas fa-exclamation-triangle"></i>
         平台尚未部署到云端 —
-        <a href="#" onclick="enterPlatform()" style="color: white; text-decoration: underline; font-weight: 700;">点击查看部署指南</a>
-        <span style="opacity: 0.7;">|</span>
-        本地运行：<code style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px;">python run.py</code> → <code style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px;">http://localhost:5001</code>
+        <a href="#" onclick="enterPlatform()">点击查看部署指南 (Koyeb + Aiven)</a>
+        <span style="opacity: 0.6;">|</span>
+        本地运行：<code>python run.py</code> → <code>http://localhost:5001</code>
     </div>
 
-    <section class="hero" style="padding-top: 140px;">
+    <section class="hero">
         <div class="hero-particles">
             <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
             <div class="particle" style="left: 20%; animation-delay: 2s;"></div>
@@ -313,12 +342,8 @@
                         现代化 C++ 编程学习解决方案
                     </p>
                     <div class="hero-buttons">
-                        <a href="#" onclick="enterPlatform()" class="btn btn-white">
-                            <i class="fas fa-cloud-upload-alt"></i> 部署到云端
-                        </a>
-                        <a href="#login" class="btn btn-glass">
-                            <i class="fas fa-laptop-code"></i> 本地运行指南
-                        </a>
+                        <a href="#" onclick="enterPlatform()" class="btn btn-white"><i class="fas fa-cloud"></i> 部署到 Koyeb</a>
+                        <a href="#login" class="btn btn-glass"><i class="fas fa-laptop-code"></i> 本地运行 / 登录</a>
                     </div>
                     <div class="hero-stats">
                         <div class="stat-item"><span class="stat-number">6+</span><span class="stat-label">核心模块</span></div>
@@ -328,7 +353,11 @@
                 </div>
                 <div class="hero-visual" style="animation: fadeInRight 1s ease 0.4s both;">
                     <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.2);">
-                        <div style="display: flex; gap: 8px; margin-bottom: 20px;"><span style="width:12px;height:12px;border-radius:50%;background:#ff5f56;"></span><span style="width:12px;height:12px;border-radius:50%;background:#ffbd2e;"></span><span style="width:12px;height:12px;border-radius:50%;background:#27ca40;"></span></div>
+                        <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                            <span style="width:12px;height:12px;border-radius:50%;background:#ff5f56;"></span>
+                            <span style="width:12px;height:12px;border-radius:50%;background:#ffbd2e;"></span>
+                            <span style="width:12px;height:12px;border-radius:50%;background:#27ca40;"></span>
+                        </div>
                         <div style="font-family:'Consolas','Monaco',monospace;font-size:0.88rem;line-height:1.8;color:rgba(255,255,255,0.9);">
                             <div style="color:rgba(255,255,255,0.5);font-style:italic;">// 欢迎来到 C++ 学习平台</div>
                             <div><span style="color:#c792ea;">#include</span> <span style="color:#c3e88d;">&lt;iostream&gt;</span></div>
@@ -398,14 +427,14 @@
                 <p class="section-desc">采用成熟稳定的技术栈构建，确保系统的性能、安全性和可扩展性</p>
             </div>
             <div class="tech-stack fade-in">
-                <div class="tech-item"><i class="fab fa-python tech-icon"></i><span class="tech-name">Python / Flask</span></div>
-                <div class="tech-item"><i class="fab fa-html5 tech-icon"></i><span class="tech-name">HTML5 / CSS3</span></div>
-                <div class="tech-item"><i class="fab fa-js-square tech-icon"></i><span class="tech-name">JavaScript</span></div>
-                <div class="tech-item"><i class="fas fa-database tech-icon"></i><span class="tech-name">MySQL / SQLite</span></div>
-                <div class="tech-item"><i class="fas fa-brain tech-icon"></i><span class="tech-name">Ollama AI</span></div>
-                <div class="tech-item"><i class="fas fa-code tech-icon"></i><span class="tech-name">G++ Compiler</span></div>
-                <div class="tech-item"><i class="fab fa-docker tech-icon"></i><span class="tech-name">Docker</span></div>
-                <div class="tech-item"><i class="fas fa-cloud tech-icon"></i><span class="tech-name">Zeabur 部署</span></div>
+                <div class="tech-item"><i class="fab fa-python tech-icon" style="color:#3776ab;"></i><span class="tech-name">Python / Flask</span></div>
+                <div class="tech-item"><i class="fab fa-html5 tech-icon" style="color:#e34c26;"></i><span class="tech-name">HTML5 / CSS3</span></div>
+                <div class="tech-item"><i class="fab fa-js-square tech-icon" style="color:#f7df1e;"></i><span class="tech-name">JavaScript</span></div>
+                <div class="tech-item"><i class="fas fa-database tech-icon" style="color:#4479a1;"></i><span class="tech-name">MySQL / SQLite</span></div>
+                <div class="tech-item"><i class="fas fa-brain tech-icon" style="color:#ff6a00;"></i><span class="tech-name">Ollama AI</span></div>
+                <div class="tech-item"><i class="fas fa-code tech-icon" style="color:#00599c;"></i><span class="tech-name">G++ Compiler</span></div>
+                <div class="tech-item"><i class="fab fa-docker tech-icon" style="color:#2496ed;"></i><span class="tech-name">Docker</span></div>
+                <div class="tech-item"><i class="fas fa-cloud tech-icon" style="color:#546fff;"></i><span class="tech-name">Koyeb + Aiven</span></div>
             </div>
         </div>
     </section>
@@ -465,17 +494,26 @@
         <div class="container">
             <div class="login-container fade-in">
                 <div class="login-visual">
-                    <h2>启动你的 C++ 学习平台</h2>
-                    <p>平台尚未部署到云端，请选择以下方式启动</p>
+                    <h2>登录 C++ 学习平台</h2>
+                    <p>多种方式登录，选择最适合你的方式开始学习</p>
                     <ul class="login-features-list">
+                        <li><i class="fab fa-github"></i> GitHub 账号一键登录（推荐）</li>
+                        <li><i class="fas fa-user-circle"></i> 用户名密码登录</li>
+                        <li><i class="fas fa-user-plus"></i> 快速注册新账号</li>
                         <li><i class="fas fa-robot"></i> CAIgpt AI 智能助手实时答疑</li>
                         <li><i class="fas fa-terminal"></i> 在线 C++ 代码编译运行</li>
-                        <li><i class="fas fa-book-open"></i> 系统化课程与进度追踪</li>
-                        <li><i class="fas fa-users"></i> 活跃社区交流与代码分享</li>
-                        <li><i class="fas fa-shield-alt"></i> 多角色权限精细化管理</li>
                     </ul>
                 </div>
                 <div class="login-box">
+                    <div class="social-login">
+                        <button class="social-login-btn github" onclick="handleGithubLogin()">
+                            <i class="fab fa-github" style="font-size:1.3rem;color:#24292e;"></i>
+                            使用 GitHub 登录（部署后可用）
+                        </button>
+                    </div>
+
+                    <div class="login-divider">或使用账号登录</div>
+
                     <div class="login-tabs">
                         <button class="login-tab active" data-tab="login" onclick="switchTab('login')">登录</button>
                         <button class="login-tab" data-tab="register" onclick="switchTab('register')">注册</button>
@@ -494,7 +532,7 @@
                             <label class="remember-me"><input type="checkbox"> 记住我</label>
                             <a href="#" class="forgot-link">忘记密码？</a>
                         </div>
-                        <button type="submit" class="login-submit" style="background: linear-gradient(135deg, var(--warning), #e67e22);"><i class="fas fa-cloud-upload-alt"></i> 查看部署指南</button>
+                        <button type="submit" class="login-submit"><i class="fas fa-sign-in-alt"></i> 登录平台</button>
                     </form>
 
                     <form id="registerForm" style="display:none;" onsubmit="handleRegister(event)">
@@ -514,12 +552,11 @@
                             <label for="reg-confirm">确认密码</label>
                             <input type="password" id="reg-confirm" placeholder="请再次输入密码" required>
                         </div>
-                        <button type="submit" class="login-submit" style="background: linear-gradient(135deg, var(--warning), #e67e22);"><i class="fas fa-cloud-upload-alt"></i> 查看部署指南</button>
+                        <button type="submit" class="login-submit"><i class="fas fa-user-plus"></i> 注册账号</button>
                     </form>
 
-                    <div class="login-divider">或使用演示账号</div>
+                    <div class="login-divider">快速体验（预置账号）</div>
                     <div class="demo-accounts">
-                        <p>平台预置账号（部署后可用）：</p>
                         <div class="demo-account-btns">
                             <button class="demo-account-btn" onclick="fillDemo('admin', 'admin123')"><i class="fas fa-user-shield"></i> 管理员</button>
                             <button class="demo-account-btn" onclick="fillDemo('teacher', 'teacher123')"><i class="fas fa-chalkboard-teacher"></i> 教师</button>
@@ -527,15 +564,22 @@
                         </div>
                     </div>
 
-                    <div style="margin-top: 20px;">
-                        <a href="#" onclick="enterPlatform()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:linear-gradient(135deg,#28a745,#229954);color:white;text-decoration:none;border-radius:12px;font-weight:700;font-size:1rem;transition:transform 0.2s;cursor:pointer;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                            <i class="fas fa-rocket"></i> 一键部署到 Zeabur (免费)
+                    <div class="deploy-actions">
+                        <a href="https://app.koyeb.com/signup" target="_blank" rel="noopener noreferrer" class="deploy-btn koyeb-btn">
+                            <i class="fas fa-rocket"></i> 一键部署到 Koyeb（免费额度）
                             <i class="fas fa-external-link-alt" style="font-size:0.75rem;"></i>
+                        </a>
+                        <a href="#" onclick="showDeployGuide()" class="deploy-btn local-btn">
+                            <i class="fas fa-book"></i> 查看完整部署指南
                         </a>
                     </div>
 
                     <div class="platform-url-hint">
-                        <i class="fas fa-exclamation-circle" style="color:#f39c12;"></i> 当前状态：<strong style="color:#e74c3c;">待部署</strong> | 本地地址：<code>http://localhost:5001</code>
+                        <i class="fas fa-exclamation-circle" style="color:#f39c12;"></i>
+                        当前状态：<strong style="color:#e74c3c;">待部署</strong> |
+                        数据库：<strong style="color:var(--aiven-color);">Aiven</strong> |
+                        应用托管：<strong style="color:var(--koyeb-color);">Koyeb</strong> |
+                        本地：<code>http://localhost:5001</code>
                     </div>
                 </div>
             </div>
@@ -544,15 +588,15 @@
 
     <section class="cta-section">
         <div class="container cta-content fade-in">
-            <span class="section-tag" style="background: rgba(255,255,255,0.15); color: white;">🚀 立即加入</span>
-            <h2 class="section-title">准备好部署你的 C++ 学习平台了吗？</h2>
-            <p class="section-desc">选择本地开发或一键云端部署，几分钟内即可启动你的编程学习平台</p>
+            <span class="section-tag" style="background: rgba(255,255,255,0.15); color: white;">🚀 立即部署</span>
+            <h2 class="section-title">准备好将你的平台部署到公网了吗？</h2>
+            <p class="section-desc">使用 Koyeb + Aiven 组合方案，几分钟内即可让你的 C++ 学习平台上线运行</p>
             <div class="cta-buttons">
-                <a href="#" onclick="enterPlatform()" class="btn btn-primary" style="background: white; color: var(--primary);">
-                    <i class="fas fa-rocket"></i> 一键部署到 Zeabur
+                <a href="https://app.koyeb.com/signup" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="background: white; color: var(--koyeb-color);">
+                    <i class="fas fa-cloud"></i> 免费部署到 Koyeb
                 </a>
-                <a href="#" onclick="enterPlatform()" class="btn btn-glass">
-                    <i class="fas fa-laptop-code"></i> 查看本地运行指南
+                <a href="#" onclick="showDeployGuide()" class="btn btn-glass">
+                    <i class="fas fa-book-open"></i> 部署指南详情
                 </a>
             </div>
         </div>
@@ -563,7 +607,7 @@
             <div class="footer-grid">
                 <div>
                     <a href="#" class="footer-brand"><i class="fas fa-code"></i> C++学习平台</a>
-                    <p class="footer-desc">基于Flask框架开发的C++在线学习平台，致力于提供优质的编程学习体验。集成AI智能助手、在线编程评测、社区交流等丰富功能。</p>
+                    <p class="footer-desc">基于Flask框架开发的C++在线学习平台，致力于提供优质的编程学习体验。集成AI智能助手、在线编程评测、社区交流等丰富功能。<br><br><strong>部署方案：</strong>Koyeb（应用托管）+ Aiven（数据库服务）</p>
                 </div>
                 <div>
                     <h4 class="footer-title">核心功能</h4>
@@ -578,47 +622,45 @@
                     <h4 class="footer-title">资源链接</h4>
                     <ul class="footer-links">
                         <li><a href="https://github.com/ymoon-ys/cpp-C-learning-platform" target="_blank" rel="noopener noreferrer">GitHub 仓库</a></li>
-                        <li><a href="#" onclick="enterPlatform()">部署指南</a></li>
+                        <li><a href="https://app.koyeb.com/signup" target="_blank" rel="noopener noreferrer">Koyeb 部署</a></li>
+                        <li><a href="https://console.aiven.io/" target="_blank" rel="noopener noreferrer">Aiven 数据库</a></li>
                         <li><a href="#">更新日志</a></li>
-                        <li><a href="#">问题反馈</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="footer-title">技术支持</h4>
                     <ul class="footer-links">
-                        <li><a href="#">安装指南</a></li>
+                        <li><a href="#" onclick="showDeployGuide()">Koyeb 部署指南</a></li>
+                        <li><a href="#" onclick="showDeployGuide()">Aiven 配置教程</a></li>
                         <li><a href="#">API 文档</a></li>
                         <li><a href="#">常见问题</a></li>
-                        <li><a href="#">开发规范</a></li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 C++学习平台. 基于 MIT 许可证开源.</p>
+                <p>&copy; 2024 C++学习平台. 基于 MIT 许可证开源. | 部署于 <strong>Koyeb + Aiven</strong></p>
                 <div class="social-links">
                     <a href="https://github.com/ymoon-ys/cpp-C-learning-platform" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="GitHub"><i class="fab fa-github"></i></a>
-                    <a href="#" class="social-link" aria-label="Email"><i class="fas fa-envelope"></i></a>
+                    <a href="https://app.koyeb.com/signup" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Koyeb" title="Koyeb"><i class="fas fa-cloud" style="color:#546fff;"></i></a>
                 </div>
             </div>
         </div>
     </footer>
 
-    <a href="#" onclick="enterPlatform()" class="floating-enter-btn" id="floatingBtn" title="进入学习平台 (待部署)">
-        <i class="fas fa-cloud-upload-alt"></i> 部署平台
+    <a href="#" onclick="enterPlatform()" class="floating-enter-btn" id="floatingBtn" title="部署到 Koyeb">
+        <i class="fas fa-cloud"></i> 部署到 Koyeb
     </a>
 
     <script>
         const PLATFORM_URL = 'http://localhost:5001';
         const IS_DEPLOYED = false;
-        const ZEABUR_DEPLOY_URL = 'https://zeabur.com?referralCode=&repo=github.com/ymoon-ys/cpp-C-learning-platform';
+        const KOYEB_URL = 'https://app.koyeb.com/signup';
+        const AIVEN_URL = 'https://console.aiven.io/';
+        const GITHUB_REPO = 'https://github.com/ymoon-ys/cpp-C-learning-platform';
 
         function enterPlatform() {
-            if (!IS_DEPLOYED) {
-                showDeployGuide();
-                return false;
-            } else {
-                window.open(PLATFORM_URL, '_self');
-            }
+            if (!IS_DEPLOYED) { showDeployGuide(); return false; }
+            else { window.open(PLATFORM_URL, '_self'); }
             return false;
         }
 
@@ -627,63 +669,85 @@
             if (modal) { modal.style.display = 'flex'; return; }
             const guideHTML = `
                 <div id="deployModal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)this.style.display='none'">
-                    <div style="background:white;border-radius:24px;padding:40px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,0.25);">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
+                    <div style="background:white;border-radius:24px;padding:36px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,0.25);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
                             <div>
-                                <h2 style="font-size:1.6rem;font-weight:800;color:#1a202c;margin-bottom:6px;"><i class="fas fa-cloud-upload-alt" style="color:#667eea;margin-right:10px;"></i>平台尚未部署</h2>
-                                <p style="color:#718096;font-size:0.95rem;">请选择以下方式启动你的 C++ 学习平台</p>
+                                <h2 style="font-size:1.5rem;font-weight:800;color:#1a202c;margin-bottom:4px;"><i class="fas fa-cloud-upload-alt" style="color:#546fff;margin-right:8px;"></i>部署指南 — Koyeb + Aiven</h2>
+                                <p style="color:#718096;font-size:0.9rem;">将你的 C++ 学习平台部署到公网</p>
                             </div>
-                            <button onclick="document.getElementById('deployModal').style.display='none'" style="width:36px;height:36px;border-radius:50%;border:none;background:#edf2f7;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#4a5568;"><i class="fas fa-times"></i></button>
+                            <button onclick="document.getElementById('deployModal').style.display='none'" style="width:34px;height:34px;border-radius:50%;border:none;background:#edf2f7;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#4a5568;"><i class="fas fa-times"></i></button>
                         </div>
 
-                        <div style="background:linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.08));border-radius:16px;padding:24px;margin-bottom:20px;border-left:4px solid #667eea;">
-                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-                                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;"><i class="fas fa-laptop-code"></i></div>
-                                <div><h3 style="font-size:1.15rem;font-weight:700;color:#1a202c;">方式一：本地运行 (推荐开发用)</h3></div>
+                        <div style="background:linear-gradient(135deg, rgba(84,111,255,0.08), rgba(61,77,184,0.08));border-radius:16px;padding:22px;margin-bottom:16px;border-left:4px solid #546fff;">
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#546fff,#3d4db8);display:flex;align-items:center;justify-content:center;color:white;font-size:1.1rem;"><i class="fas fa-server"></i></div>
+                                <div><h3 style="font-size:1.1rem;font-weight:700;color:#1a202c;">第一步：Aiven 创建 MySQL 数据库</h3></div>
                             </div>
-                            <ol style="color:#4a5568;line-height:2;font-size:0.93rem;padding-left:20px;">
+                            <ol style="color:#4a5568;line-height:1.9;font-size:0.9rem;padding-left:18px;">
+                                <li>访问 <a href="${AIVEN_URL}" target="_blank" style="color:#546fff;font-weight:600;">Aiven Console</a> 并注册/登录</li>
+                                <li>Create service → 选择 <strong>MySQL</strong> → 选择免费计划（Hobbyist）</li>
+                                <li>创建后获取连接信息：Host、Port、User、Password、Database 名</li>
+                                <li>记下这些信息，稍后在 Koyeb 环境变量中配置</li>
+                            </ol>
+                            <a href="${AIVEN_URL}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:linear-gradient(135deg,#ff6a00,#cc5500);color:white;text-decoration:none;padding:9px 20px;border-radius:10px;font-weight:600;font-size:0.88rem;"><i class="fas fa-database"></i> 前往 Aiven 创建数据库 <i class="fas fa-external-link-alt" style="font-size:0.72rem;"></i></a>
+                        </div>
+
+                        <div style="background:linear-gradient(135deg, rgba(84,111,255,0.08), rgba(61,77,184,0.08));border-radius:16px;padding:22px;margin-bottom:16px;border-left:4px solid #546fff;">
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#546fff,#3d4db8);display:flex;align-items:center;justify-content:center;color:white;font-size:1.1rem;"><i class="fas fa-cloud"></i></div>
+                                <div><h3 style="font-size:1.1rem;font-weight:700;color:#1a202c;">第二步：Koyeb 部署 Flask 应用</h3></div>
+                            </div>
+                            <ol style="color:#4a5568;line-height:1.9;font-size:0.9rem;padding-left:18px;">
+                                <li>访问 <a href="${KOYEB_URL}" target="_blank" style="color:#546fff;font-weight:600;">Koyeb 注册页</a>，使用 GitHub 账号注册（有免费额度）</li>
+                                <li>Create Service → 选择 <strong>Git</strong> → 连接仓库 <code style="background:#f7fafc;padding:1px 6px;border-radius:4px;font-size:0.82rem;">cpp-C-learning-platform</code></li>
+                                <li>配置环境变量（从 Aiven 获取）：
+                                    <div style="background:#1a202c;color:#82aaff;padding:10px 14px;border-radius:8px;font-family:monospace;font-size:0.82rem;margin:8px 0;line-height:1.7;">
+                                        DATABASE_URL=mysql+pymysql://user:pass@aiven-host:port/dbname<br>
+                                        SECRET_KEY=your-secret-key
+                                    </div>
+                                </li>
+                                <li>选择区域（建议 EU 或 US-East），点击 Deploy</li>
+                                <li>Koyeb 自动构建并部署，获得公网访问地址如 <code style="background:#f7fafc;padding:1px 6px;border-radius:4px;font-size:0.82rem;">https://xxx.koyeb.app</code></li>
+                            </ol>
+                            <a href="${KOYEB_URL}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:linear-gradient(135deg,#546fff,#3d4db8);color:white;text-decoration:none;padding:9px 20px;border-radius:10px;font-weight:600;font-size:0.88rem;"><i class="fas fa-rocket"></i> 前往 Koyeb 部署应用 <i class="fas fa-external-link-alt" style="font-size:0.72rem;"></i></a>
+                        </div>
+
+                        <div style="background:linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.08));border-radius:16px;padding:22px;margin-bottom:16px;border-left:4px solid #667eea;">
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:white;font-size:1.1rem;"><i class="fas fa-laptop-code"></i></div>
+                                <div><h3 style="font-size:1.1rem;font-weight:700;color:#1a202c;">备选：本地开发运行</h3></div>
+                            </div>
+                            <ol style="color:#4a5568;line-height:1.9;font-size:0.9rem;padding-left:18px;">
                                 <li>确保已安装 <strong>Python 3.9+</strong> 和 <strong>G++ 编译器</strong></li>
-                                <li>在项目目录打开终端，执行：<br><code style="background:#f7fafc;padding:4px 10px;border-radius:6px;font-size:0.88rem;color:#667eea;font-weight:600;">pip install -r requirements.txt</code></li>
-                                <li>初始化数据库并运行：<br><code style="background:#f7fafc;padding:4px 10px;border-radius:6px;font-size:0.88rem;color:#667eea;font-weight:600;">python run.py init && python run.py</code></li>
-                                <li>浏览器访问 <code style="background:#f7fafc;padding:4px 10px;border-radius:6px;font-size:0.88rem;color:#667eea;font-weight:600;">http://localhost:5001</code></li>
+                                <li><code style="background:#f7fafc;padding:2px 8px;border-radius:5px;font-size:0.85rem;color:#667eea;">pip install -r requirements.txt</code></li>
+                                <li><code style="background:#f7fafc;padding:2px 8px;border-radius:5px;font-size:0.85rem;color:#667eea;">python run.py init && python run.py</code></li>
+                                <li>访问 <code style="background:#f7fafc;padding:2px 8px;border-radius:5px;font-size:0.85rem;color:#667eea;">http://localhost:5001</code></li>
                             </ol>
-                            <button onclick="document.getElementById('deployModal').style.display='none';window.open('https://github.com/ymoon-ys/cpp-C-learning-platform#readme','_blank')" style="margin-top:16px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:11px 24px;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.92rem;"><i class="fas fa-book"></i> 查看完整 README 文档</button>
                         </div>
 
-                        <div style="background:linear-gradient(135deg, rgba(40,167,69,0.08), rgba(46,125,50,0.08));border-radius:16px;padding:24px;margin-bottom:20px;border-left:4px solid #28a745;">
-                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-                                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#28a745,#229954);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;"><i class="fas fa-cloud"></i></div>
-                                <div><h3 style="font-size:1.15rem;font-weight:700;color:#1a202c;">方式二：一键部署到 Zeabur (推荐生产)</h3></div>
+                        <div style="background:linear-gradient(135deg, rgba(40,167,69,0.08), rgba(46,125,50,0.08));border-radius:16px;padding:22px;border-left:4px solid #28a745;">
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                                <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#28a745,#229954);display:flex;align-items:center;justify-content:center;color:white;font-size:1.1rem;"><i class="fas fa-check-circle"></i></div>
+                                <div><h3 style="font-size:1.1rem;font-weight:700;color:#1a202c;">部署成功后</h3></div>
                             </div>
-                            <ol style="color:#4a5568;line-height:2;font-size:0.93rem;padding-left:20px;">
-                                <li>点击下方按钮跳转到 <strong>Zeabur</strong> 云平台</li>
-                                <li>使用 GitHub 账号登录 Zeabur</li>
-                                <li>选择仓库 <code style="background:#f7fafc;padding:2px 8px;border-radius:4px;font-size:0.85rem;">cpp-C-learning-platform</code></li>
-                                <li>Zeabur 会自动读取 <code style="background:#f7fafc;padding:2px 8px;border-radius:4px;font-size:0.85rem;">zeabur.yaml</code> 完成部署！</li>
-                            </ol>
-                            <a href="${ZEABUR_DEPLOY_URL}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;margin-top:16px;background:linear-gradient(135deg,#28a745,#229954);color:white;text-decoration:none;padding:11px 24px;border-radius:10px;font-weight:600;font-size:0.92rem;transition:transform 0.2s;"><i class="fas fa-rocket"></i> 前往 Zeabur 部署 <i class="fas fa-external-link-alt" style="font-size:0.75rem;"></i></a>
-                        </div>
-
-                        <div style="background:linear-gradient(135deg, rgba(23,162,184,0.08), rgba(21,128,170,0.08));border-radius:16px;padding:24px;border-left:4px solid #17a2b8;">
-                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-                                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#17a2b8,#138496);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;"><i class="fas fa-server"></i></div>
-                                <div><h3 style="font-size:1.15rem;font-weight:700;color:#1a202c;">方式三：其他云平台</h3></div>
+                            <p style="color:#4a5568;font-size:0.9rem;line-height:1.7;">打开 index.html，修改以下两行：</p>
+                            <div style="background:#1a202c;color:#82aaff;padding:12px 16px;border-radius:10px;font-family:monospace;font-size:0.85rem;margin-top:10px;line-height:1.8;">
+                                const PLATFORM_URL = 'https://your-app.koyeb.app';<br>
+                                const IS_DEPLOYED = true;
                             </div>
-                            <p style="color:#4a5568;font-size:0.93rem;line-height:1.8;">支持 Docker 容器化部署，可部署到任何支持 Docker 的云服务器或平台（阿里云、腾讯云、Vercel、Railway 等）。</p>
-                            <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
-                                <span style="padding:6px 14px;background:#f7fafc;border-radius:8px;font-size:0.82rem;color:#4a5568;"><i class="fab fa-docker" style="color:#2496ed;"></i> Docker</span>
-                                <span style="padding:6px 14px;background:#f7fafc;border-radius:8px;font-size:0.82rem;color:#4a5568;"><i class="fas fa-server" style="color:#e74c3c;"></i> 阿里云</span>
-                                <span style="padding:6px 14px;background:#f7fafc;border-radius:8px;font-size:0.82rem;color:#4a5568;"><i class="fas fa-cloud" style:color:#00a4ef;"></i> 腾讯云</span>
-                                <span style="padding:6px 14px;background:#f7fafc;border-radius:8px;font-size:0.82rem;color:#4a5568;"><i class="fas fa-bolt" style="color:#5c6bc0;"></i> Railway</span>
-                            </div>
-                        </div>
-
-                        <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid #edf2f7;">
-                            <p style="color:#a0aec0;font-size:0.85rem;"><i class="fas fa-info-circle"></i> 部署成功后，请在 index.html 中将 PLATFORM_URL 改为你的实际地址</p>
+                            <p style="color:#718096;font-size:0.85rem;margin-top:10px;"><i class="fas fa-info-circle"></i> 同时开启 GitHub Pages 让此首页在线可访问</p>
                         </div>
                     </div>
                 </div>`;
             document.body.insertAdjacentHTML('beforeend', guideHTML);
+        }
+
+        function handleGithubLogin() {
+            if (!IS_DEPLOYED) {
+                showDeployGuide();
+            } else {
+                window.location.href = `${PLATFORM_URL}/auth/github`;
+            }
         }
 
         function switchTab(tab) {
@@ -695,12 +759,19 @@
 
         function handleLogin(e) {
             e.preventDefault();
-            showDeployGuide();
+            if (!IS_DEPLOYED) { showDeployGuide(); return; }
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            window.location.href = `${PLATFORM_URL}/auth/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&auto=1`;
         }
 
         function handleRegister(e) {
             e.preventDefault();
-            showDeployGuide();
+            if (!IS_DEPLOYED) { showDeployGuide(); return; }
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            window.location.href = `${PLATFORM_URL}/auth/register?username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&auto=1`;
         }
 
         function fillDemo(username, password) {
@@ -708,8 +779,6 @@
             document.getElementById('login-password').value = password;
             switchTab('login');
         }
-
-        document.getElementById('platformUrlDisplay').innerHTML = '<span style="color:#e74c3c;"><i class="fas fa-exclamation-triangle"></i> 待部署 (当前: 本地开发模式)</span>';
 
         const statusBanner = document.getElementById('statusBanner');
         window.addEventListener('scroll', () => {
@@ -721,29 +790,22 @@
                 statusBanner.style.opacity = '1';
             }
         });
-        statusBanner.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
 
         const navbar = document.getElementById('navbar');
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const navMenu = document.getElementById('navMenu');
 
-        window.addEventListener('scroll', () => {
-            navbar.classList.toggle('scrolled', window.scrollY > 50);
-        });
-
+        window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', window.scrollY > 50); });
         mobileMenuBtn.addEventListener('click', () => {
             navMenu.classList.toggle('active');
-            const icon = mobileMenuBtn.querySelector('i');
-            icon.classList.toggle('fa-bars');
-            icon.classList.toggle('fa-times');
+            mobileMenuBtn.querySelector('i').classList.toggle('fa-bars');
+            mobileMenuBtn.querySelector('i').classList.toggle('fa-times');
         });
-
         document.querySelectorAll('.navbar-nav a').forEach(link => {
             link.addEventListener('click', () => {
                 navMenu.classList.remove('active');
-                const icon = mobileMenuBtn.querySelector('i');
-                icon.classList.add('fa-bars');
-                icon.classList.remove('fa-times');
+                mobileMenuBtn.querySelector('i').classList.add('fa-bars');
+                mobileMenuBtn.querySelector('i').classList.remove('fa-times');
             });
         });
 
@@ -751,21 +813,12 @@
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
         }, observerOptions);
-
         document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-        let lastScroll = 0;
         const floatingBtn = document.getElementById('floatingBtn');
         window.addEventListener('scroll', () => {
-            const currentScroll = window.scrollY;
-            if (currentScroll > 400) {
-                floatingBtn.style.opacity = '1';
-                floatingBtn.style.pointerEvents = 'auto';
-            } else {
-                floatingBtn.style.opacity = '0';
-                floatingBtn.style.pointerEvents = 'none';
-            }
-            lastScroll = currentScroll;
+            if (window.scrollY > 400) { floatingBtn.style.opacity = '1'; floatingBtn.style.pointerEvents = 'auto'; }
+            else { floatingBtn.style.opacity = '0'; floatingBtn.style.pointerEvents = 'none'; }
         });
         floatingBtn.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
         floatingBtn.style.opacity = '0';
