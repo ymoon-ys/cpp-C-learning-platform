@@ -457,42 +457,77 @@ def create_course():
     db = current_app.db
     
     if request.method == 'POST':
-        title = request.form.get('title')
-        description = request.form.get('description')
-        category = request.form.get('category', '')
-        duration = request.form.get('duration', '')
-        difficulty = request.form.get('difficulty', '')
-        cover = request.files.get('cover_image')
-        
-        cover_path = ''
-        if cover and cover.filename:
-            filename = secure_filename(cover.filename)
-            if not filename:
-                flash('文件名包含非法字符', 'error')
+        try:
+            print(f'[DEBUG] 开始创建课程，用户ID: {current_user.id}')
+            
+            title = request.form.get('title')
+            description = request.form.get('description')
+            category = request.form.get('category', '')
+            duration = request.form.get('duration', '')
+            difficulty = request.form.get('difficulty', '')
+            cover = request.files.get('cover_image')
+            
+            print(f'[DEBUG] 课程信息: title={title}, category={category}, difficulty={difficulty}')
+            
+            if not title or not description:
+                flash('请填写完整的课程信息', 'error')
                 return redirect(url_for('teacher.create_course'))
             
-            file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
-            if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
-                flash('不支持的图片格式，仅支持 PNG、JPG、GIF、WEBP 格式', 'error')
-                return redirect(url_for('teacher.create_course'))
+            cover_path = ''
+            if cover and cover.filename:
+                print(f'[DEBUG] 处理封面图片: {cover.filename}')
+                
+                filename = secure_filename(cover.filename)
+                if not filename:
+                    flash('文件名包含非法字符', 'error')
+                    return redirect(url_for('teacher.create_course'))
+                
+                file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+                if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
+                    flash('不支持的图片格式，仅支持 PNG、JPG、GIF、WEBP 格式', 'error')
+                    return redirect(url_for('teacher.create_course'))
+                
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+                filename = f"course_{timestamp}_{filename}"
+                
+                covers_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'covers')
+                os.makedirs(covers_dir, exist_ok=True)
+                
+                cover_path_full = os.path.join(covers_dir, filename)
+                cover.save(cover_path_full)
+                cover_path = f"/uploads/covers/{filename}"
+                
+                print(f'[DEBUG] 封面图片已保存: {cover_path}')
             
-            filename = f"course_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-            cover.save(os.path.join(current_app.config['UPLOAD_FOLDER'], 'covers', filename))
-            cover_path = f"/uploads/covers/{filename}"
-        
-        course_data = {
-            'title': title,
-            'description': description,
-            'category': category,
-            'duration': duration,
-            'difficulty': difficulty,
-            'teacher_id': current_user.id,
-            'cover': cover_path
-        }
-        
-        db.insert('courses', course_data)
-        flash('课程创建成功', 'success')
-        return redirect(url_for('teacher.dashboard'))
+            course_data = {
+                'title': title,
+                'description': description,
+                'category': category,
+                'duration': duration,
+                'difficulty': difficulty,
+                'teacher_id': current_user.id,
+                'cover': cover_path
+            }
+            
+            print(f'[DEBUG] 准备插入数据库: {course_data}')
+            
+            new_id = db.insert('courses', course_data)
+            
+            if new_id > 0:
+                print(f'[OK] 课程创建成功，ID: {new_id}')
+                flash('课程创建成功', 'success')
+                return redirect(url_for('teacher.dashboard'))
+            else:
+                print(f'[ERR] 课程插入失败，返回ID: {new_id}')
+                flash('课程创建失败，请稍后重试', 'error')
+                return redirect(url_for('teacher.create_course'))
+                
+        except Exception as e:
+            print(f'[ERR] 创建课程时发生异常: {str(e)}')
+            import traceback
+            traceback.print_exc()
+            flash(f'创建课程时发生错误: {str(e)}', 'error')
+            return redirect(url_for('teacher.create_course'))
     
     return render_template('teacher/create_course.html')
 
@@ -1001,12 +1036,48 @@ def add_exercise():
                          problems=problem_list, 
                          current_category_id=category_id)
 
-@teacher_bp.route('/settings')
+@teacher_bp.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
     if current_user.role != 'teacher':
         flash('您没有权限访问此页面', 'error')
         return redirect(url_for('student.dashboard'))
+    
+    from flask import jsonify
+    
+    if request.method == 'POST':
+        db = current_app.db
+        
+        avatar_file = request.files.get('avatar')
+        if avatar_file and avatar_file.filename:
+            filename = secure_filename(avatar_file.filename)
+            if filename:
+                file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+                if file_ext in ALLOWED_IMAGE_EXTENSIONS:
+                    filename = f"avatar_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+                    os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], 'avatars'), exist_ok=True)
+                    avatar_file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], 'avatars', filename))
+                    avatar_path = f"/uploads/avatars/{filename}"
+                    db.update('users', current_user.id, {'avatar': avatar_path})
+        
+        nickname = request.form.get('nickname', '')
+        email = request.form.get('email', '')
+        bio = request.form.get('bio', '')
+        
+        update_data = {}
+        if nickname:
+            update_data['nickname'] = nickname
+        if email:
+            update_data['email'] = email
+        if bio:
+            update_data['bio'] = bio
+        
+        if update_data:
+            db.update('users', current_user.id, update_data)
+        
+        flash('设置保存成功', 'success')
+        return redirect(url_for('teacher.settings'))
+    
     return render_template('teacher/settings.html')
 
 @teacher_bp.route('/problems')
