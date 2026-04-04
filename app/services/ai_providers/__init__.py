@@ -1,7 +1,8 @@
 from .base import BaseAIProvider
 from .ollama_provider import OllamaProvider
+from .qwen_provider import QwenProvider
 
-__all__ = ['BaseAIProvider', 'OllamaProvider']
+__all__ = ['BaseAIProvider', 'OllamaProvider', 'QwenProvider']
 
 
 def get_provider(provider_name: str, config: Dict) -> BaseAIProvider:
@@ -9,6 +10,9 @@ def get_provider(provider_name: str, config: Dict) -> BaseAIProvider:
     providers = {
         'ollama': OllamaProvider,
         'caigpt': OllamaProvider,
+        'qwen': QwenProvider,
+        'tongyi': QwenProvider,
+        'dashscope': QwenProvider,
     }
 
     provider_class = providers.get(provider_name.lower())

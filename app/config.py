@@ -14,6 +14,13 @@ class Config:
     OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'qwen3-coder:30b')
     OLLAMA_TIMEOUT = int(os.environ.get('OLLAMA_TIMEOUT', '180'))
 
+    QWEN_API_KEY = os.environ.get('QWEN_API_KEY', '')
+    QWEN_BASE_URL = os.environ.get('QWEN_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1')
+    QWEN_MODEL = os.environ.get('QWEN_MODEL', 'qwen-turbo')
+    QWEN_TIMEOUT = int(os.environ.get('QWEN_TIMEOUT', '120'))
+
+    AI_PROVIDER = os.environ.get('AI_PROVIDER', 'qwen')
+
     AI_MAX_HISTORY = int(os.environ.get('AI_MAX_HISTORY', '20'))
     AI_STREAM_ENABLED = os.environ.get('AI_STREAM_ENABLED', 'true').lower() == 'true'
     AI_RATE_LIMIT = os.environ.get('AI_RATE_LIMIT', '20 per minute')

@@ -30,6 +30,136 @@ _ocr_token_cache = {"access_token": None, "expires_at": 0}
 
 dialog_history_cache = {}
 
+
+def get_ai_response(messages: list, stream: bool = False, timeout: int = None):
+    """
+    通用的 AI 响应函数，自动选择 AI 服务（Ollama 或 通义千问）
+    
+    Args:
+        messages: 消息列表
+        stream: 是否使用流式响应
+        timeout: 超时时间
+    
+    Returns:
+        如果 stream=False: 返回文本响应
+        如果 stream=True: 返回生成器
+    """
+    ai_provider = os.environ.get('AI_PROVIDER', 'qwen').lower()
+    
+    if timeout is None:
+        timeout = int(os.environ.get('QWEN_TIMEOUT', '120'))
+    
+    if ai_provider in ['ollama', 'caigpt']:
+        return get_ollama_response(messages, stream, timeout)
+    elif ai_provider in ['qwen', 'tongyi', 'dashscope']:
+        return get_qwen_response(messages, stream, timeout)
+    else:
+        logger.error(f"Unknown AI provider: {ai_provider}")
+        raise ValueError(f"Unknown AI provider: {ai_provider}")
+
+
+def get_ollama_response(messages: list, stream: bool = False, timeout: int = 120):
+    """Ollama 本地模型响应"""
+    ollama_url = f"{os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')}/api/chat"
+    model_name = os.environ.get('OLLAMA_MODEL', 'qwen3-coder:30b')
+    
+    payload = {
+        "model": model_name,
+        "messages": messages,
+        "stream": stream
+    }
+    
+    if not stream:
+        response = requests.post(ollama_url, json=payload, timeout=timeout)
+        if response.status_code == 200:
+            result = response.json()
+            return result.get('message', {}).get('content', '')
+        else:
+            error_msg = f"Ollama API returned status {response.status_code}: {response.text}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+    else:
+        response = requests.post(ollama_url, json=payload, timeout=timeout, stream=True)
+        if response.status_code == 200:
+            def generate():
+                for line in response.iter_lines():
+                    if line:
+                        try:
+                            chunk_data = json.loads(line.decode('utf-8'))
+                            if 'message' in chunk_data and 'content' in chunk_data['message']:
+                                yield chunk_data['message']['content']
+                            if chunk_data.get('done', False):
+                                break
+                        except json.JSONDecodeError:
+                            continue
+            return generate()
+        else:
+            error_msg = f"Ollama stream error: {response.status_code}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+
+
+def get_qwen_response(messages: list, stream: bool = False, timeout: int = 120):
+    """通义千问（阿里云）API 响应"""
+    api_key = os.environ.get('QWEN_API_KEY', '')
+    if not api_key:
+        logger.error("QWEN_API_KEY not configured")
+        raise ValueError("QWEN_API_KEY not configured. Please set QWEN_API_KEY environment variable.")
+    
+    base_url = os.environ.get('QWEN_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1')
+    url = f"{base_url}/chat/completions"
+    model_name = os.environ.get('QWEN_MODEL', 'qwen-turbo')
+    
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        "model": model_name,
+        "messages": messages,
+        "temperature": 0.7,
+        "max_tokens": 2000
+    }
+    
+    if stream:
+        payload["stream"] = True
+    
+    if not stream:
+        response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+        if response.status_code == 200:
+            result = response.json()
+            return result['choices'][0]['message']['content']
+        else:
+            error_msg = f"Qwen API returned status {response.status_code}: {response.text}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+    else:
+        response = requests.post(url, headers=headers, json=payload, timeout=timeout, stream=True)
+        if response.status_code == 200:
+            def generate():
+                for line in response.iter_lines():
+                    if line:
+                        line_str = line.decode('utf-8')
+                        if line_str.startswith('data: '):
+                            data_str = line_str[6:]
+                            if data_str.strip() == '[DONE]':
+                                break
+                            try:
+                                chunk_data = json.loads(data_str)
+                                if ('choices' in chunk_data and 
+                                    len(chunk_data['choices']) > 0 and 
+                                    'delta' in chunk_data['choices'][0] and 
+                                    'content' in chunk_data['choices'][0]['delta']):
+                                    yield chunk_data['choices'][0]['delta']['content']
+                            except json.JSONDecodeError:
+                                continue
+            return generate()
+        else:
+            error_msg = f"Qwen stream error: {response.status_code}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+
 CAIGPT_SYSTEM_PROMPT = """
 你是一位专业的 C++ 程序设计教学智能助手（基于 Qwen3.0 大模型），你的核心任务是帮助大学生学习 C++ 编程。你的交互风格参考豆包（Doubao）AI 助手：**简洁、专业、高效**。
 
