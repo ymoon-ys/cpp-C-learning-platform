@@ -61,7 +61,14 @@ def create_app(config_class=Config):
     login_manager.login_message = 'Please login first'
     
     Config.init_app(app)
-    
+
+    upload_folder = app.config.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads'))
+    app.config['UPLOAD_FOLDER'] = upload_folder
+    os.makedirs(upload_folder, exist_ok=True)
+    os.makedirs(os.path.join(upload_folder, 'avatars'), exist_ok=True)
+    os.makedirs(os.path.join(upload_folder, 'community'), exist_ok=True)
+    print(f'[OK] Upload folder ready: {upload_folder}')
+
     from app.utils import ensure_url_path, from_json
     app.add_template_filter(ensure_url_path, 'ensure_url_path')
     app.add_template_filter(from_json, 'from_json')

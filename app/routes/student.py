@@ -292,9 +292,16 @@ def settings():
 
             filename = f"avatar_{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
             upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'avatars')
-            os.makedirs(upload_path, exist_ok=True)
-            avatar.save(os.path.join(upload_path, filename))
-            update_data['avatar'] = f"/uploads/avatars/{filename}"
+            
+            try:
+                os.makedirs(upload_path, exist_ok=True)
+                avatar.save(os.path.join(upload_path, filename))
+                update_data['avatar'] = f"/uploads/avatars/{filename}"
+                print(f'[OK] Avatar uploaded successfully: {filename}')
+            except Exception as e:
+                print(f'[ERR] Failed to save avatar: {e}')
+                flash('头像保存失败，请重试', 'error')
+                return redirect(url_for('student.settings'))
 
         user_id = current_user.id
         try:

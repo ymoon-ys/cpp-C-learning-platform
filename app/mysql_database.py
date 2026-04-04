@@ -102,6 +102,7 @@ class MySQLDatabase:
                     role VARCHAR(50) NOT NULL DEFAULT 'student',
                     nickname VARCHAR(255),
                     avatar VARCHAR(500),
+                    bio TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     UNIQUE KEY uk_username (username),
@@ -456,6 +457,15 @@ class MySQLDatabase:
                 print(f'[OK] Table created: {table_name}')
             except Exception as e:
                 print(f'[ERR] Error creating table {table_name}: {e}')
+
+        try:
+            cursor.execute("SHOW COLUMNS FROM users LIKE 'bio'")
+            if not cursor.fetchone():
+                cursor.execute("ALTER TABLE users ADD COLUMN bio TEXT AFTER avatar")
+                conn.commit()
+                print('[OK] Added missing bio column to users table')
+        except Exception as e:
+            print(f'[WARN] Could not check/add bio column: {e}')
         cursor.close()
     
     def _convert_datetime_to_string(self, row: Dict[str, Any]) -> Dict[str, Any]:
