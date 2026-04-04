@@ -1174,7 +1174,7 @@ def handle_local_analyze(question):
 
 
 def handle_caigpt_chat(model_info, question, problem_id, conversation_type, has_code, has_image, image_data):
-    """Handle CAIgpt model chat request - call Ollama API directly"""
+    """Handle CAIgpt model chat request - 使用通用 AI 响应函数"""
     user_id = current_user.id if current_user.is_authenticated else 0
 
     if has_image and image_data:
@@ -1192,33 +1192,7 @@ def handle_caigpt_chat(model_info, question, problem_id, conversation_type, has_
     messages = build_messages(user_message, history, user=user, problem_id=problem_id)
 
     try:
-        ollama_url = f"{current_app.config.get('OLLAMA_BASE_URL', 'http://localhost:11434')}/api/chat"
-        timeout = current_app.config.get('OLLAMA_TIMEOUT', 60)
-        model_name = current_app.config.get('OLLAMA_MODEL', 'qwen3-coder:30b')
-
-        payload = {
-            "model": model_name,
-            "messages": messages,
-            "stream": False
-        }
-
-        try:
-            response = requests.post(ollama_url, json=payload, timeout=timeout)
-            if response.status_code == 200:
-                result = response.json()
-                response_message = result['message']['content']
-            else:
-                logger.error(f"Ollama API returned error: {response.text}")
-                response_message = "Sorry, I'm having trouble connecting to the AI service right now. Please try again later."
-        except requests.Timeout:
-            logger.error("Ollama API request timeout")
-            response_message = "Request timeout. Please try again."
-        except requests.exceptions.ConnectionError:
-            logger.error("Cannot connect to Ollama service")
-            response_message = "Cannot connect to local AI service. Please make sure Ollama is running."
-        except Exception as e:
-            logger.error(f"Request to Ollama API failed: {str(e)}")
-            response_message = f"AI service error: {str(e)}"
+        response_message = get_ai_response(messages, stream=False)
 
         if user_id > 0:
             save_message(user_id, "user", user_message, [image_data] if has_image and image_data else None)
@@ -1249,7 +1223,7 @@ def handle_caigpt_chat(model_info, question, problem_id, conversation_type, has_
 
 
 def handle_caigpt_chat_stream(model_info, question, problem_id, conversation_type, has_code, has_image, image_data):
-    """Handle CAIgpt model chat request with streaming support"""
+    """Handle CAIgpt model chat request with streaming support - 使用通用 AI 响应函数"""
     user_id = current_user.id if current_user.is_authenticated else 0
 
     if has_image and image_data:
@@ -1262,13 +1236,8 @@ def handle_caigpt_chat_stream(model_info, question, problem_id, conversation_typ
     else:
         user_message = question
 
-    # 获取配置信息（在应用上下文中）
-    ollama_url = f"{current_app.config.get('OLLAMA_BASE_URL', 'http://localhost:11434')}/api/chat"
-    timeout = current_app.config.get('OLLAMA_TIMEOUT', 120)
-    model_name = current_app.config.get('OLLAMA_MODEL', 'qwen3-coder:30b')
-    max_cache = current_app.config.get('AI_MAX_HISTORY', 20)
+    max_cache = int(os.environ.get('AI_MAX_HISTORY', 20))
 
-    # 构建消息（在应用上下文中）
     history = get_user_history(user_id, max_history=max_cache)
     user = current_user if current_user.is_authenticated else None
     messages = build_messages(user_message, history, user=user, problem_id=problem_id)
@@ -1276,44 +1245,14 @@ def handle_caigpt_chat_stream(model_info, question, problem_id, conversation_typ
     def generate():
         full_response = ""
         try:
-            payload = {
-                "model": model_name,
-                "messages": messages,
-                "stream": True
-            }
+            stream_generator = get_ai_response(messages, stream=True)
 
-            response = requests.post(ollama_url, json=payload, timeout=timeout, stream=True)
+            for chunk_content in stream_generator:
+                full_response += chunk_content
+                yield f"data: {json.dumps({'content': chunk_content, 'done': False})}\n\n"
 
-            if response.status_code == 200:
-                for line in response.iter_lines():
-                    if line:
-                        try:
-                            chunk_data = json.loads(line.decode('utf-8'))
-                            if 'message' in chunk_data and 'content' in chunk_data['message']:
-                                chunk_content = chunk_data['message']['content']
-                                full_response += chunk_content
-                                yield f"data: {json.dumps({'content': chunk_content, 'done': False})}\n\n"
+            yield f"data: {json.dumps({'content': '', 'done': True})}\n\n"
 
-                            if chunk_data.get('done', False):
-                                break
-                        except json.JSONDecodeError:
-                            continue
-
-                # 直接返回结果，不保存到数据库（避免应用上下文问题）
-                yield f"data: {json.dumps({'content': '', 'done': True})}\n\n"
-            else:
-                error_msg = f"Ollama API error: {response.text}"
-                logger.error(error_msg)
-                yield f"data: {json.dumps({'error': error_msg, 'done': True})}\n\n"
-
-        except requests.Timeout:
-            error_msg = "Request timeout. Please try again."
-            logger.error("Ollama streaming request timeout")
-            yield f"data: {json.dumps({'error': error_msg, 'done': True})}\n\n"
-        except requests.exceptions.ConnectionError:
-            error_msg = "Cannot connect to local AI service. Please make sure Ollama is running."
-            logger.error("Cannot connect to Ollama service for streaming")
-            yield f"data: {json.dumps({'error': error_msg, 'done': True})}\n\n"
         except Exception as e:
             error_msg = f"AI service error: {str(e)}"
             logger.error(f"CAIgpt streaming failed: {str(e)}")
@@ -2359,9 +2298,6 @@ def ai_code_completion():
     current_line = lines[cursor_line - 1] if cursor_line <= len(lines) else ''
     prefix = '\n'.join(lines[max(0, cursor_line - 5):cursor_line])
 
-    ollama_url = f"{current_app.config.get('OLLAMA_BASE_URL', 'http://localhost:11434')}/api/generate"
-    model_name = current_app.config.get('OLLAMA_MODEL', 'qwen3:8b')
-
     prompt = f"""你是一个C++代码补全助手。根据当前代码上下文，提供1-3个最可能的代码补全建议。
 
 只输出补全内容，不要解释。每个建议用 ||| 分隔。
@@ -2379,32 +2315,13 @@ def ai_code_completion():
 请提供补全建议（只输出代码片段）："""
 
     try:
-        response = requests.post(
-            ollama_url.replace('/api/chat', '/api/generate'),
-            json={
-                "model": model_name,
-                "prompt": prompt,
-                "stream": False,
-                "options": {
-                    "num_predict": 100,
-                    "temperature": 0.2,
-                    "top_p": 0.9,
-                    "stop": ["\n\n", "```", "|||"]
-                }
-            },
-            timeout=10
-        )
-
-        if response.status_code == 200:
-            result = response.json()
-            text = result.get('response', '').strip()
-            suggestions = [s.strip() for s in text.split('|||') if s.strip()]
-            return jsonify({
-                'suggestions': suggestions[:5],
-                'context': current_line[:50]
-            })
-        else:
-            return jsonify({'suggestions': []})
+        messages = [{'role': 'user', 'content': prompt}]
+        response_text = get_ai_response(messages, stream=False, timeout=10)
+        suggestions = [s.strip() for s in response_text.split('|||') if s.strip()]
+        return jsonify({
+            'suggestions': suggestions[:5],
+            'context': current_line[:50]
+        })
 
     except Exception as e:
         logger.error(f"Code completion failed: {str(e)}")
