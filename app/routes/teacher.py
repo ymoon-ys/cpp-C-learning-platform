@@ -247,13 +247,11 @@ def save_lesson_content(lesson_id):
     print(f'[DEBUG] 保存小节 {lesson_id}')
     print(f'[DEBUG] 标题: {title}')
     print(f'[DEBUG] 内容长度: {len(content) if content else 0}')
-    print(f'[DEBUG] 多媒体文件数: {len(media_files) if media_files else 0}')
-    
+
     lesson_data = {
         'title': title,
         'description': description,
-        'content': content,
-        'media_files': media_files
+        'content': content
     }
     
     success = db.update('lessons', lesson_id, lesson_data)
