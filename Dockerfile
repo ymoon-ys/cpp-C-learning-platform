@@ -8,7 +8,6 @@ RUN npm ci
 
 COPY static/src/ ./static/src/
 COPY vite.config.js ./
-COPY update_assets.py ./
 RUN npm run build
 
 # Stage 2: Python运行环境
