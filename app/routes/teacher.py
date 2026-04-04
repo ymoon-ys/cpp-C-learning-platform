@@ -503,7 +503,6 @@ def create_course():
                 'title': title,
                 'description': description,
                 'category': category,
-                'difficulty': difficulty,
                 'teacher_id': current_user.id,
                 'cover': cover_path
             }
