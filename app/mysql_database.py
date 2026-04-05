@@ -142,6 +142,7 @@ class MySQLDatabase:
                     title VARCHAR(255) NOT NULL,
                     description TEXT,
                     content TEXT,
+                    media_files LONGTEXT,
                     content_type VARCHAR(50) DEFAULT 'text',
                     content_path VARCHAR(255),
                     duration VARCHAR(50),
@@ -475,11 +476,23 @@ class MySQLDatabase:
         try:
             cursor.execute("SHOW COLUMNS FROM lessons LIKE 'media_files'")
             if not cursor.fetchone():
-                cursor.execute("ALTER TABLE lessons ADD COLUMN media_files TEXT AFTER content")
+                cursor.execute("ALTER TABLE lessons ADD COLUMN media_files LONGTEXT AFTER content")
                 conn.commit()
-                print('[OK] Added missing media_files column to lessons table')
+                print('[OK] Added missing media_files column to lessons table (LONGTEXT)')
+            else:
+                # 检查字段类型，如果是 TEXT 则升级为 LONGTEXT
+                cursor.execute("""
+                    SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lessons' AND COLUMN_NAME = 'media_files'
+                """)
+                result = cursor.fetchone()
+                if result and 'text' in result[0].lower() and 'long' not in result[0].lower():
+                    print(f'[INFO] Upgrading media_files column from {result[0]} to LONGTEXT...')
+                    cursor.execute("ALTER TABLE lessons MODIFY COLUMN media_files LONGTEXT")
+                    conn.commit()
+                    print('[OK] ✅ Successfully upgraded media_files column to LONGTEXT (supports up to 4GB)')
         except Exception as e:
-            print(f'[WARN] Could not check/add media_files column: {e}')
+            print(f'[WARN] Could not check/add/upgrade media_files column: {e}')
 
         cursor.close()
     
