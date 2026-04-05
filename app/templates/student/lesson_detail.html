@@ -940,14 +940,7 @@
                                 <i class="fas fa-video" style="color: #3498db;"></i>
                                 {{ file.name if file.name else '视频文件' }}
                             </h3>
-                            {# 视频也尝试 Base64，但大视频可能不适用 #}
-                            {% if file.base64 and file.mime_type and file.base64|length < 10485760 %}
-                            <video controls preload="metadata"
-                                   style="width: 100%; max-height: 600px; display: block; background: #000;">
-                                <source src="data:{{ file.mime_type }};base64,{{ file.base64 }}" type="{{ file.mime_type }}">
-                                您的浏览器不支持视频播放
-                            </video>
-                            {% else %}
+                            {# 视频始终使用 URL（Base64 太大浏览器无法处理） #}
                             <video controls preload="metadata"
                                    style="width: 100%; max-height: 600px; display: block; background: #000;"
                                    poster="">
@@ -957,7 +950,22 @@
                                 您的浏览器不支持视频播放，
                                 <a href="{{ file.url }}" style="color: #3498db;">点击下载观看</a>
                             </video>
-                            {% endif %}
+                            {% if not file.url.startswith('http') %}
+                            <div style="margin-top: 15px; padding: 15px; background: rgba(255,200,0,0.1); border-radius: 8px; text-align: center;">
+                                <p style="color: #ffc107; margin-bottom: 10px; font-size: 14px;">
+                                    <i class="fas fa-info-circle"></i> 
+                                    视频文件存储在临时目录，Koyeb 重启后可能需要重新上传
+                                </p>
+                                <a href="{{ file.url }}" target="_blank"
+                                   style="display: inline-block; padding: 10px 24px; background: #3498db; color: white; text-decoration: none; border-radius: 6px; margin-right: 10px;">
+                                    <i class="fas fa-external-link-alt"></i> 新窗口播放
+                                </a>
+                                <a href="{{ file.url }}" download
+                                   style="display: inline-block; padding: 10px 24px; background: #27ae60; color: white; text-decoration: none; border-radius: 6px;">
+                                    <i class="fas fa-download"></i> 下载视频
+                                </a>
+                            </div>
+                            {% else %}
                             <div style="margin-top: 15px; text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
                                 <a href="{{ file.url }}" target="_blank"
                                    style="display: inline-block; padding: 10px 24px; background: #3498db; color: white; text-decoration: none; border-radius: 6px; margin-right: 10px;">
@@ -968,6 +976,7 @@
                                     <i class="fas fa-download"></i> 下载视频
                                 </a>
                             </div>
+                            {% endif %}
                         </div>
 
                         {% elif file and file.type == 'image' %}
