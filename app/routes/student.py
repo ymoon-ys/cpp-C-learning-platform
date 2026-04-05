@@ -70,71 +70,73 @@ def course_detail(course_id):
 @student_bp.route('/lessons/<int:lesson_id>')
 @login_required
 def lesson_detail(lesson_id):
-    from flask import current_app
+    from flask import current_app, jsonify
+    import json
     db = current_app.db
-    lesson = db.find_by_id('lessons', lesson_id)
-    
-    if not lesson:
-        flash('课程内容不存在', 'error')
+
+    try:
+        lesson = db.find_by_id('lessons', lesson_id)
+        if not lesson:
+            flash('课程内容不存在', 'error')
+            return redirect(url_for('student.dashboard'))
+    except Exception as e:
+        print(f'[ERR] Error fetching lesson: {e}')
+        flash('课程内容加载失败', 'error')
         return redirect(url_for('student.dashboard'))
-    
-    chapter = db.find_by_id('chapters', lesson['chapter_id'])
-    course = db.find_by_id('courses', chapter['course_id'])
-    
-    # 获取所有章节和小节
-    chapters = db.find_all('chapters', {'course_id': course['id']})
-    chapters.sort(key=lambda x: int(x.get('order_index', 0)))
-    
-    for c in chapters:
-        c['lessons'] = db.find_all('lessons', {'chapter_id': c['id']})
-        c['lessons'].sort(key=lambda x: int(x.get('order_index', 0)))
-        
-        for l in c['lessons']:
-            progress = db.find_by_field('learning_progress', 'user_id', current_user.id)
-            progress = [p for p in progress if int(p.get('lesson_id', 0)) == l['id']]
-            l['completed'] = len(progress) > 0 and progress[0].get('status') == 'completed'
-    
-    # 获取讨论
-    discussions = db.find_all('discussions', {'lesson_id': lesson_id})
-    
-    # 计算学习进度
-    total_lessons = sum(len(c['lessons']) for c in chapters)
-    completed_lessons = sum(len([l for l in c['lessons'] if l.get('completed')]) for c in chapters)
-    
-    # 查找上一节和下一节
+
+    try:
+        chapter = db.find_by_id('chapters', lesson.get('chapter_id', 0))
+    except:
+        chapter = {}
+
+    try:
+        course_id = chapter.get('course_id', 0) if chapter else 0
+        course = db.find_by_id('courses', course_id) if course_id else {}
+    except:
+        course = {}
+
+    try:
+        chapters = []
+        if course and course.get('id'):
+            chapters = db.find_all('chapters', {'course_id': course['id']})
+            for c in chapters:
+                try:
+                    c['lessons'] = db.find_all('lessons', {'chapter_id': c['id']})
+                    for l in c['lessons']:
+                        l['completed'] = False
+                except:
+                    c['lessons'] = []
+    except:
+        chapters = []
+
+    discussions = []
+    total_lessons = sum(len(c.get('lessons', [])) for c in chapters)
+    completed_lessons = 0
+
+    media_files_raw = lesson.get('media_files')
+    lesson['media_files_list'] = []
+
+    if media_files_raw and isinstance(media_files_raw, str):
+        try:
+            if media_files_raw.strip() not in ['[]', 'null', 'None', '', 'None']:
+                lesson['media_files_list'] = json.loads(media_files_raw)
+        except:
+            lesson['media_files_list'] = []
+    elif isinstance(media_files_raw, list):
+        lesson['media_files_list'] = media_files_raw
+
     prev_lesson = None
     next_lesson = None
-    
-    # 将所有小节放入一个列表
-    all_lessons = []
-    for c in chapters:
-        all_lessons.extend(c['lessons'])
-    
-    # 按order_index排序
-    all_lessons.sort(key=lambda x: int(x.get('order_index', 0)))
-    
-    # 查找当前小节的索引
-    current_index = -1
-    for i, l in enumerate(all_lessons):
-        if l['id'] == lesson['id']:
-            current_index = i
-            break
-    
-    # 查找上一节和下一节
-    if current_index > 0:
-        prev_lesson = all_lessons[current_index - 1]
-    if current_index < len(all_lessons) - 1:
-        next_lesson = all_lessons[current_index + 1]
-    
-    return render_template('student/lesson_detail.html', 
-                         lesson=lesson, 
-                         course=course, 
-                         chapter=chapter, 
-                         chapters=chapters, 
-                         discussions=discussions, 
-                         total_lessons=total_lessons, 
-                         completed_lessons=completed_lessons, 
-                         prev_lesson=prev_lesson, 
+
+    return render_template('student/lesson_detail.html',
+                         lesson=lesson,
+                         course=course,
+                         chapter=chapter,
+                         chapters=chapters,
+                         discussions=discussions,
+                         total_lessons=total_lessons,
+                         completed_lessons=completed_lessons,
+                         prev_lesson=prev_lesson,
                          next_lesson=next_lesson)
 
 @student_bp.route('/lessons/<int:lesson_id>/complete', methods=['POST'])

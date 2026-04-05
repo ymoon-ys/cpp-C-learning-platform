@@ -886,96 +886,37 @@
             <div class="content-body">
                 <div class="content-card">
                     <div class="content-inner">
-                        {# 调试信息（部署后可删除） #}
-                        <div style="background: #f0f0f0; padding: 10px; margin-bottom: 20px; border-radius: 8px; font-size: 12px; color: #666;">
-                            <strong>[DEBUG]</strong> content长度: {{ lesson.content|length if lesson.content else 0 }} |
-                            media_files类型: {{ lesson.media_files.__class__.__name__ if lesson.media_files else 'None' }} |
-                            media_files值: {{ lesson.media_files|default('空')[:150] if lesson.media_files else '空' }}
-                        </div>
-
                         {% if lesson.content %}
                         <div class="document-content">
                             {{ lesson.content|safe }}
                         </div>
-
                         {% endif %}
 
-                        {# 显示多媒体文件（PDF、视频等） #}
-                        {% set show_media = false %}
-                        {% if lesson.media_files %}
-                            {% if lesson.media_files is string and lesson.media_files|length > 2 and lesson.media_files != '[]' and lesson.media_files != 'null' %}
-                                {% set show_media = true %}
-                            {% elif lesson.media_files is not string and lesson.media_files|length > 0 %}
-                                {% set show_media = true %}
-                            {% endif %}
-                        {% endif %}
-
-                        {% if show_media %}
-                        <div class="media-section" style="margin-top: 30px;">
-                            <h3 style="font-size: 18px; color: #2c3e50; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #667eea;">
-                                <i class="fas fa-paperclip"></i> 附件资料
+                        {# 简单的多媒体文件显示 #}
+                        {% if lesson.media_files_list is defined %}
+                        {% for file in lesson.media_files_list %}
+                        {% if file and file.type == 'pdf' %}
+                        <div style="margin: 30px 0; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
+                            <h3 style="color: #2c3e50; margin-bottom: 15px;">
+                                <i class="fas fa-file-pdf" style="color: #e74c3c;"></i>
+                                {{ file.name if file.name else 'PDF文档' }}
                             </h3>
-
-                            {% set media_list = lesson.media_files if lesson.media_files is string else (lesson.media_files | tojson if lesson.media_files else '[]') %}
-                            {% set files = media_list | from_json if media_list is string else media_list %}
-                            
-                            {% for file in files %}
-                            <div class="media-item">
-                                {% if file.type == 'pdf' %}
-                                <div class="pdf-container">
-                                    <div class="pdf-header">
-                                        <i class="fas fa-file-pdf"></i>
-                                        <span>{{ file.name }}</span>
-                                    </div>
-                                    <div class="pdf-viewer">
-                                        <object data="{{ file.url }}" 
-                                               type="application/pdf"
-                                               style="width: 100%; height: 600px; min-height: 600px;"
-                                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                        </object>
-                                        <div class="pdf-fallback" style="display: none; text-align: center; padding: 60px 40px;">
-                                            <div style="font-size: 64px; margin-bottom: 16px;">📄</div>
-                                            <h3 style="margin-bottom: 12px; color: #2c3e50;">PDF文档</h3>
-                                            <p style="color: #666; margin-bottom: 24px;">您的浏览器不支持直接预览PDF，请点击下方链接查看或下载</p>
-                                            <a href="{{ file.url }}" target="_blank" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
-                                                📥 查看或下载 PDF 文档
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="pdf-footer">
-                                        <a href="{{ file.url }}" target="_blank"><i class="fas fa-external-link-alt"></i> 在新窗口中打开</a>
-                                        <a href="{{ file.url }}" download><i class="fas fa-download"></i> 下载文件</a>
-                                    </div>
-                                </div>
-                                
-                                {% elif file.type == 'video' %}
-                                <div style="margin: 24px 0; background: black; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
-                                    <div style="padding: 14px 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
-                                        <i class="fas fa-video"></i> {{ file.name }}
-                                    </div>
-                                    <video controls style="width: 100%; max-height: 500px;">
-                                        <source src="{{ file.url }}" type="video/mp4">
-                                    </video>
-                                </div>
-                                
-                                {% elif file.type == 'image' %}
-                                <figure style="margin: 24px 0;">
-                                    <img src="{{ file.url }}" alt="{{ file.name }}" style="max-width: 100%; height: auto; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
-                                    <figcaption style="text-align: center; color: #666; margin-top: 8px;">{{ file.name }}</figcaption>
-                                </figure>
-                                
-                                {% else %}
-                                <div style="margin: 24px 0; padding: 30px; background: #f8f9fa; border-radius: 12px; text-align: center;">
-                                    <i class="fas fa-file" style="font-size: 48px; color: #667eea;"></i>
-                                    <h3 style="color: #2c3e50; margin: 12px 0 8px;">{{ file.name }}</h3>
-                                    <a href="{{ file.url }}" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
-                                        📥 下载文件
-                                    </a>
-                                </div>
-                                {% endif %}
+                            <object data="{{ file.url }}" type="application/pdf"
+                                   style="width: 100%; height: 600px; border: 1px solid #ddd;">
+                            </object>
+                            <div style="margin-top: 15px; text-align: center;">
+                                <a href="{{ file.url }}" target="_blank"
+                                   style="display: inline-block; padding: 10px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; margin-right: 10px;">
+                                    <i class="fas fa-external-link-alt"></i> 新窗口打开
+                                </a>
+                                <a href="{{ file.url }}" download
+                                   style="display: inline-block; padding: 10px 24px; background: #27ae60; color: white; text-decoration: none; border-radius: 6px;">
+                                    <i class="fas fa-download"></i> 下载PDF
+                                </a>
                             </div>
-                            {% endfor %}
                         </div>
+                        {% endif %}
+                        {% endfor %}
                         {% endif %}
 
                         {% if lesson.content_path %}
