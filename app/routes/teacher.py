@@ -252,26 +252,83 @@ def save_lesson_content(lesson_id):
     # 解析并验证 media_files JSON
     try:
         import json
+        import os
+        import base64 as b64_module
+
         media_files_list = json.loads(media_files) if media_files else []
         print(f'[DEBUG] 解析后的文件列表长度: {len(media_files_list)}')
 
-        # 检查每个文件的 Base64 状态
+        # 为每个文件补充 Base64 数据（如果缺失）
         for idx, file_info in enumerate(media_files_list):
+            file_name = file_info.get('name', f'文件{idx+1}')
+            file_type = file_info.get('type', 'unknown')
+            file_url = file_info.get('url', '')
+
             has_base64 = 'base64' in file_info and file_info['base64']
             base64_len = len(file_info.get('base64', '')) if has_base64 else 0
-            print(f'[DEBUG] 文件 {idx + 1}: name={file_info.get("name")}, type={file_info.get("type")}, has_base64={has_base64}, base64_length={base64_len}')
 
-            if not has_base64:
-                print(f'[WARNING] 文件 {file_info.get("name")} 缺少 Base64 数据！将无法持久化保存！')
+            print(f'[DEBUG] 文件 {idx + 1}: name={file_name}, type={file_type}, has_base64={has_base64}, base64_length={base64_len}')
+
+            if not has_base64 and file_url:
+                # 尝试从本地文件系统读取文件并转换为 Base64
+                print(f'[INFO] 正在为 {file_name} 生成 Base64 数据...')
+
+                try:
+                    # 构建完整路径
+                    if file_url.startswith('/uploads/'):
+                        local_path = os.path.join(current_app.config['UPLOAD_FOLDER'], file_url[9:])  # 去掉 /uploads/
+                    elif file_url.startswith('uploads/'):
+                        local_path = os.path.join(current_app.config['UPLOAD_FOLDER'], file_url[8:])
+                    else:
+                        local_path = None
+
+                    if local_path and os.path.exists(local_path):
+                        # 读取文件内容
+                        with open(local_path, 'rb') as f:
+                            file_content = f.read()
+
+                        # 转换为 Base64
+                        base64_data = b64_module.b64encode(file_content).decode('utf-8')
+
+                        # 确定 MIME 类型
+                        ext = file_name.rsplit('.', 1)[-1].lower() if '.' in file_name else ''
+                        mime_map = {
+                            'pdf': 'application/pdf',
+                            'mp4': 'video/mp4',
+                            'webm': 'video/webm',
+                            'ogg': 'video/ogg',
+                            'jpg': 'image/jpeg',
+                            'jpeg': 'image/jpeg',
+                            'png': 'image/png',
+                            'gif': 'image/gif'
+                        }
+                        mime_type = mime_map.get(ext, 'application/octet-stream')
+
+                        # 更新文件信息
+                        file_info['base64'] = base64_data
+                        file_info['mime_type'] = mime_type
+
+                        print(f'[OK] ✅ 成功生成 {file_name} 的 Base64 数据 ({len(base64_data)} 字符)')
+                    else:
+                        print(f'[WARNING] ⚠️ 文件不存在: {local_path}, 无法生成 Base64')
+                except Exception as e:
+                    print(f'[ERROR] ❌ 读取文件 {file_name} 失败: {e}')
+
+        # 将更新后的列表转回 JSON
+        final_media_files = json.dumps(media_files_list, ensure_ascii=False)
+        print(f'[DEBUG] 最终 media_files 长度: {len(final_media_files)} 字符')
+
     except Exception as e:
-        print(f'[ERROR] 解析 media_files JSON 失败: {e}')
-        media_files_list = []
-    
+        print(f'[ERROR] 处理 media_files 失败: {e}')
+        import traceback
+        traceback.print_exc()
+        final_media_files = media_files if media_files else '[]'
+
     lesson_data = {
         'title': title,
         'description': description,
         'content': content,
-        'media_files': media_files
+        'media_files': final_media_files
     }
     
     success = db.update('lessons', lesson_id, lesson_data)
