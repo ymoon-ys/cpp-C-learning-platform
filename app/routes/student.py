@@ -70,74 +70,135 @@ def course_detail(course_id):
 @student_bp.route('/lessons/<int:lesson_id>')
 @login_required
 def lesson_detail(lesson_id):
-    from flask import current_app, jsonify
     import json
-    db = current_app.db
-
-    try:
-        lesson = db.find_by_id('lessons', lesson_id)
-        if not lesson:
-            flash('课程内容不存在', 'error')
-            return redirect(url_for('student.dashboard'))
-    except Exception as e:
-        print(f'[ERR] Error fetching lesson: {e}')
-        flash('课程内容加载失败', 'error')
-        return redirect(url_for('student.dashboard'))
-
-    try:
-        chapter = db.find_by_id('chapters', lesson.get('chapter_id', 0))
-    except:
-        chapter = {}
-
-    try:
-        course_id = chapter.get('course_id', 0) if chapter else 0
-        course = db.find_by_id('courses', course_id) if course_id else {}
-    except:
-        course = {}
-
-    try:
-        chapters = []
-        if course and course.get('id'):
-            chapters = db.find_all('chapters', {'course_id': course['id']})
-            for c in chapters:
-                try:
-                    c['lessons'] = db.find_all('lessons', {'chapter_id': c['id']})
-                    for l in c['lessons']:
-                        l['completed'] = False
-                except:
-                    c['lessons'] = []
-    except:
-        chapters = []
-
+    import traceback
+    
+    print(f'[DEBUG] ===== 开始加载课程详情 lesson_id={lesson_id} =====')
+    
+    db = None
+    lesson = None
+    chapter = {}
+    course = {}
+    chapters = []
     discussions = []
-    total_lessons = sum(len(c.get('lessons', [])) for c in chapters)
-    completed_lessons = 0
-
-    media_files_raw = lesson.get('media_files')
-    lesson['media_files_list'] = []
-
-    if media_files_raw and isinstance(media_files_raw, str):
+    
+    try:
+        from flask import current_app
+        db = current_app.db
+        print(f'[DEBUG] 数据库连接成功')
+    except Exception as e:
+        print(f'[ERROR] 获取数据库连接失败: {e}')
+    
+    if db:
         try:
-            if media_files_raw.strip() not in ['[]', 'null', 'None', '', 'None']:
-                lesson['media_files_list'] = json.loads(media_files_raw)
-        except:
-            lesson['media_files_list'] = []
-    elif isinstance(media_files_raw, list):
-        lesson['media_files_list'] = media_files_raw
-
-    prev_lesson = None
-    next_lesson = None
-
-    return render_template('student/lesson_detail.html',
-                         lesson=lesson,
-                         course=course,
-                         chapter=chapter,
-                         chapters=chapters,
-                         discussions=discussions,
-                         total_lessons=total_lessons,
-                         completed_lessons=completed_lessons,
-                         prev_lesson=prev_lesson,
-                         next_lesson=next_lesson)
+            lesson = db.find_by_id('lessons', lesson_id)
+            print(f'[DEBUG] 查询课程结果: {lesson is not None}')
+            if not lesson:
+                flash('课程内容不存在', 'error')
+                return redirect(url_for('student.dashboard'))
+        except Exception as e:
+            print(f'[ERROR] 查询课程失败: {e}')
+            traceback.print_exc()
+            flash('课程内容加载失败', 'error')
+            return redirect(url_for('student.dashboard'))
+        
+        if lesson:
+            try:
+                chapter_id = lesson.get('chapter_id')
+                print(f'[DEBUG] chapter_id: {chapter_id}, type: {type(chapter_id)}')
+                if chapter_id:
+                    chapter = db.find_by_id('chapters', int(chapter_id) if isinstance(chapter_id, str) else chapter_id)
+                    print(f'[DEBUG] 查询章节结果: {chapter is not None}')
+            except Exception as e:
+                print(f'[ERROR] 查询章节失败: {e}')
+                chapter = {}
+            
+            try:
+                course_id = None
+                if chapter and isinstance(chapter, dict):
+                    course_id = chapter.get('course_id')
+                
+                print(f'[DEBUG] course_id: {course_id}')
+                
+                if course_id:
+                    course = db.find_by_id('courses', int(course_id) if isinstance(course_id, str) else course_id)
+                    print(f'[DEBUG] 查询课程结果: {course is not None}')
+                    
+                    if course and course.get('id'):
+                        try:
+                            chapters = db.find_all('chapters', {'course_id': course['id']})
+                            print(f'[DEBUG] 查询到 {len(chapters)} 个章节')
+                            
+                            for c in chapters:
+                                try:
+                                    c['lessons'] = db.find_all('lessons', {'chapter_id': c['id']})
+                                    for l in c['lessons']:
+                                        l['completed'] = False
+                                except:
+                                    c['lessons'] = []
+                        except Exception as e:
+                            print(f'[ERROR] 查询章节列表失败: {e}')
+                            chapters = []
+                else:
+                    course = {}
+            except Exception as e:
+                print(f'[ERROR] 查询课程/章节失败: {e}')
+                course = {}
+                chapters = []
+            
+            try:
+                discussions = db.find_all('discussions', {'lesson_id': lesson_id})
+            except:
+                discussions = []
+    
+    total_lessons = sum(len(c.get('lessons', [])) for c in chapters) if chapters else 0
+    completed_lessons = 0
+    
+    media_files_list = []
+    
+    if lesson and isinstance(lesson, dict):
+        media_files_raw = lesson.get('media_files')
+        print(f'[DEBUG] media_files_raw: {media_files_raw}, type: {type(media_files_raw)}')
+        
+        if media_files_raw and isinstance(media_files_raw, str):
+            try:
+                cleaned = media_files_raw.strip()
+                if cleaned and cleaned not in ['[]', 'null', 'None', '', 'none']:
+                    media_files_list = json.loads(cleaned)
+                    print(f'[DEBUG] 解析 JSON 成功, 文件数: {len(media_files_list)}')
+            except json.JSONDecodeError as e:
+                print(f'[ERROR] JSON 解析失败: {e}')
+                media_files_list = []
+            except Exception as e:
+                print(f'[ERROR] 处理 media_files 失败: {e}')
+                media_files_list = []
+        elif isinstance(media_files_raw, list):
+            media_files_list = media_files_raw
+        
+        lesson['media_files_list'] = media_files_list
+    else:
+        lesson = {'id': lesson_id, 'title': f'课程 #{lesson_id}', 'content': '', 'media_files_list': []}
+    
+    print(f'[DEBUG] ===== 准备渲染模板 =====')
+    print(f'[DEBUG] lesson keys: {list(lesson.keys()) if lesson else "None"}')
+    print(f'[DEBUG] media_files_list length: {len(media_files_list)}')
+    
+    try:
+        return render_template('student/lesson_detail.html',
+                             lesson=lesson,
+                             course=course or {},
+                             chapter=chapter or {},
+                             chapters=chapters or [],
+                             discussions=discussions or [],
+                             total_lessons=total_lessons,
+                             completed_lessons=completed_lessons,
+                             prev_lesson=None,
+                             next_lesson=None)
+    except Exception as e:
+        print(f'[ERROR] 渲染模板失败: {e}')
+        traceback.print_exc()
+        flash('页面渲染失败，请稍后重试', 'error')
+        return redirect(url_for('student.dashboard'))
 
 @student_bp.route('/lessons/<int:lesson_id>/complete', methods=['POST'])
 @login_required
