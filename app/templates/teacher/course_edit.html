@@ -1240,8 +1240,13 @@
 
     <script>
         let editor = null;
-        let currentLessonId = {% if chapters and chapters[0].lessons %}{{ chapters[0].lessons[0].id }}{% else %}null{% endif %};
-        let currentChapterId = {% if chapters %}{{ chapters[0].id }}{% else %}null{% endif %};
+        {% if chapters and chapters[0] %}
+        let currentLessonId = {% if chapters[0].lessons and chapters[0].lessons[0] %}{{ chapters[0].lessons[0].id }}{% else %}null{% endif %};
+        let currentChapterId = {{ chapters[0].id }};
+        {% else %}
+        let currentLessonId = null;
+        let currentChapterId = null;
+        {% endif %}
         let autoSaveTimer = null;
         
         // 多媒体文件列表（单独存储，避免被CKEditor过滤）
@@ -1287,9 +1292,9 @@
                     })
                     .then(newEditor => {
                         editor = newEditor;
-                        
+
                         // 加载第一个小节的初始内容
-                        {% if chapters and chapters[0].lessons %}
+                        {% if chapters and chapters[0] and chapters[0].lessons and chapters[0].lessons[0] %}
                         const initialContent = {{ chapters[0].lessons[0].content | tojson if chapters[0].lessons[0].content else '""' }};
                         if (initialContent) {
                             editor.setData(initialContent);
