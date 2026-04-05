@@ -1429,8 +1429,8 @@
                                 progressCard.querySelector('.progress-bar-fill').style.width = '100%';
                                 progressCard.querySelector('.progress-card-status').textContent = '✅ 上传完成';
 
-                                // 将文件信息添加到列表（传递文件名）
-                                insertFileToEditor(response.url, fileType, response.filename || file.name);
+                                // 将文件信息添加到列表（包含 Base64 数据用于持久化）
+                                insertFileToEditor(response.url, fileType, response.filename || file.name, response.base64, response.mime_type);
 
                                 // 显示成功消息和保存提醒
                                 setTimeout(() => {
@@ -1490,12 +1490,7 @@
         }
         
         // 将文件信息添加到列表（不插入到编辑器，避免被过滤）
-        function insertFileToEditor(url, fileType, fileName) {
-            if (!editor) {
-                console.error('编辑器未初始化');
-                return;
-            }
-            
+        function insertFileToEditor(url, fileType, fileName, base64Data = null, mimeType = null) {
             // 添加到多媒体文件列表
             const fileInfo = {
                 type: fileType,
@@ -1503,7 +1498,14 @@
                 name: fileName || '未命名文件',
                 id: Date.now() + Math.random()
             };
-            
+
+            // 保存 Base64 数据（用于持久化存储，避免 Koyeb 文件系统重置）
+            if (base64Data) {
+                fileInfo.base64 = base64Data;
+                fileInfo.mime_type = mimeType;
+                console.log(`[OK] 已保存 ${fileName} 的 Base64 数据 (${(base64Data.length / 1024 / 1024).toFixed(2)} MB)`);
+            }
+
             uploadedFiles.push(fileInfo);
             
             console.log('添加文件到列表:', fileInfo);

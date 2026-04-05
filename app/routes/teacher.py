@@ -322,62 +322,113 @@ def upload_editor_image():
 def upload_video():
     if current_user.role != 'teacher':
         return jsonify({'success': False, 'error': '权限不足'}), 403
-    
+
     from flask import current_app, jsonify
     import os
-    
+    import base64
+
     if 'video' not in request.files:
         return jsonify({'success': False, 'error': '没有上传文件'})
-    
+
     file = request.files['video']
     if file.filename == '':
         return jsonify({'success': False, 'error': '没有选择文件'})
-    
+
     filename = secure_filename(file.filename)
     if not filename:
         return jsonify({'success': False, 'error': '文件名包含非法字符'})
-    
+
     file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
     if file_ext not in ALLOWED_VIDEO_EXTENSIONS:
         return jsonify({'success': False, 'error': '不支持的视频格式'})
-    
+
+    # 读取视频内容并转换为 Base64
+    file_content = file.read()
+    base64_data = base64.b64encode(file_content).decode('utf-8')
+
+    # 确定 MIME 类型
+    mime_types = {
+        'mp4': 'video/mp4',
+        'webm': 'video/webm',
+        'ogg': 'video/ogg'
+    }
+    mime_type = mime_types.get(file_ext, 'video/mp4')
+
     filename = f"video_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
     folder = 'videos'
+
+    # 保存到本地（备份）
     os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
+    file.seek(0)
     file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], folder, filename))
     url = f"/uploads/{folder}/{filename}"
-    return jsonify({'success': True, 'url': url, 'filename': filename})
+
+    return jsonify({
+        'success': True,
+        'url': url,
+        'filename': filename,
+        'base64': base64_data,
+        'mime_type': mime_type,
+        'size': len(file_content)
+    })
 
 @teacher_bp.route('/upload-document', methods=['POST'])
 @login_required
 def upload_document():
     if current_user.role != 'teacher':
         return jsonify({'success': False, 'error': '权限不足'}), 403
-    
+
     from flask import current_app, jsonify
     import os
-    
+    import base64
+
     if 'document' not in request.files:
         return jsonify({'success': False, 'error': '没有上传文件'})
-    
+
     file = request.files['document']
     if file.filename == '':
         return jsonify({'success': False, 'error': '没有选择文件'})
-    
+
     filename = secure_filename(file.filename)
     if not filename:
         return jsonify({'success': False, 'error': '文件名包含非法字符'})
-    
+
     file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
     if file_ext not in ALLOWED_DOCUMENT_EXTENSIONS:
         return jsonify({'success': False, 'error': '不支持的文档格式'})
-    
+
+    # 读取文件内容并转换为 Base64（用于持久化存储）
+    file_content = file.read()
+    base64_data = base64.b64encode(file_content).decode('utf-8')
+
+    # 确定 MIME 类型
+    mime_types = {
+        'pdf': 'application/pdf',
+        'doc': 'application/msword',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls': 'application/vnd.ms-excel',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    }
+    mime_type = mime_types.get(file_ext, 'application/octet-stream')
+
     filename = f"doc_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
     folder = 'documents'
+
+    # 仍然保存到本地（作为备份）
     os.makedirs(os.path.join(current_app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
+    file.seek(0)  # 重置文件指针
     file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], folder, filename))
     url = f"/uploads/{folder}/{filename}"
-    return jsonify({'success': True, 'url': url, 'filename': filename})
+
+    # 返回 URL 和 Base64 数据
+    return jsonify({
+        'success': True,
+        'url': url,
+        'filename': filename,
+        'base64': base64_data,
+        'mime_type': mime_type,
+        'size': len(file_content)
+    })
 
 @teacher_bp.route('/upload-file', methods=['POST'])
 @login_required
