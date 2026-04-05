@@ -1121,27 +1121,27 @@
                 </div>
                 <div class="editor-container">
                     <div class="editor-wrapper">
-                        {% if chapters and chapters[0].lessons %}
+                        {% if chapters and chapters[0] and chapters[0].lessons and chapters[0].lessons[0] %}
                         {% set first_lesson = chapters[0].lessons[0] %}
 
                         <div class="lesson-header-edit">
-                            <input type="text" id="lessonTitleInput" value="{{ first_lesson.title }}" placeholder="输入小节标题...">
+                            <input type="text" id="lessonTitleInput" value="{{ first_lesson.title if first_lesson.title else '' }}" placeholder="输入小节标题...">
                         </div>
                         <div class="lesson-description-edit">
-                            <textarea id="lessonDescriptionInput" placeholder="输入小节描述（可选）...">{{ first_lesson.description or '' }}</textarea>
+                            <textarea id="lessonDescriptionInput" placeholder="输入小节描述（可选）...">{{ first_lesson.description if first_lesson.description else '' }}</textarea>
                         </div>
-                        
+
                         <!-- 上传进度区域 -->
                         <div class="upload-progress-area" id="uploadProgressArea" style="margin-bottom: 15px;"></div>
-                        
+
                         <!-- 上传成功提示 -->
                         <div class="upload-success-msg" id="uploadSuccessMsg" style="margin-bottom: 15px;">
                             <i class="fas fa-check-circle"></i>
                             <span class="upload-success-msg-text">文件上传成功！已自动插入到编辑器中</span>
                         </div>
-                        
+
                         <div id="editor">
-                            {{ first_lesson.content or '' }}
+                            {{ first_lesson.content if first_lesson.content else '' }}
                         </div>
                         {% else %}
                         <div class="empty-state">
@@ -1251,11 +1251,24 @@
         
         // 多媒体文件列表（单独存储，避免被CKEditor过滤）
         let uploadedFiles = [];
-        
+
         // 初始化编辑器
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('[DEBUG] DOM loaded, initializing editor...');
+            
             const editorElement = document.getElementById('editor');
+            console.log('[DEBUG] Editor element found:', editorElement ? 'YES' : 'NO');
+            
             if (editorElement) {
+                // 检查 CKEditor 是否加载成功
+                if (typeof ClassicEditor === 'undefined') {
+                    console.error('[ERROR] CKEditor not loaded! Falling back to textarea.');
+                    fallbackToTextarea(editorElement);
+                    return;
+                }
+                
+                console.log('[DEBUG] Creating ClassicEditor instance...');
+                
                 ClassicEditor
                     .create(editorElement, {
                         toolbar: {
@@ -1291,31 +1304,67 @@
                         }
                     })
                     .then(newEditor => {
+                        console.log('[OK] CKEditor initialized successfully!');
                         editor = newEditor;
 
                         // 加载第一个小节的初始内容
                         {% if chapters and chapters[0] and chapters[0].lessons and chapters[0].lessons[0] %}
                         const initialContent = {{ chapters[0].lessons[0].content | tojson if chapters[0].lessons[0].content else '""' }};
+                        console.log('[DEBUG] Loading initial content:', initialContent ? 'YES' : 'NO');
                         if (initialContent) {
                             editor.setData(initialContent);
                         }
                         {% endif %}
-                        
+
                         editor.model.document.on('change:data', () => {
                             scheduleAutoSave();
                         });
                     })
                     .catch(error => {
-                        console.error('编辑器初始化失败:', error);
+                        console.error('[ERROR] CKEditor initialization failed:', error);
+                        console.log('[FALLBACK] Switching to simple textarea...');
+                        fallbackToTextarea(editorElement);
                     });
+            } else {
+                console.warn('[WARN] Editor element #editor not found in DOM');
             }
-            
+
             // 初始化编辑器拖放上传功能
             initEditorDragDrop();
-            
+
             // 初始化预览模态框点击关闭
             initPreviewModal();
         });
+
+        // Fallback: 如果 CKEditor 加载失败，使用普通 textarea
+        function fallbackToTextarea(editorElement) {
+            const content = editorElement.innerHTML || editorElement.textContent || '';
+            
+            // 创建 textarea 替换 div
+            const textarea = document.createElement('textarea');
+            textarea.id = 'editor-fallback';
+            textarea.name = 'content';
+            textarea.value = content;
+            textarea.style.width = '100%';
+            textarea.style.minHeight = '400px';
+            textarea.style.padding = '15px';
+            textarea.style.border = '1px solid #ddd';
+            textarea.style.borderRadius = '8px';
+            textarea.style.fontSize = '14px';
+            textarea.style.lineHeight = '1.6';
+            textarea.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            textarea.placeholder = '请输入课程内容...';
+            
+            // 替换元素
+            editorElement.parentNode.replaceChild(textarea, editorElement);
+            
+            // 监听内容变化
+            textarea.addEventListener('input', function() {
+                scheduleAutoSave();
+            });
+            
+            console.log('[OK] Fallback textarea created successfully');
+        }
         
         // 初始化预览模态框
         function initPreviewModal() {
