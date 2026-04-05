@@ -1559,9 +1559,10 @@
                          </div>`;
                 
                 // 操作按钮
+                const safeFileId = String(file.id).replace(/'/g, "\\'");  // 转义单引号
                 html += `<div style="display: flex; gap: 8px;">
                             <a href="${file.url}" target="_blank" style="padding: 6px 14px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 600;">查看</a>
-                            <button onclick="removeMediaFile('${file.id}')" style="padding: 6px 14px; background: #e74c3c; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">删除</button>
+                            <button onclick="removeMediaFile('${safeFileId}')" style="padding: 6px 14px; background: #e74c3c; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;" title="删除此文件">删除</button>
                          </div>`;
                 
                 html += `</div>`;
@@ -1575,8 +1576,36 @@
         
         // 删除媒体文件
         function removeMediaFile(fileId) {
-            uploadedFiles = uploadedFiles.filter(f => f.id != fileId);
+            console.log('[DEBUG] 尝试删除文件，ID:', fileId, '类型:', typeof fileId);
+            console.log('[DEBUG] 删除前文件列表长度:', uploadedFiles.length);
+
+            const fileIdStr = String(fileId);  // 确保 ID 是字符串
+            const beforeLength = uploadedFiles.length;
+
+            uploadedFiles = uploadedFiles.filter(f => {
+                const match = String(f.id) === fileIdStr;
+                if (match) {
+                    console.log('[OK] 找到并删除文件:', f.name || '未命名');
+                }
+                return !match;
+            });
+
+            const afterLength = uploadedFiles.length;
+            console.log('[DEBUG] 删除后文件列表长度:', afterLength);
+
+            if (beforeLength === afterLength) {
+                console.error('[ERROR] 未找到匹配的文件！ID:', fileId);
+                alert('删除失败：未找到该文件');
+                return;
+            }
+
+            // 更新预览
             updateMediaPreview();
+
+            // 显示删除成功提示
+            showSaveReminder();
+
+            console.log('[OK] ✅ 文件删除成功！剩余', afterLength, '个文件');
         }
         
         // 显示上传成功消息
