@@ -1141,7 +1141,7 @@
                         </div>
 
                         <div id="editor">
-                            {{ first_lesson.content if first_lesson.content else '' }}
+                            <textarea id="editor-textarea" name="content" placeholder="请输入课程内容（支持 Markdown 语法）..." style="width: 100%; min-height: 500px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 15px; line-height: 1.8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; resize: vertical; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e0e0e0'">{{ first_lesson.content if first_lesson.content else '' }}</textarea>
                         </div>
                         {% else %}
                         <div class="empty-state">
@@ -1252,81 +1252,37 @@
         // 多媒体文件列表（单独存储，避免被CKEditor过滤）
         let uploadedFiles = [];
 
-        // 初始化编辑器
+        // 初始化编辑器 - 使用原生 textarea（100% 可靠）
         document.addEventListener('DOMContentLoaded', function() {
             console.log('[DEBUG] DOM loaded, initializing editor...');
-            
-            const editorElement = document.getElementById('editor');
-            console.log('[DEBUG] Editor element found:', editorElement ? 'YES' : 'NO');
-            
-            if (editorElement) {
-                // 检查 CKEditor 是否加载成功
-                if (typeof ClassicEditor === 'undefined') {
-                    console.error('[ERROR] CKEditor not loaded! Falling back to textarea.');
-                    fallbackToTextarea(editorElement);
-                    return;
-                }
-                
-                console.log('[DEBUG] Creating ClassicEditor instance...');
-                
-                ClassicEditor
-                    .create(editorElement, {
-                        toolbar: {
-                            items: [
-                                'heading', '|',
-                                'bold', 'italic', 'underline', 'strikethrough', '|',
-                                'fontColor', 'fontBackgroundColor', '|',
-                                'bulletedList', 'numberedList', '|',
-                                'alignment', '|',
-                                'indent', 'outdent', '|',
-                                'link', 'imageUpload', 'blockQuote', 'insertTable', 'mediaEmbed', '|',
-                                'undo', 'redo'
-                            ]
-                        },
-                        language: 'zh-cn',
-                        image: {
-                            toolbar: [
-                                'imageTextAlternative',
-                                'imageStyle:inline',
-                                'imageStyle:block',
-                                'imageStyle:side'
-                            ]
-                        },
-                        table: {
-                            contentToolbar: [
-                                'tableColumn',
-                                'tableRow',
-                                'mergeTableCells'
-                            ]
-                        },
-                        simpleUpload: {
-                            uploadUrl: '{{ url_for("teacher.upload_editor_image") }}'
-                        }
-                    })
-                    .then(newEditor => {
-                        console.log('[OK] CKEditor initialized successfully!');
-                        editor = newEditor;
 
-                        // 加载第一个小节的初始内容
-                        {% if chapters and chapters[0] and chapters[0].lessons and chapters[0].lessons[0] %}
-                        const initialContent = {{ chapters[0].lessons[0].content | tojson if chapters[0].lessons[0].content else '""' }};
-                        console.log('[DEBUG] Loading initial content:', initialContent ? 'YES' : 'NO');
-                        if (initialContent) {
-                            editor.setData(initialContent);
-                        }
-                        {% endif %}
+            const textarea = document.getElementById('editor-textarea');
+            console.log('[DEBUG] Textarea element found:', textarea ? 'YES' : 'NO');
 
-                        editor.model.document.on('change:data', () => {
-                            scheduleAutoSave();
+            if (textarea) {
+                // 监听内容变化，触发自动保存
+                textarea.addEventListener('input', function() {
+                    scheduleAutoSave();
+                });
+
+                // 尝试加载 CKEditor 增强功能（可选）
+                if (typeof ClassicEditor !== 'undefined') {
+                    console.log('[DEBUG] CKEditor available, attempting to enhance...');
+                    ClassicEditor
+                        .create(textarea, {
+                            toolbar: ['heading', '|', 'bold', 'italic', 'underline', '|', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                            language: 'zh-cn'
+                        })
+                        .then(newEditor => {
+                            console.log('[OK] CKEditor enhanced successfully!');
+                            editor = newEditor;
+                        })
+                        .catch(error => {
+                            console.warn('[WARN] CKEditor enhancement failed, using native textarea:', error);
                         });
-                    })
-                    .catch(error => {
-                        console.error('[ERROR] CKEditor initialization failed:', error);
-                        console.log('[FALLBACK] Switching to simple textarea...');
-                        fallbackToTextarea(editorElement);
-                    });
-            } else {
-                console.warn('[WARN] Editor element #editor not found in DOM');
+                } else {
+                    console.log('[INFO] Using native textarea (CKEditor not available)');
+                }
             }
 
             // 初始化编辑器拖放上传功能
@@ -1335,36 +1291,6 @@
             // 初始化预览模态框点击关闭
             initPreviewModal();
         });
-
-        // Fallback: 如果 CKEditor 加载失败，使用普通 textarea
-        function fallbackToTextarea(editorElement) {
-            const content = editorElement.innerHTML || editorElement.textContent || '';
-            
-            // 创建 textarea 替换 div
-            const textarea = document.createElement('textarea');
-            textarea.id = 'editor-fallback';
-            textarea.name = 'content';
-            textarea.value = content;
-            textarea.style.width = '100%';
-            textarea.style.minHeight = '400px';
-            textarea.style.padding = '15px';
-            textarea.style.border = '1px solid #ddd';
-            textarea.style.borderRadius = '8px';
-            textarea.style.fontSize = '14px';
-            textarea.style.lineHeight = '1.6';
-            textarea.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-            textarea.placeholder = '请输入课程内容...';
-            
-            // 替换元素
-            editorElement.parentNode.replaceChild(textarea, editorElement);
-            
-            // 监听内容变化
-            textarea.addEventListener('input', function() {
-                scheduleAutoSave();
-            });
-            
-            console.log('[OK] Fallback textarea created successfully');
-        }
         
         // 初始化预览模态框
         function initPreviewModal() {
