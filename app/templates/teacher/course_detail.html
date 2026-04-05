@@ -385,9 +385,10 @@
 
 <!-- 课程封面和基本信息 -->
 <div class="course-cover-card">
-    <div class="course-cover">
+    <div class="course-cover" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
         {% if course.cover %}
-        <img src="{{ course.cover }}" alt="{{ course.title }}">
+        <img src="{{ course.cover }}" alt="{{ course.title }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <i class="fas fa-book" style="display: none;"></i>
         {% else %}
         <i class="fas fa-book"></i>
         {% endif %}

@@ -171,19 +171,60 @@ def create_app(config_class=Config):
     def logout_redirect():
         return redirect(url_for('auth.logout'))
     
-    from flask import send_from_directory
+    from flask import send_from_directory, abort, Response
     from werkzeug.utils import secure_filename
+    import base64
+    import io
+    
+    DEFAULT_IMAGES = {
+        'covers': {
+            'data': b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x01\x90\x00\x00\x00\xe1\x08\x06\x00\x00\x00\x18\x19\xd6\x9e\x00\x00\x00\tsRGB\x00\xae\xce\x1c\xe9\x00\x00\x00>IDATx\x9c\xed\xc1\x01\x0d\x00\x00\x00\x82\x80\x89\xfe\xaf\xf8\xcf\xff\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x01\xb7w\xfc\x0f\x00\x00\x00\x00IEND\xaeB`\x82',
+            'mime': 'image/png'
+        },
+        'avatars': {
+            'data': b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00d\x00\x00\x00d\x08\x02\x00\x00\x00\x1e\x19z\x8f\x00\x00\x00\tsRGB\x00\xae\xce\x1c\xe9\x00\x00\x00IDATx\x9c\xed\xc1\x01\x0d\x00\x00\x00\x82\x80\x89\xfe\xaf\xf8\xcf\xff\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x01\xb7w\xfc\x0f\x00\x00\x00\x00IEND\xaeB`\x82',
+            'mime': 'image/png'
+        },
+        'default': {
+            'data': b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\xc8\x00\x00\x00\x96\x08\x02\x00\x00\x00\x1e\x19z\x8f\x00\x00\x00\tsRGB\x00\xae\xce\x1c\xe9\x00\x00\x00IDATx\x9c\xed\xc1\x01\x0d\x00\x00\x00\x82\x80\x89\xfe\xaf\xf8\xcf\xff\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 \x00\x01\xb7w\xfc\x0f\x00\x00\x00\x00IEND\xaeB`\x82',
+            'mime': 'image/png'
+        }
+    }
+    
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
-        if '..' in filename:
+        if '..' in filename or filename.startswith('/'):
             return 'Invalid filename', 400
+        
         import os
+        import logging
+        logger = logging.getLogger(__name__)
         
         filename = filename.replace('\\', '/')
         if filename.startswith('uploads/'):
             filename = filename[8:]
         
-        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        if not os.path.exists(file_path):
+            logger.warning(f'[UPLOAD] 文件不存在: {file_path}')
+            
+            folder = filename.split('/')[0] if '/' in filename else ''
+            
+            if folder in DEFAULT_IMAGES:
+                default_img = DEFAULT_IMAGES[folder]
+                logger.info(f'[UPLOAD] 返回 {folder} 默认图片')
+                return Response(default_img['data'], mimetype=default_img['mime'])
+            else:
+                default_img = DEFAULT_IMAGES['default']
+                logger.info(f'[UPLOAD] 返回通用默认图片')
+                return Response(default_img['data'], mimetype=default_img['mime'])
+        
+        try:
+            return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+        except Exception as e:
+            logger.error(f'[UPLOAD] 文件访问失败: {file_path}, 错误: {str(e)}')
+            abort(500, description='文件访问失败')
     
     try:
         if not db.conn:

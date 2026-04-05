@@ -577,7 +577,9 @@
                         {% else %}
                             {% set cover_path = '/uploads/' + cover_path %}
                         {% endif %}
-                        <img src="{{ cover_path }}" alt="{{ course.title }}" class="course-cover">
+                        <div style="position: relative; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <img src="{{ cover_path }}" alt="{{ course.title }}" class="course-cover" onerror="this.style.display='none'; this.parentElement.classList.add('no-cover');">
+                        </div>
                         {% else %}
                         <div class="course-cover" style="display: flex; align-items: center; justify-content: center;">
                             <i class="fas fa-book" style="font-size: 48px; color: white; opacity: 0.5;"></i>

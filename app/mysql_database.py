@@ -461,6 +461,26 @@ class MySQLDatabase:
                 print('[OK] Added missing bio column to users table')
         except Exception as e:
             print(f'[WARN] Could not check/add bio column: {e}')
+
+        try:
+            cursor.execute("SHOW COLUMNS FROM discussions LIKE 'lesson_id'")
+            if not cursor.fetchone():
+                cursor.execute("ALTER TABLE discussions ADD COLUMN lesson_id INT AFTER course_id")
+                cursor.execute("ALTER TABLE discussions ADD INDEX idx_lesson_id (lesson_id)")
+                conn.commit()
+                print('[OK] Added missing lesson_id column to discussions table')
+        except Exception as e:
+            print(f'[WARN] Could not check/add lesson_id column: {e}')
+
+        try:
+            cursor.execute("SHOW COLUMNS FROM lessons LIKE 'media_files'")
+            if not cursor.fetchone():
+                cursor.execute("ALTER TABLE lessons ADD COLUMN media_files TEXT AFTER content")
+                conn.commit()
+                print('[OK] Added missing media_files column to lessons table')
+        except Exception as e:
+            print(f'[WARN] Could not check/add media_files column: {e}')
+
         cursor.close()
     
     def _convert_datetime_to_string(self, row: Dict[str, Any]) -> Dict[str, Any]:
@@ -520,34 +540,56 @@ class MySQLDatabase:
             return 0
     
     def update(self, table_name: str, record_id: int, data: Dict[str, Any]) -> bool:
-        conn = self.get_connection()
-        if not conn:
-            return False
-        
-        try:
-            if 'updated_at' not in data:
-                data['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            
-            set_clause = ','.join([f"{key}=%s" for key in data.keys()])
-            values = list(data.values())
-            values.append(record_id)
-            
-            sql = f"UPDATE {table_name} SET {set_clause} WHERE id=%s"
-            
-            cursor = conn.cursor()
-            cursor.execute(sql, values)
-            conn.commit()
-            if cursor.rowcount > 0:
-                print(f'[OK] Updated {table_name} record, ID: {record_id}')
-                cursor.close()
-                return True
-            else:
-                print(f'[ERR] {table_name} record not found, ID: {record_id}')
-                cursor.close()
+        max_retries = 3
+        for attempt in range(max_retries):
+            conn = self.get_connection()
+            if not conn:
+                if attempt < max_retries - 1:
+                    print(f'[WARN] Retry {attempt + 1}/{max_retries}: Getting new connection...')
+                    self.conn = None
+                    time.sleep(0.5)
+                    continue
                 return False
-        except Exception as e:
-            print(f'[ERR] Error updating {table_name} record: {e}')
-            return False
+            
+            try:
+                if 'updated_at' not in data:
+                    data['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+                set_clause = ','.join([f"{key}=%s" for key in data.keys()])
+                values = list(data.values())
+                values.append(record_id)
+
+                sql = f"UPDATE {table_name} SET {set_clause} WHERE id=%s"
+
+                cursor = conn.cursor()
+                cursor.execute(sql, values)
+                conn.commit()
+                if cursor.rowcount > 0:
+                    print(f'[OK] Updated {table_name} record, ID: {record_id}')
+                    cursor.close()
+                    return True
+                else:
+                    print(f'[ERR] {table_name} record not found, ID: {record_id}')
+                    cursor.close()
+                    return False
+            except mysql.connector.Error as e:
+                print(f'[WARN] MySQL Error (attempt {attempt + 1}/{max_retries}): {e}')
+                if attempt < max_retries - 1:
+                    self.conn = None
+                    try:
+                        if conn.is_connected():
+                            conn.close()
+                    except:
+                        pass
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                print(f'[ERR] Error updating {table_name} record after {max_retries} attempts: {e}')
+                return False
+            except Exception as e:
+                print(f'[ERR] Error updating {table_name} record: {e}')
+                return False
+        
+        return False
     
     def delete(self, table_name: str, record_id: int) -> bool:
         conn = self.get_connection()
