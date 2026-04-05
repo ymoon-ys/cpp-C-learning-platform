@@ -915,6 +915,54 @@
                                 </a>
                             </div>
                         </div>
+
+                        {% elif file and file.type == 'video' %}
+                        <div style="margin: 30px 0; padding: 20px; background: #000; border-radius: 12px; overflow: hidden;">
+                            <h3 style="color: #fff; margin-bottom: 15px; padding: 0 10px;">
+                                <i class="fas fa-video" style="color: #3498db;"></i>
+                                {{ file.name if file.name else '视频文件' }}
+                            </h3>
+                            <video controls preload="metadata"
+                                   style="width: 100%; max-height: 600px; display: block; background: #000;"
+                                   poster="">
+                                <source src="{{ file.url }}" type="video/mp4">
+                                <source src="{{ file.url }}" type="video/webm">
+                                <source src="{{ file.url }}" type="video/ogg">
+                                您的浏览器不支持视频播放，
+                                <a href="{{ file.url }}" style="color: #3498db;">点击下载观看</a>
+                            </video>
+                            <div style="margin-top: 15px; text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <a href="{{ file.url }}" target="_blank"
+                                   style="display: inline-block; padding: 10px 24px; background: #3498db; color: white; text-decoration: none; border-radius: 6px; margin-right: 10px;">
+                                    <i class="fas fa-external-link-alt"></i> 新窗口播放
+                                </a>
+                                <a href="{{ file.url }}" download
+                                   style="display: inline-block; padding: 10px 24px; background: #27ae60; color: white; text-decoration: none; border-radius: 6px;">
+                                    <i class="fas fa-download"></i> 下载视频
+                                </a>
+                            </div>
+                        </div>
+
+                        {% elif file and file.type == 'image' %}
+                        <div style="margin: 30px 0; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0;">
+                            <h3 style="color: #2c3e50; margin-bottom: 15px;">
+                                <i class="fas fa-image" style="color: #f39c12;"></i>
+                                {{ file.name if file.name else '图片文件' }}
+                            </h3>
+                            <img src="{{ file.url }}" alt="{{ file.name if file.name else '图片' }}"
+                                 style="width: 100%; max-height: 600px; object-fit: contain; border-radius: 8px; border: 1px solid #eee;">
+                            <div style="margin-top: 15px; text-align: center;">
+                                <a href="{{ file.url }}" target="_blank"
+                                   style="display: inline-block; padding: 10px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; margin-right: 10px;">
+                                    <i class="fas fa-external-link-alt"></i> 查看原图
+                                </a>
+                                <a href="{{ file.url }}" download
+                                   style="display: inline-block; padding: 10px 24px; background: #27ae60; color: white; text-decoration: none; border-radius: 6px;">
+                                    <i class="fas fa-download"></i> 下载图片
+                                </a>
+                            </div>
+                        </div>
+
                         {% endif %}
                         {% endfor %}
                         {% endif %}
