@@ -1679,29 +1679,29 @@
                 }
                 return;
             }
-            
-            if (!editor) {
-                console.error('编辑器未初始化，无法保存');
-                return;
-            }
-            
+
             const saveStatus = document.getElementById('saveStatus');
             saveStatus.className = 'save-status saving';
             saveStatus.textContent = isAuto ? '自动保存中...' : '保存中...';
             saveStatus.style.display = 'inline-flex';
-            
+
             const title = document.getElementById('lessonTitleInput').value || '';
             const description = document.getElementById('lessonDescriptionInput').value || '';
-            
-            // 获取编辑器内容
+
+            // 获取编辑器内容（兼容 CKEditor 和原生 textarea）
             let content = '';
-            try {
-                content = editor.getData();
-            } catch (e) {
-                console.error('获取编辑器内容失败:', e);
-                content = '';
+            const textarea = document.getElementById('editor-textarea');
+            if (textarea) {
+                content = textarea.value;
+            } else if (editor && typeof editor.getData === 'function') {
+                try {
+                    content = editor.getData();
+                } catch (e) {
+                    console.error('获取编辑器内容失败:', e);
+                    content = '';
+                }
             }
-            
+
             console.log('=== 保存调试信息 ===');
             console.log('小节ID:', currentLessonId);
             console.log('标题:', title);
@@ -1709,15 +1709,30 @@
             console.log('内容长度:', content.length);
             console.log('内容预览:', content.substring(0, 300));
             console.log('多媒体文件数:', uploadedFiles.length);
-            
+
+            // 详细输出每个文件的 Base64 状态
+            if (uploadedFiles.length > 0) {
+                console.log('=== 多媒体文件详情 ===');
+                uploadedFiles.forEach((file, index) => {
+                    console.log(`文件 ${index + 1}:`, {
+                        name: file.name,
+                        type: file.type,
+                        hasBase64: !!file.base64,
+                        base64Length: file.base64 ? file.base64.length : 0,
+                        hasMimeType: !!file.mime_type,
+                        mimeType: file.mime_type
+                    });
+                });
+            }
+
             // 使用JSON格式发送数据（避免FormData的编码问题）
             const payload = {
                 title: title,
                 description: description,
                 content: content,
-                media_files: JSON.stringify(uploadedFiles)  // 多媒体文件列表
+                media_files: JSON.stringify(uploadedFiles)  // 多媒体文件列表（包含 Base64）
             };
-            
+
             fetch(`/teacher/lessons/${currentLessonId}/save`, {
                 method: 'POST',
                 headers: {

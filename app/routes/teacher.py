@@ -247,7 +247,25 @@ def save_lesson_content(lesson_id):
     print(f'[DEBUG] 保存小节 {lesson_id}')
     print(f'[DEBUG] 标题: {title}')
     print(f'[DEBUG] 内容长度: {len(content) if content else 0}')
-    print(f'[DEBUG] 多媒体文件: {media_files[:100] if media_files else "空"}')
+    print(f'[DEBUG] 多媒体文件原始数据: {media_files[:200] if media_files else "空"}')
+
+    # 解析并验证 media_files JSON
+    try:
+        import json
+        media_files_list = json.loads(media_files) if media_files else []
+        print(f'[DEBUG] 解析后的文件列表长度: {len(media_files_list)}')
+
+        # 检查每个文件的 Base64 状态
+        for idx, file_info in enumerate(media_files_list):
+            has_base64 = 'base64' in file_info and file_info['base64']
+            base64_len = len(file_info.get('base64', '')) if has_base64 else 0
+            print(f'[DEBUG] 文件 {idx + 1}: name={file_info.get("name")}, type={file_info.get("type")}, has_base64={has_base64}, base64_length={base64_len}')
+
+            if not has_base64:
+                print(f'[WARNING] 文件 {file_info.get("name")} 缺少 Base64 数据！将无法持久化保存！')
+    except Exception as e:
+        print(f'[ERROR] 解析 media_files JSON 失败: {e}')
+        media_files_list = []
     
     lesson_data = {
         'title': title,
