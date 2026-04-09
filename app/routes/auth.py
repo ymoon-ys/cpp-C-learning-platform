@@ -34,7 +34,7 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         try:
-            default_avatar = f"https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt={form.username.data}%20avatar%20robot%20icon%20minimalist&image_size=square"
+            default_avatar = ""
             
             AuthService.register(
                 username=form.username.data,

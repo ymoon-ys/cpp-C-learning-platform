@@ -18,9 +18,10 @@
             </div>
             <div class="user-icon">
                 {% if current_user.avatar %}
-                <img src="{{ current_user.avatar }}" alt="用户头像" onerror="this.src='https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square'">
+                <img src="{{ current_user.avatar }}" alt="用户头像"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 {% else %}
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20profile%20icon%20avatar&image_size=square" alt="用户头像">
+                <div class="user-avatar user-avatar--gradient"></div>
                 {% endif %}
                 <span class="notification">1</span>
             </div>
