@@ -1,217 +1,697 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ problem.title }} - C++学习平台</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <header class="header">
-        <div class="header-left">
-            <h1>C++学习平台</h1>
+{% extends "base.html" %}
+
+{% block title %}{{ problem.title }} - C++学习平台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .problem-detail-wrapper {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 30px;
+    }
+
+    .problem-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 24px;
+        padding: 35px 40px;
+        margin-bottom: 30px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 50px rgba(102, 126, 234, 0.3);
+    }
+
+    .problem-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -5%;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .problem-title-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .problem-title-section h1 {
+        font-size: 32px;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        flex: 1;
+        min-width: 280px;
+    }
+
+    .problem-stats-bar {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 12px 20px;
+        text-align: center;
+        min-width: 100px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stat-item .label {
+        font-size: 12px;
+        opacity: 0.9;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-item .value {
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .problem-tags {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .difficulty-tag {
+        padding: 8px 18px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .difficulty-easy {
+        background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        color: #155724;
+    }
+
+    .difficulty-medium {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: #856404;
+    }
+
+    .difficulty-hard {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee0979 100%);
+        color: white;
+    }
+
+    .meta-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .main-content-grid {
+        display: grid;
+        grid-template-columns: 1fr 480px;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    @media (max-width: 1200px) {
+        .main-content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .content-left {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .section-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.06);
+    }
+
+    .section-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 20px 28px;
+        border-bottom: 2px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .section-header h3 {
+        margin: 0;
+        font-size: 19px;
+        font-weight: 700;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-header i {
+        color: #667eea;
+        font-size: 22px;
+    }
+
+    .section-body {
+        padding: 28px;
+    }
+
+    .description-text {
+        line-height: 1.8;
+        color: #495057;
+        font-size: 15px;
+    }
+
+    .io-box {
+        background: #f8f9fa;
+        border-left: 4px solid #667eea;
+        border-radius: 10px;
+        padding: 18px 22px;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 14px;
+        color: #212529;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    .sample-box {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        border-radius: 12px;
+        padding: 20px 24px;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        position: relative;
+        overflow-x: auto;
+    }
+
+    .sample-label {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 11px;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+
+    .submissions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .submission-item {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 18px 22px;
+        border-left: 4px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .submission-item.status-AC {
+        border-left-color: #28a745;
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    }
+
+    .submission-item.status-WA {
+        border-left-color: #dc3545;
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    }
+
+    .submission-item.status-TLE {
+        border-left-color: #ffc107;
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    }
+
+    .submission-item.status-CE {
+        border-left-color: #17a2b8;
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    }
+
+    .submission-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .status-badge {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.AC {
+        background: #28a745;
+        color: white;
+    }
+
+    .status-badge.WA {
+        background: #dc3545;
+        color: white;
+    }
+
+    .status-badge.TLE {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .status-badge.CE {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .submission-time {
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .submission-message {
+        font-size: 14px;
+        color: #495057;
+        font-family: 'Consolas', monospace;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+
+    .code-editor-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+        position: sticky;
+        top: 90px;
+    }
+
+    .editor-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .editor-header h3 {
+        margin: 0;
+        color: white;
+        font-size: 17px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .editor-tabs {
+        display: flex;
+        gap: 4px;
+    }
+
+    .editor-tab {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #ff5f56;
+    }
+
+    .editor-tab:nth-child(2) {
+        background: #ffbd2e;
+    }
+
+    .editor-tab:nth-child(3) {
+        background: #27ca40;
+    }
+
+    .code-editor-wrapper {
+        padding: 0;
+    }
+
+    .code-textarea {
+        width: 100%;
+        min-height: 450px;
+        padding: 24px;
+        border: none;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: vertical;
+        outline: none;
+        tab-size: 4;
+    }
+
+    .code-textarea::placeholder {
+        color: #666;
+    }
+
+    .editor-actions {
+        padding: 20px 24px;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-submit {
+        flex: 1;
+        padding: 14px 28px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.35);
+    }
+
+    .btn-reset {
+        padding: 14px 24px;
+        background: white;
+        color: #6c757d;
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-reset:hover {
+        border-color: #adb5bd;
+        background: #f8f9fa;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 40px;
+        color: #868e96;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .problem-title-section h1 {
+            font-size: 24px;
+        }
+
+        .problem-stats-bar {
+            width: 100%;
+        }
+
+        .code-editor-card {
+            position: static;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="problem-detail-wrapper">
+    <div class="problem-header">
+        <div class="header-content">
+            <div class="problem-title-section">
+                <h1><i class="fas fa-code"></i> {{ problem.title }}</h1>
+                <div class="problem-stats-bar">
+                    <div class="stat-item">
+                        <div class="label"><i class="fas fa-clock"></i> 时间限制</div>
+                        <div class="value">{{ problem.time_limit }}s</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="label"><i class="fas fa-memory"></i> 内存限制</div>
+                        <div class="value">{{ problem.memory_limit }}MB</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="label"><i class="fas fa-star"></i> 得分</div>
+                        <div class="value">99.8</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="problem-tags">
+                <span class="difficulty-tag difficulty-{{ problem.difficulty }}">
+                    {% if problem.difficulty == 'easy' %}🟢 简单
+                    {% elif problem.difficulty == 'medium' %}🟡 中等
+                    {% elif problem.difficulty == 'hard' %}🔴 困难
+                    {% else %}⚪ 未分类{% endif %}
+                </span>
+                <span class="meta-tag">
+                    <i class="fas fa-folder-open"></i> {{ problem.category or '通用' }}
+                </span>
+                <span class="meta-tag">
+                    <i class="fas fa-eye"></i> {{ problem.view_count or 0 }} 次浏览
+                </span>
+            </div>
         </div>
-        <div class="header-right">
-            <div class="greeting">
-                <p>{{ greeting }}，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
-                <p class="sub-greeting">今天也要坚持学习，上次登录：{{ week_day }}</p>
-            </div>
-            <div class="user-icon">
-                {% if current_user.avatar %}
-                <img src="{{ current_user.avatar }}" alt="用户头像"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                {% else %}
-                <div class="user-avatar user-avatar--gradient"></div>
-                {% endif %}
-                <span class="notification">1</span>
-            </div>
-        </div>
-    </header>
-
-    <div class="container">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="learning-stats">
-                    <p class="days">已连续学习</p>
-                    <p class="number">{{ consecutive_days }}天</p>
-                    <p class="streak">继续加油</p>
-                </div>
-            </div>
-            <nav class="sidebar-nav">
-                <ul>
-                    <li><a href="{{ url_for('student.dashboard') }}">我的课程</a></li>
-                    <li class="active"><a href="{{ url_for('student.practice') }}">练习</a></li>
-                    <li><a href="{{ url_for('ai_assistant.index') }}">AI助手</a></li>
-                    <li><a href="{{ url_for('community.community_page') }}">社区</a></li>
-                    <li><a href="{{ url_for('student.settings') }}">设置</a></li>
-                    <li><a href="{{ url_for('auth.logout') }}">退出登录</a></li>
-                </ul>
-            </nav>
-        </aside>
-
-        <main class="main-content problem-detail-content">
-            <div class="problem-detail-container">
-                <div class="problem-header-info">
-                    <div class="countdown-section">
-                        <h3>离练习结束还有</h3>
-                        <p class="countdown">277 天 13:13:02</p>
-                    </div>
-                    <div class="score-section">
-                        <h3>得分:</h3>
-                        <p class="score">99.8</p>
-                    </div>
-                </div>
-
-                <div class="problem-detail-header">
-                    <h2>{{ problem.title }}</h2>
-                    <div class="problem-info">
-                        <span class="difficulty {{ problem.difficulty }}">{{ problem.difficulty }}</span>
-                        <span class="time-limit">时间限制: {{ problem.time_limit }}s</span>
-                        <span class="memory-limit">内存限制: {{ problem.memory_limit }}MB</span>
-                    </div>
-                </div>
-
-                <div class="problem-table-container">
-                    <table class="problem-detail-table">
-                        <thead>
-                            <tr>
-                                <th>题号</th>
-                                <th>标题</th>
-                                <th>难度</th>
-                                <th>时间限制</th>
-                                <th>章节</th>
-                                <th>打折时间</th>
-                                <th>打折系数</th>
-                                <th>截止时间</th>
-                                <th>得分</th>
-                                <th>状态</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for question in questions %}
-                            <tr>
-                                <td>{{ question.id }}</td>
-                                <td><a href="#">{{ question.title }}</a></td>
-                                <td>{{ question.difficulty or '易' }}</td>
-                                <td>{{ question.time_limit or '1s' }}</td>
-                                <td>{{ question.chapter or '-' }}</td>
-                                <td>{{ question.discount_time or '-' }}</td>
-                                <td>{{ question.discount_factor or '-' }}</td>
-                                <td>{{ question.deadline or '-' }}</td>
-                                <td>{{ question.score or '10 / 10' }}</td>
-                                <td>
-                                    <span class="status {{ question.status or 'AC' }}">
-                                        {{ question.status or 'AC' }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="10" class="empty-state">
-                                    <p>暂无题目</p>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="problem-detail-layout">
-                    <div class="left-section">
-                        <div class="problem-description-section">
-                            <h3>题目描述</h3>
-                            <div class="problem-description">
-                                {{ problem.description|safe }}
-                            </div>
-                        </div>
-
-                        <div class="problem-io-section">
-                            <h3>输入格式</h3>
-                            <div class="problem-io">
-                                {{ problem.input_format|safe }}
-                            </div>
-                        </div>
-
-                        <div class="problem-io-section">
-                            <h3>输出格式</h3>
-                            <div class="problem-io">
-                                {{ problem.output_format|safe }}
-                            </div>
-                        </div>
-
-                        <div class="problem-sample-section">
-                            <h3>样例输入</h3>
-                            <pre class="sample-input">{{ problem.sample_input }}</pre>
-                        </div>
-
-                        <div class="problem-sample-section">
-                            <h3>样例输出</h3>
-                            <pre class="sample-output">{{ problem.sample_output }}</pre>
-                        </div>
-
-                        <div class="submissions-section">
-                            <h3>提交记录</h3>
-                            <div class="submissions-list">
-                                {% for submission in submissions %}
-                                <div class="submission-item status-{{ submission.status }}">
-                                    <div class="submission-header">
-                                        <span class="submission-status">{{ submission.status }}</span>
-                                        <span class="submission-time">{{ submission.submit_time }}</span>
-                                    </div>
-                                    {% if submission.error_message %}
-                                    <div class="submission-message">
-                                        {{ submission.error_message }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                {% else %}
-                                <div class="empty-state">
-                                    <p>暂无提交记录</p>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="right-section">
-                        <div class="code-editor-section">
-                            <h3>代码编辑器</h3>
-                            <form action="{{ url_for('student.submit_code', problem_id=problem.id) }}" method="POST" id="codeForm">
-                                <div class="code-editor">
-                                    <textarea id="code" name="code" placeholder="#include &lt;iostream&gt;&#10;using namespace std;&#10;&#10;int main() {&#10;    return 0;&#10;}"></textarea>
-                                </div>
-                                <div class="code-actions">
-                                    <button type="submit" class="submit-btn">提交代码</button>
-                                    <button type="button" class="reset-btn" id="resetBtn">重置代码</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
     </div>
 
-    <script src="/static/script.js"></script>
-    <script>
-        document.getElementById('resetBtn').addEventListener('click', function() {
-            if (confirm('确定要重置代码吗？')) {
-                document.getElementById('code').value = '#include <iostream>\nusing namespace std;\n\nint main() {\n    return 0;\n}';
-            }
-        });
+    <div class="main-content-grid">
+        <div class="content-left">
+            <div class="section-card">
+                <div class="section-header">
+                    <h3><i class="fas fa-book-open"></i> 题目描述</h3>
+                </div>
+                <div class="section-body">
+                    <div class="description-text">{{ problem.description|safe }}</div>
+                </div>
+            </div>
 
-        const codeTextarea = document.getElementById('code');
-        codeTextarea.addEventListener('keydown', function(e) {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                const start = this.selectionStart;
-                const end = this.selectionEnd;
-                this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
-                this.selectionStart = this.selectionEnd = start + 4;
-            }
-        });
-    </script>
+            <div class="section-card">
+                <div class="section-header">
+                    <h3><i class="fas fa-sign-in-alt"></i> 输入格式</h3>
+                </div>
+                <div class="section-body">
+                    <div class="io-box">{{ problem.input_format|safe }}</div>
+                </div>
+            </div>
 
-    {% include 'ai_assistant_include.html' %}
-</body>
-</html>
+            <div class="section-card">
+                <div class="section-header">
+                    <h3><i class="fas fa-sign-out-alt"></i> 输出格式</h3>
+                </div>
+                <div class="section-body">
+                    <div class="io-box">{{ problem.output_format|safe }}</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3><i class="fas fa-keyboard"></i> 样例输入</h3>
+                    </div>
+                    <div class="section-body" style="padding-top: 35px;">
+                        <div class="sample-box">
+                            <span class="sample-label">Input</span>{{ problem.sample_input }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3><i class="fas fa-check-circle"></i> 样例输出</h3>
+                    </div>
+                    <div class="section-body" style="padding-top: 35px;">
+                        <div class="sample-box">
+                            <span class="sample-label">Output</span>{{ problem.sample_output }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">
+                    <h3><i class="fas fa-history"></i> 提交记录 ({{ submissions|length }})</h3>
+                </div>
+                <div class="section-body">
+                    {% if submissions %}
+                    <div class="submissions-list">
+                        {% for submission in submissions %}
+                        <div class="submission-item status-{{ submission.status }}">
+                            <div class="submission-header">
+                                <span class="status-badge {{ submission.status }}">{{ submission.status }}</span>
+                                <span class="submission-time">{{ submission.submit_time }}</span>
+                            </div>
+                            {% if submission.error_message %}
+                            <div class="submission-message">{{ submission.error_message }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>暂无提交记录，快来提交你的代码吧！</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="content-right">
+            <div class="code-editor-card">
+                <div class="editor-header">
+                    <h3><i class="fas fa-terminal"></i> 代码编辑器</h3>
+                    <div class="editor-tabs">
+                        <div class="editor-tab"></div>
+                        <div class="editor-tab"></div>
+                        <div class="editor-tab"></div>
+                    </div>
+                </div>
+
+                <form action="{{ url_for('student.submit_code', problem_id=problem.id) }}" method="POST" id="codeForm">
+                    <div class="code-editor-wrapper">
+                        <textarea id="code" name="code" class="code-textarea" placeholder="#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    // 在这里编写你的代码
+    return 0;
+}"></textarea>
+                    </div>
+
+                    <div class="editor-actions">
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-paper-plane"></i> 提交代码
+                        </button>
+                        <button type="button" class="btn-reset" id="resetBtn">
+                            <i class="fas fa-redo"></i> 重置
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('resetBtn').addEventListener('click', function() {
+    if (confirm('确定要重置代码吗？所有修改将丢失。')) {
+        document.getElementById('code').value = '#include <iostream>\nusing namespace std;\n\nint main() {\n    // 在这里编写你的代码\n    return 0;\n}';
+    document.getElementById('code').focus();
+    showToast('info', '代码已重置');
+    }
+});
+
+const codeTextarea = document.getElementById('code');
+
+codeTextarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+        this.selectionStart = this.selectionEnd = start + 4;
+    }
+
+    if (e.key === 'Enter') {
+        const start = this.selectionStart;
+        const lineStart = this.value.lastIndexOf('\n', start - 1) + 1;
+        const currentLine = this.value.substring(lineStart, start);
+        const indent = currentLine.match(/^\s*/)[0];
+
+        if (currentLine.trim().endsWith('{')) {
+            e.preventDefault();
+            const newIndent = indent + '    ';
+            this.value = this.value.substring(0, start + 1) + newIndent + this.value.substring(start + 1);
+            this.selectionStart = this.selectionEnd = start + 1 + newIndent.length;
+        }
+    }
+});
+
+function showToast(type, message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        border-radius: 12px;
+        color: white;
+        font-weight: 500;
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    `;
+
+    if (type === 'success') toast.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+    else if (type === 'error') toast.style.background = 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)';
+    else toast.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+{% include 'ai_assistant_include.html' %}
+{% endblock %}
