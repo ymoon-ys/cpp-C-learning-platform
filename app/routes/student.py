@@ -322,27 +322,31 @@ def settings():
         db = current_app.db
         ALLOWED_AVATAR_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-        nickname = request.form.get('nickname')
-        email = request.form.get('email')
-        bio = request.form.get('bio')
+        nickname = request.form.get('nickname', '').strip()
+        email = request.form.get('email', '').strip()
+        bio = request.form.get('bio', '').strip()
         avatar = request.files.get('avatar')
 
         current_password = request.form.get('current_password')
         new_password = request.form.get('new_password')
         confirm_password = request.form.get('confirm_password')
 
+        print(f'[DEBUG] Settings POST - nickname: {nickname}, email: {email}, bio: {bio[:20] if bio else None}')
+        print(f'[DEBUG] Avatar file: {avatar.filename if avatar else None}')
+
         update_data = {
             'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
 
-        if nickname is not None:
+        if nickname:
             update_data['nickname'] = nickname
-        if email is not None:
+        if email:
             update_data['email'] = email
         if bio is not None:
             update_data['bio'] = bio
 
         if avatar and avatar.filename:
+            print(f'[INFO] Processing avatar upload: {avatar.filename}')
             import uuid
             filename = secure_filename(avatar.filename)
             if not filename:
@@ -351,7 +355,7 @@ def settings():
 
             file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
             if file_ext not in ALLOWED_AVATAR_EXTENSIONS:
-                flash('不支持的文件类型，仅支持 PNG、JPG、GIF、WEBP 格式', 'error')
+                flash(f'不支持的文件类型: .{file_ext}，仅支持 PNG、JPG、GIF、WEBP 格式', 'error')
                 return redirect(url_for('student.settings'))
 
             safe_filename = f"avatar_{current_user.id}_{uuid.uuid4().hex[:12]}.{file_ext}"
@@ -359,13 +363,25 @@ def settings():
 
             try:
                 os.makedirs(upload_path, exist_ok=True)
-                avatar.save(os.path.join(upload_path, safe_filename))
-                update_data['avatar'] = f"/uploads/avatars/{safe_filename}"
-                print(f'[OK] Avatar uploaded successfully: {safe_filename}')
+                full_path = os.path.join(upload_path, safe_filename)
+                avatar.save(full_path)
+
+                if os.path.exists(full_path):
+                    file_size = os.path.getsize(full_path)
+                    print(f'[OK] Avatar saved: {safe_filename} ({file_size} bytes)')
+                    update_data['avatar'] = f"/uploads/avatars/{safe_filename}"
+                else:
+                    print(f'[ERR] File not found after save: {full_path}')
+                    flash('头像文件保存失败', 'error')
+                    return redirect(url_for('student.settings'))
             except Exception as e:
                 print(f'[ERR] Failed to save avatar: {e}')
-                flash('头像保存失败，请重试', 'error')
+                import traceback
+                traceback.print_exc()
+                flash(f'头像保存失败: {str(e)}', 'error')
                 return redirect(url_for('student.settings'))
+        elif avatar:
+            print('[INFO] Avatar field exists but no file selected')
 
         user_id = current_user.id
         try:
@@ -374,13 +390,21 @@ def settings():
             flash('用户ID无效', 'error')
             return redirect(url_for('student.settings'))
 
+        print(f'[INFO] Updating user {user_id} with data: {list(update_data.keys())}')
         success = db.update('users', user_id, update_data)
 
         if success:
-            updated_user = User.get_by_id(user_id)
-            if updated_user:
-                from flask_login import login_user
-                login_user(updated_user, remember=True)
+            print(f'[OK] User {user_id} updated successfully')
+            try:
+                updated_user = User.get_by_id(user_id)
+                if updated_user:
+                    from flask_login import login_user
+                    login_user(updated_user, remember=True)
+                    print(f'[OK] User session refreshed for: {updated_user.username}')
+            except Exception as e:
+                print(f'[WARN] Failed to refresh user session: {e}')
+        else:
+            print(f'[ERR] Failed to update user {user_id}')
 
         if new_password:
             if not current_password:
