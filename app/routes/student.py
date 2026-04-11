@@ -400,10 +400,7 @@ def settings():
             print(f'[DEBUG] Avatar updated: {avatar_updated}')
 
             try:
-                from flask_login import current_user as cu
-                if hasattr(cu, '_get_current_object'):
-                    from flask import request
-                    print(f'[INFO] Forcing session reload...')
+                print(f'[INFO] Forcing session reload...')
 
                 updated_user_data = db.find_by_id('users', user_id)
                 if updated_user_data:
@@ -420,6 +417,8 @@ def settings():
                     login_user(current_user._get_current_object(), remember=True)
                     print(f'[OK] User session force-refreshed')
                     print(f'[OK] Current user avatar is now: {current_user.avatar}')
+                else:
+                    print(f'[WARN] User {user_id} not found in database after update')
             except Exception as e:
                 print(f'[WARN] Failed to refresh user session: {e}')
                 import traceback
