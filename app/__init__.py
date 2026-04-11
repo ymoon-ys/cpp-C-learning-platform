@@ -192,6 +192,7 @@ def create_app(config_class=Config):
     }
     
     @app.route('/uploads/<path:filename>')
+    @limiter.exempt
     def uploaded_file(filename):
         if '..' in filename or filename.startswith('/'):
             return 'Invalid filename', 400
