@@ -564,8 +564,7 @@
     <!-- 发帖区域 -->
     <div class="create-post-section">
         <div class="create-post-header">
-            {% set default_avatar = 'https://ui-avatars.com/api/?name=' + (current_user.nickname|default(current_user.username))|urlencode + '&background=667eea&color=fff&size=64' %}
-            <img src="{{ current_user.avatar or default_avatar }}" alt="头像" class="create-post-avatar" onerror="this.src='{{ default_avatar }}'">
+            <img src="{{ current_user.avatar }}" alt="头像" class="create-post-avatar" onerror="this.style.display='none'">
             <input type="text" class="create-post-input" id="createPostInput" placeholder="分享你的想法..." readonly onclick="showCreatePostForm()">
         </div>
 
@@ -817,7 +816,7 @@ function createPostCard(post) {
     return `
         <div class="post-card" onclick="goToPostDetail(${post.id})">
             <div class="post-header">
-                <img src="${post.user.avatar || 'https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=64'}" alt="头像" class="post-avatar">
+                <img src="${post.user.avatar || ''}" alt="头像" class="post-avatar" onerror="this.style.display='none'">
                 <div class="post-meta">
                     <div class="post-author">${escapeHtml(post.user.nickname)}</div>
                     <div class="post-time">${formatTime(post.created_at)}</div>

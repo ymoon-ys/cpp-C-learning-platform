@@ -842,8 +842,7 @@
                 </div>
 
                 <div class="comment-form-row">
-                    {% set default_avatar = 'https://ui-avatars.com/api/?name=' + (current_user.nickname|default(current_user.username))|urlencode + '&background=667eea&color=fff&size=64' %}
-                    <img src="{{ current_user.avatar or default_avatar }}" alt="" class="commenter-avatar" onerror="this.src='{{ default_avatar }}'">
+                    <img src="{{ current_user.avatar }}" alt="" class="commenter-avatar" onerror="this.style.display='none'">
                     <div class="comment-input-group">
                         <textarea class="comment-textarea" id="mainCommentInput" placeholder="写下你的评论..." rows="1"></textarea>
                         <button class="submit-comment-btn" onclick="submitMainComment()">发送</button>
@@ -953,7 +952,7 @@
 
             container.innerHTML = `
                 <div class="post-header-section">
-                    <img src="${post.user.avatar || 'https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=64'}" alt="" class="author-avatar-img">
+                    <img src="${post.user.avatar || ''}" alt="" class="author-avatar-img" onerror="this.style.display='none'">
                     <div class="author-details">
                         <div class="author-display-name">${escapeHtml(post.user.nickname)}</div>
                         <div class="post-publish-time">${formatTimeAgo(post.created_at)}</div>
@@ -1043,7 +1042,7 @@
 
             return `
                 <div class="single-comment" data-id="${reply.id}">
-                    <img src="${reply.user.avatar || 'https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=48'}" alt="" class="commenter-avatar-small">
+                    <img src="${reply.user.avatar || ''}" alt="" class="commenter-avatar-small" onerror="this.style.display='none'">
                     <div class="comment-main-body">
                         <div class="commenter-name-row">
                             <span class="commenter-name-label">${escapeHtml(reply.user.nickname)}</span>
@@ -1078,7 +1077,7 @@
 
             return `
                 <div class="nested-reply-item" data-id="${reply.id}">
-                    <img src="${reply.user.avatar || 'https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=40'}" alt="" class="nested-reply-avatar">
+                    <img src="${reply.user.avatar || ''}" alt="" class="nested-reply-avatar" onerror="this.style.display='none'">
                     <div class="nested-reply-body">
                         <div class="nested-reply-meta">
                             <span class="nested-replyer-name">${escapeHtml(reply.user.nickname)}</span>
