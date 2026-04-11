@@ -46,7 +46,7 @@
                          alt="用户头像" class="user-avatar"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     {% endif %}
-                    <div class="user-avatar" style="{% if current_user.avatar and current_user.avatar != '' and current_user.avatar != '/uploads/avatars/default.png' %}display:none;{% else %}display:flex;{% endif %} background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="user-avatar" style="{% if current_user.avatar and current_user.avatar != '' and current_user.avatar != '/uploads/avatars/default.png' %}display:none;{% else %}display:flex;{% endif %} background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 18px; font-weight: 700; align-items: center; justify-content: center;">
                         {{ user_initial }}
                     </div>
                     <div class="user-info">

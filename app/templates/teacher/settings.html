@@ -274,11 +274,34 @@
 <script>
 function previewAvatar(input) {
     if (input.files && input.files[0]) {
+        const file = input.files[0];
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert('文件大小不能超过2MB');
+            input.value = '';
+            return;
+        }
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('仅支持 JPG、PNG、GIF、WEBP 格式的图片');
+            input.value = '';
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
-            document.getElementById('avatar-preview').src = e.target.result;
-        }
-        reader.readAsDataURL(input.files[0]);
+            const imgPreview = document.getElementById('avatar-preview');
+            const divFallback = imgPreview.nextElementSibling;
+
+            imgPreview.src = e.target.result;
+            imgPreview.style.display = 'block';
+
+            if (divFallback) {
+                divFallback.style.display = 'none';
+            }
+        };
+        reader.readAsDataURL(file);
     }
 }
 </script>
