@@ -180,8 +180,9 @@
                 <div class="form-group">
                     <label>头像</label>
                     <div class="avatar-upload">
-                        <img src="{{ current_user.avatar if current_user.avatar else 'https://via.placeholder.com/100' }}"
-                             alt="用户头像" class="avatar-preview" id="avatar-preview">
+                        <img src="{{ current_user.avatar or '/uploads/avatars/default.png' }}"
+                             alt="用户头像" class="avatar-preview" id="avatar-preview"
+                             onerror="this.src='/uploads/avatars/default.png'">
                         <div class="upload-area">
                             <input type="file" id="avatar" name="avatar" accept="image/*" style="display: none;" onchange="previewAvatar(this)">
                             <button type="button" class="upload-btn" onclick="document.getElementById('avatar').click()">

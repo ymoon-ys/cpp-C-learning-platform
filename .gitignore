@@ -7,6 +7,7 @@ __pycache__/
 .env.mysql
 .env.local
 .env.*.local
+.env.sealos
 deployment_check_report.json
 
 # 上传目录（用户上传的文件）

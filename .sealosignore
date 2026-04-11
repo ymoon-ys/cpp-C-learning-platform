@@ -1,0 +1,111 @@
+# ============================================
+# Sealos Docker 构建排除文件
+# ============================================
+# 用于优化构建上下文大小和提高安全性
+# 排除不需要打包到 Docker 镜像中的文件
+
+# ===== Git 相关 =====
+.git
+.gitignore
+
+# ===== Python 缓存和编译文件 =====
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache
+.coverage
+htmlcov
+.mypy_cache
+.dmypy.json
+dmypy.json
+
+# ===== 虚拟环境 =====
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ===== IDE 和编辑器配置 =====
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# ===== 环境变量文件（敏感信息）=====
+.env
+.env.local
+.env.*.local
+.env.production
+.sealos/.env
+
+# ===== 日志文件 =====
+*.log
+logs/
+log/
+
+# ===== 文档文件 =====
+README.md
+CHANGELOG.md
+LICENSE
+docs/
+*.md
+!.trae/documents/
+
+# ===== 测试相关 =====
+tests/
+test/
+tox.ini
+pytest.ini
+coverage.xml
+*.cover
+.hypothesis/
+
+# ===== 操作系统文件 =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ===== 项目特定 =====
+.trae/                          # Trae IDE 配置
+node_modules/                   # 前端依赖（在容器中安装）
+static/dist/                    # 前端构建产物（在容器中生成）
+uploads/*                       # 用户上传文件（通过卷挂载）
+*.sqlite3                       # SQLite 数据库文件（如使用）
+db.sqlite3                      # SQLite 数据库文件
+
+# ===== 临时文件 =====
+*.tmp
+*.temp
+*.bak
+*.cache
+*.pid
+*.seed
+*.pid.lock
+
+# ===== 打包和归档 =====
+*.tar.gz
+*.zip
+*.rar
+backup_*
+uploads_backup_*
+
+# ===== 其他 =====
+.example
+docker-compose*.yml             # 其他 compose 文件（非 sealos 版本）
+zeabur.yaml                     # 旧部署配置
