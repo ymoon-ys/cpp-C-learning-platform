@@ -393,16 +393,37 @@ def settings():
         print(f'[INFO] Updating user {user_id} with data: {list(update_data.keys())}')
         success = db.update('users', user_id, update_data)
 
+        avatar_updated = 'avatar' in update_data
+
         if success:
             print(f'[OK] User {user_id} updated successfully')
+            print(f'[DEBUG] Avatar updated: {avatar_updated}')
+
             try:
-                updated_user = User.get_by_id(user_id)
-                if updated_user:
+                from flask_login import current_user as cu
+                if hasattr(cu, '_get_current_object'):
+                    from flask import request
+                    print(f'[INFO] Forcing session reload...')
+
+                updated_user_data = db.find_by_id('users', user_id)
+                if updated_user_data:
+                    print(f'[INFO] Reloaded user data from DB, avatar: {updated_user_data.get("avatar", "None")}')
+
+                    for key, value in updated_user_data.items():
+                        if hasattr(current_user, key):
+                            try:
+                                setattr(current_user, key, value)
+                            except Exception as attr_err:
+                                print(f'[WARN] Could not set attribute {key}: {attr_err}')
+
                     from flask_login import login_user
-                    login_user(updated_user, remember=True)
-                    print(f'[OK] User session refreshed for: {updated_user.username}')
+                    login_user(current_user._get_current_object(), remember=True)
+                    print(f'[OK] User session force-refreshed')
+                    print(f'[OK] Current user avatar is now: {current_user.avatar}')
             except Exception as e:
                 print(f'[WARN] Failed to refresh user session: {e}')
+                import traceback
+                traceback.print_exc()
         else:
             print(f'[ERR] Failed to update user {user_id}')
 
@@ -426,11 +447,23 @@ def settings():
                     flash('当前密码错误，其他设置已保存', 'warning')
 
         if success:
-            flash('设置保存成功', 'success')
+            if avatar_updated:
+                flash('✅ 设置保存成功！头像已更新（如未显示请刷新页面 Ctrl+F5）', 'success')
+            else:
+                flash('✅ 设置保存成功！', 'success')
         else:
-            flash('设置保存失败', 'error')
+            flash('❌ 设置保存失败，请稍后重试', 'error')
 
-        return redirect(url_for('student.settings'))
+        response = redirect(url_for('student.settings'))
+
+        if avatar_updated:
+            from flask import make_response
+            response = make_response(response)
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+
+        return response
 
     context = {
         'greeting': get_greeting(),

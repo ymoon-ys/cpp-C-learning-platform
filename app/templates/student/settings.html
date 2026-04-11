@@ -198,7 +198,7 @@
                 <div class="form-group">
                     <label>头像</label>
                     <div class="avatar-upload">
-                        <img src="{{ current_user.avatar or '/uploads/avatars/default.png' }}"
+                        <img src="{{ current_user.avatar or '/uploads/avatars/default.png' }}?t={{ current_user.updated_at|default('now') }}"
                              alt="用户头像" class="avatar-preview" id="avatar-preview"
                              onerror="this.src='/uploads/avatars/default.png'">
                         <div class="upload-area">
