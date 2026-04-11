@@ -180,9 +180,10 @@
                 <div class="form-group">
                     <label>头像</label>
                     <div class="avatar-upload">
-                        <img src="{{ current_user.avatar or '/uploads/avatars/default.png' }}"
+                        {% set default_avatar = 'https://ui-avatars.com/api/?name=' + (current_user.nickname|default(current_user.username))|urlencode + '&background=667eea&color=fff&size=128' %}
+                        <img src="{{ current_user.avatar or default_avatar }}"
                              alt="用户头像" class="avatar-preview" id="avatar-preview"
-                             onerror="this.src='/uploads/avatars/default.png'">
+                             onerror="this.src='{{ default_avatar }}'">
                         <div class="upload-area">
                             <input type="file" id="avatar" name="avatar" accept="image/*" style="display: none;" onchange="previewAvatar(this)">
                             <button type="button" class="upload-btn" onclick="document.getElementById('avatar').click()">

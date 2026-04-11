@@ -224,9 +224,10 @@
             <tr>
                 <td>
                     <div class="user-info">
-                        <img src="{{ user.avatar or '/uploads/avatars/default.png' }}"
-                             alt="用户头像" class="user-avatar-small"
-                             onerror="this.src='/uploads/avatars/default.png'">
+                        {% set default_avatar = 'https://ui-avatars.com/api/?name=' + (user.nickname|default(user.username))|urlencode + '&background=667eea&color=fff&size=64' %}
+                        <img src="{{ user.avatar or default_avatar }}"
+                             alt="用户头像" class="user-avatar"
+                             onerror="this.src='{{ default_avatar }}'">
                         <span class="user-name">{{ user.nickname or user.username }}</span>
                     </div>
                 </td>

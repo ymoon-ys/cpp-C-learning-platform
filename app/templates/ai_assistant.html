@@ -760,7 +760,7 @@
         <!-- 消息列表 -->
         <div class="chat-messages" id="chatMessages">
             <div class="message ai">
-                <img src="{{ url_for('static', filename='images/ai-avatar.png') }}" alt="AI" class="message-avatar" onerror="this.src='/uploads/avatars/default.png'">
+                <img src="{{ url_for('static', filename='images/ai-avatar.png') }}" alt="AI" class="message-avatar" onerror="this.src='https://ui-avatars.com/api/?name=AI&background=667eea&color=fff&size=64'">
                 <div class="message-bubble">
                     你好！我是你的 C++ 编程助手。我可以帮你：
                     <br><br>
@@ -2028,9 +2028,9 @@ function addMessageToChat(type, content, isStreaming = false, customHtml = null)
 
     let avatarHtml = '';
     if (type === 'user') {
-        avatarHtml = `<img src="{{ current_user.avatar or '/uploads/avatars/default.png' }}" alt="用户" class="message-avatar" onerror="this.src='/uploads/avatars/default.png'">`;
+        avatarHtml = `<img src="{{ current_user.avatar or 'https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=64' }}" alt="用户" class="message-avatar" onerror="this.src='https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=64'">`;
     } else if (type === 'ai') {
-        avatarHtml = `<img src="{{ url_for('static', filename='images/ai-avatar.png') }}" alt="AI" class="message-avatar" onerror="this.src='/uploads/avatars/default.png'">`;
+        avatarHtml = `<img src="{{ url_for('static', filename='images/ai-avatar.png') }}" alt="AI" class="message-avatar" onerror="this.src='https://ui-avatars.com/api/?name=AI&background=667eea&color=fff&size=64'">`;
     }
 
     let bubbleContent = customHtml || (isStreaming ? '<div class="typing-indicator"><span></span><span></span><span></span></div>' : formatMarkdown(content));

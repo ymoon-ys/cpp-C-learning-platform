@@ -17,8 +17,9 @@
                 <p class="sub-greeting">今天也要坚持学习，上次登录：{{ week_day }}</p>
             </div>
             <div class="user-icon">
-                <img src="{{ current_user.avatar or '/uploads/avatars/default.png' }}" alt="用户头像"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                {% set default_avatar = 'https://ui-avatars.com/api/?name=' + (current_user.nickname|default(current_user.username))|urlencode + '&background=667eea&color=fff&size=64' %}
+                <img src="{{ current_user.avatar or default_avatar }}" alt="用户头像"
+                     onerror="this.src='{{ default_avatar }}'">
                 <div class="user-avatar user-avatar--gradient" style="display:none;"></div>
                 <span class="notification">1</span>
             </div>

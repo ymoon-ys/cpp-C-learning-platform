@@ -40,12 +40,15 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="user-profile">
-                <img src="{{ current_user.avatar or '/uploads/avatars/default.png' }}"
-                     alt="用户头像" class="user-avatar"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="user-avatar user-avatar--gradient" style="display:none;">
-                    {{ (current_user.nickname if current_user.nickname else current_user.username)[:1] }}
-                </div>
+                    {% set default_avatar = 'https://ui-avatars.com/api/?name=' + (current_user.nickname|default(current_user.username))|urlencode + '&background=667eea&color=fff&size=128&bold=true' %}
+                    {% if current_user.avatar and current_user.avatar != '' and current_user.avatar != '/uploads/avatars/default.png' %}
+                    <img src="{{ current_user.avatar }}?t={{ current_user.updated_at|default('now') }}"
+                         alt="用户头像" class="user-avatar"
+                         onerror="this.src='{{ default_avatar }}'">
+                    {% else %}
+                    <img src="{{ default_avatar }}"
+                         alt="用户头像" class="user-avatar">
+                    {% endif %}
                     <div class="user-info">
                         <h3>{{ current_user.nickname if current_user.nickname else current_user.username }}</h3>
                         <p>
@@ -59,7 +62,7 @@
                 <!-- 学习统计卡片 -->
                 <div class="learning-stats">
                     <p class="stats-label">连续学习</p>
-                    <p class="stats-number">7</p>
+                    <p class="stats-number">{{ consecutive_days | default(0) }}</p>
                     <p class="streak">天 🔥</p>
                 </div>
             </div>
