@@ -1,0 +1,184 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ '编辑题目' if problem else '添加题目' }} - C++学习平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>C++学习平台</h1>
+        </div>
+        <div class="header-right">
+            <div class="greeting">
+                <p>下午好，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
+                <p class="sub-greeting">今天也要坚持学习，上次登录：3月15日(周四)</p>
+            </div>
+            <div class="user-icon">
+                <img src="{{ current_user.avatar }}" alt="用户头像"
+                     class="user-icon" onerror="this.style.display='none'">
+                <div class="user-avatar user-avatar--gradient" style="display:none;"></div>
+                <span class="notification">1</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="learning-stats">
+                    <p class="days">已连续学习</p>
+                    <p class="number">8天</p>
+                    <p class="streak">继续加油</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{{ url_for('admin.dashboard') }}">仪表盘</a></li>
+                    <li><a href="{{ url_for('admin.users') }}">用户管理</a></li>
+                    <li><a href="{{ url_for('admin.courses') }}">课程管理</a></li>
+                    <li class="active"><a href="{{ url_for('admin.problems') }}">题目管理</a></li>
+                    <li><a href="/community">社区管理</a></li>
+                    <li><a href="{{ url_for('admin.settings') }}">设置</a></li>
+                    <li><a href="{{ url_for('auth.logout') }}">退出登录</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content problem-form-content">
+            <div class="problem-form-container">
+                <div class="problem-form-header">
+                    <h2>{{ '编辑题目' if problem else '添加题目' }}</h2>
+                    <p>{{ '编辑现有题目的信息' if problem else '添加新的练习题目' }}</p>
+                </div>
+
+                <div class="problem-form-layout">
+                    <div class="form-section">
+                        <form action="{{ url_for('admin.add_problem') if not problem else url_for('admin.edit_problem', problem_id=problem.id) }}" method="POST" id="problemForm">
+                            <div class="form-group">
+                                <label for="title">题目标题 *</label>
+                                <input type="text" id="title" name="title" required value="{{ problem.title if problem else '' }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="category_id">题目分类 *</label>
+                                <select id="category_id" name="category_id" required>
+                                    <option value="">请选择分类</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {{ 'selected' if problem and problem.category_id == category.id else '' }}>{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="difficulty">难度 *</label>
+                                <select id="difficulty" name="difficulty" required>
+                                    <option value="">请选择难度</option>
+                                    <option value="easy" {{ 'selected' if problem and problem.difficulty == 'easy' else '' }}>简单</option>
+                                    <option value="medium" {{ 'selected' if problem and problem.difficulty == 'medium' else '' }}>中等</option>
+                                    <option value="hard" {{ 'selected' if problem and problem.difficulty == 'hard' else '' }}>困难</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="description">题目描述 *</label>
+                                <textarea id="description" name="description" rows="10" required>{{ problem.description if problem else '' }}</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="input_format">输入格式 *</label>
+                                <textarea id="input_format" name="input_format" rows="5" required>{{ problem.input_format if problem else '' }}</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="output_format">输出格式 *</label>
+                                <textarea id="output_format" name="output_format" rows="5" required>{{ problem.output_format if problem else '' }}</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sample_input">样例输入 *</label>
+                                <textarea id="sample_input" name="sample_input" rows="5" required>{{ problem.sample_input if problem else '' }}</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sample_output">样例输出 *</label>
+                                <textarea id="sample_output" name="sample_output" rows="5" required>{{ problem.sample_output if problem else '' }}</textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="time_limit">时间限制（秒） *</label>
+                                    <input type="number" id="time_limit" name="time_limit" min="1" max="10" value="{{ problem.time_limit if problem else 1 }}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="memory_limit">内存限制（MB） *</label>
+                                    <input type="number" id="memory_limit" name="memory_limit" min="64" max="1024" value="{{ problem.memory_limit if problem else 256 }}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="test_cases">测试用例（JSON格式）</label>
+                                <textarea id="test_cases" name="test_cases" rows="10" placeholder='[{"input": "输入数据", "output": "输出数据"}]'>{{ problem.test_cases|tojson if problem and problem.test_cases else '' }}</textarea>
+                                <small class="form-hint">测试用例格式：[{"input": "输入", "output": "输出"}]</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="source">来源</label>
+                                <input type="text" id="source" name="source" value="{{ problem.source if problem else '' }}" placeholder="如：洛谷、LeetCode等">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="source_id">来源ID</label>
+                                <input type="text" id="source_id" name="source_id" value="{{ problem.source_id if problem else '' }}" placeholder="如：B2001">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="source_url">来源链接</label>
+                                <input type="url" id="source_url" name="source_url" value="{{ problem.source_url if problem else '' }}" placeholder="https://">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tags">标签</label>
+                                <input type="text" id="tags" name="tags" value="{{ problem.tags|replace('[', '')|replace(']', '')|replace('"', '') if problem and problem.tags else '' }}" placeholder="用逗号分隔，如：数组,排序">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="hint">提示</label>
+                                <textarea id="hint" name="hint" rows="3">{{ problem.hint if problem else '' }}</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="is_public">是否公开</label>
+                                <input type="checkbox" id="is_public" name="is_public" {{ 'checked' if problem and problem.is_public else '' }}>
+                                <small class="form-hint">公开后学生可以直接查看</small>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">{{ '更新题目' if problem else '添加题目' }}</button>
+                                <a href="{{ url_for('admin.problems') }}" class="btn btn-secondary">取消</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+        document.getElementById('problemForm').addEventListener('submit', function(e) {
+            const testCasesInput = document.getElementById('test_cases');
+            if (testCasesInput.value.trim()) {
+                try {
+                    JSON.parse(testCasesInput.value);
+                } catch (error) {
+                    e.preventDefault();
+                    alert('测试用例格式错误，请输入有效的JSON格式');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

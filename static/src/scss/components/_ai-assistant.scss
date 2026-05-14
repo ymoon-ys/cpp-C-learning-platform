@@ -1,0 +1,671 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ============================================
+// AI 助手页面 (AI Assistant Page)
+// 聊天面板 + 代码编辑器 + 分析面板
+// ============================================
+
+// ------------------------------------------
+// AI 编程助手主容器
+// ------------------------------------------
+.ai-programming-assistant {
+  display: flex;
+  height: calc(100vh - 60px);
+  gap: 16px;
+  padding: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+// ------------------------------------------
+// 聊天面板 (Chat Panel)
+// ------------------------------------------
+.chat-panel {
+  flex: 1;
+  background: $bg-white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  @include flex-column;
+  overflow: hidden;
+  min-width: 400px;
+}
+
+// 聊天头部
+.chat-header {
+  background: $primary-gradient;
+  color: $text-white;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.chat-header-icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+  @include flex-center;
+  font-size: 20px;
+}
+
+.chat-header-text {
+  h2 {
+    font-size: 18px;
+    font-weight: $font-weight-semibold;
+    margin: 0;
+  }
+
+  p {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-top: 2px;
+    margin-bottom: 0;
+  }
+}
+
+// 消息列表区域
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  @include flex-column;
+  gap: 16px;
+  background: #fafbfc;
+
+  // 自定义滚动条
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $border-color;
+    border-radius: 3px;
+  }
+}
+
+// 消息项
+.message {
+  display: flex;
+  gap: 12px;
+  animation: messageSlideIn 0.3s ease;
+}
+
+@keyframes messageSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.message-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: $radius-full;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid $border-light;
+}
+
+.message-bubble {
+  max-width: 80%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: $font-size-sm;
+  line-height: 1.6;
+  position: relative;
+}
+
+// AI 消息气泡
+.message.ai .message-bubble {
+  background: $bg-white;
+  color: $text-primary;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-bottom-left-radius: 4px;
+}
+
+// 用户消息气泡
+.message.user .message-bubble {
+  background: $primary-gradient;
+  color: $text-white;
+  border-bottom-right-radius: 4px;
+  margin-left: auto;
+}
+
+.message-time {
+  font-size: 11px;
+  color: #999;
+  margin-top: 6px;
+  text-align: right;
+}
+
+// ------------------------------------------
+// 输入区域
+// ------------------------------------------
+.chat-input-area {
+  padding: 20px;
+  background: $bg-white;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.chat-input-wrapper {
+  position: relative;
+  background: $bg-light;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  transition: all 0.3s;
+
+  &:focus-within {
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+}
+
+.chat-input {
+  width: 100%;
+  padding: 14px 70px 14px 16px;
+  border: none;
+  background: transparent;
+  font-size: $font-size-sm;
+  resize: none;
+  outline: none;
+  min-height: 52px;
+  max-height: 150px;
+  font-family: inherit;
+  line-height: 1.5;
+  color: $text-primary;
+}
+
+.input-actions {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-btn {
+  width: 34px;
+  height: 34px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: $radius-sm;
+  @include flex-center;
+  font-size: 18px;
+  color: $text-secondary;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #e8e8e8;
+    color: $primary-color;
+  }
+}
+
+.send-btn {
+  width: 38px;
+  height: 38px;
+  background: $primary-gradient;
+  color: $text-white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  @include flex-center;
+  font-size: 18px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba($primary-color, 0.3);
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba($primary-color, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+// 文件预览区
+.file-preview-area {
+  padding: 12px 20px;
+  background: #fff9e6;
+  border-top: 1px solid #ffe8a1;
+  display: none;
+
+  &.show { display: block; }
+}
+
+.file-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: $bg-white;
+  border: 1px solid #e8e8e8;
+  border-radius: $radius-sm;
+  margin-bottom: 8px;
+}
+
+.file-preview-icon { font-size: 24px; }
+
+.file-preview-info {
+  flex: 1;
+
+  .file-preview-name {
+    font-size: 13px;
+    font-weight: $font-weight-medium;
+    color: $text-primary;
+  }
+
+  .file-preview-size {
+    font-size: 11px;
+    color: #999;
+  }
+}
+
+.file-preview-remove {
+  background: none;
+  border: none;
+  color: $danger-color;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+}
+
+// 拖拽覆盖层
+.drop-zone-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba($primary-color, 0.95);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border-radius: 12px;
+
+  &.show { display: flex; }
+}
+
+.drop-zone-content {
+  text-align: center;
+  color: $text-white;
+
+  i { font-size: 48px; margin-bottom: 15px; }
+  h3 { font-size: 20px; margin-bottom: 8px; }
+  p { font-size: $font-size-md; opacity: 0.9; }
+}
+
+// ------------------------------------------
+// 代码编辑器面板 (Editor Panel)
+// ------------------------------------------
+.editor-panel {
+  flex: 1;
+  background: $bg-white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  @include flex-column;
+  overflow: hidden;
+  min-width: 500px;
+}
+
+.editor-header {
+  background: #2d2d30;
+  color: $text-white;
+  padding: 14px 20px;
+  @include flex-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.editor-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: $font-weight-semibold;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.editor-action-btn {
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.1);
+  color: $text-white;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  &:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.3);
+  }
+
+  &.primary {
+    background: #4CAF50;
+    border-color: #4CAF50;
+
+    &:hover { background: #45a049; }
+  }
+}
+
+.monaco-editor-container {
+  flex: 1;
+  overflow: hidden;
+  background: $bg-white;
+}
+
+// 编辑器标签栏
+.editor-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 16px;
+  background: $bg-light;
+  border-top: 1px solid #e8e8e8;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.editor-tab {
+  padding: 8px 16px;
+  background: $bg-white;
+  border: 1px solid #e0e0e0;
+  border-radius: $radius-sm;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+
+  &:hover {
+    background: #f0f0ff;
+    border-color: $primary-color;
+    color: $primary-color;
+  }
+
+  &.active {
+    background: $primary-gradient;
+    color: $text-white;
+    border-color: transparent;
+  }
+}
+
+.editor-tab-close {
+  font-size: 14px;
+  opacity: 0.6;
+  margin-left: 4px;
+
+  &:hover { opacity: 1; }
+}
+
+// 输出控制台
+.output-console {
+  display: none;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 16px;
+  font-family: $font-family-mono;
+  font-size: 13px;
+  line-height: 1.6;
+  max-height: 200px;
+  overflow-y: auto;
+  border-top: 1px solid #333;
+
+  &.show { display: block; }
+}
+
+.output-line {
+  margin-bottom: 4px;
+
+  &.error   { color: #f48771; }
+  &.success { color: #89d185; }
+}
+
+// ------------------------------------------
+// 性能分析面板
+// ------------------------------------------
+.analysis-panel {
+  background: $bg-light;
+  border-top: 1px solid #e0e0e0;
+  max-height: 300px;
+  overflow-y: auto;
+  display: none;
+
+  &.show { display: block; }
+}
+
+.analysis-header {
+  @include flex-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: $primary-gradient;
+  color: $text-white;
+
+  h4 { margin: 0; font-size: 14px; }
+}
+
+.analysis-content { padding: 16px; }
+
+.analysis-metric {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric-card {
+  background: $bg-white;
+  padding: 12px;
+  border-radius: $radius-sm;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: $font-weight-bold;
+  color: $primary-color;
+}
+
+.metric-label {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.complexity-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: $font-weight-semibold;
+  margin-right: 6px;
+
+  &--good    { background: #d4edda; color: #155724; }
+  &--warning { background: #fff3cd; color: #856404; }
+  &--bad     { background: #f8d7da; color: #721c24; }
+}
+
+// ------------------------------------------
+// 导出/设置对话框
+// ------------------------------------------
+.export-modal {
+  @include fixed-overlay;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+
+  &.show { display: flex; }
+}
+
+.export-modal-content {
+  background: $bg-white;
+  border-radius: $radius-xl;
+  width: 450px;
+  max-width: 90vw;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from { transform: translateY(-30px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.export-modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  @include flex-between;
+  align-items: center;
+
+  h3 { margin: 0; font-size: 17px; color: $text-primary; }
+}
+
+.export-modal-body { padding: 24px; }
+
+.export-options {
+  @include flex-column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.export-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: $bg-light;
+  border: 2px solid $border-color;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: $primary-color;
+    background: #f0f0ff;
+    transform: translateX(5px);
+  }
+}
+
+.export-icon { font-size: 32px; }
+
+.export-option-info {
+  strong {
+    display: block;
+    font-size: 15px;
+    color: $text-primary;
+    margin-bottom: 3px;
+  }
+
+  small { color: #888; font-size: 12px; }
+}
+
+// ------------------------------------------
+// 暗黑模式支持
+// ------------------------------------------
+body.dark-theme {
+  background-color: $bg-dark;
+
+  .chat-panel,
+  .editor-panel {
+    background: #16213e;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+
+  .chat-messages { background: #0f1929; }
+
+  .message.ai .message-bubble {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-color: #334155;
+  }
+
+  .chat-input-area {
+    background: #16213e;
+    border-top-color: #334155;
+  }
+
+  .chat-input-wrapper {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .chat-input {
+    background: transparent;
+    color: #e2e8f0;
+  }
+
+  .editor-tabs {
+    background: #0f1929;
+    border-top-color: #334155;
+  }
+
+  .editor-tab {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+  }
+
+  .output-console {
+    background: #0d1117;
+    color: #c9d1d9;
+    border-top-color: #21262d;
+  }
+
+  .analysis-panel {
+    background: #0f1929;
+    border-top-color: #21262d;
+  }
+
+  .metric-card {
+    background: #1e293b;
+    border-color: #334155;
+  }
+}
+
+// ============================================
+// 响应式适配
+// ============================================
+
+@include respond-below('lg') {
+  .ai-programming-assistant {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 60px);
+  }
+
+  .chat-panel,
+  .editor-panel {
+    min-width: auto;
+    min-height: 500px;
+  }
+}
+
+@include respond-below('sm') {
+  .ai-programming-assistant {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .chat-input-area,
+  .chat-messages {
+    padding: 12px;
+  }
+}

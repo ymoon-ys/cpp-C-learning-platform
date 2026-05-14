@@ -1,0 +1,197 @@
+﻿{% extends "base.html" %}
+
+{% block title %}设置 - C++学习平台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1E293B;
+    }
+    
+    .settings-layout {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 20px;
+    }
+    
+    .settings-sidebar {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        height: fit-content;
+    }
+    
+    .settings-menu {
+        list-style: none;
+    }
+    
+    .settings-menu li {
+        margin-bottom: 5px;
+    }
+    
+    .settings-menu a {
+        display: block;
+        padding: 12px 15px;
+        color: #64748B;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.3s;
+        font-size: 14px;
+    }
+    
+    .settings-menu a:hover {
+        background: #F8FAFC;
+        color: #6C5CE7;
+    }
+    
+    .settings-menu li.active a {
+        background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+        color: white;
+    }
+    
+    .settings-content {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .settings-section {
+        margin-bottom: 30px;
+    }
+    
+    .settings-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .settings-section h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #F1F5F9;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1E293B;
+        margin-bottom: 8px;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #E2E8F0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s;
+        font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #6C5CE7;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">系统设置</h1>
+</div>
+
+<div class="settings-layout">
+    <aside class="settings-sidebar">
+        <ul class="settings-menu">
+            <li class="active"><a href="#general"><i class="fas fa-cog"></i> 常规设置</a></li>
+            <li><a href="#security"><i class="fas fa-lock"></i> 安全设置</a></li>
+            <li><a href="#notifications"><i class="fas fa-bell"></i> 通知设置</a></li>
+        </ul>
+    </aside>
+    
+    <div class="settings-content">
+        <form method="POST" action="{{ url_for('admin.settings') }}">
+            <div class="settings-section" id="general">
+                <h2><i class="fas fa-cog"></i> 常规设置</h2>
+                
+                <div class="form-group">
+                    <label for="site_name">网站名称</label>
+                    <input type="text" id="site_name" name="site_name" value="{{ settings.site_name if settings else 'C++学习平台' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="site_description">网站描述</label>
+                    <textarea id="site_description" name="site_description" rows="3">{{ settings.site_description if settings else '' }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact_email">联系邮箱</label>
+                    <input type="email" id="contact_email" name="contact_email" value="{{ settings.contact_email if settings else '' }}">
+                </div>
+            </div>
+            
+            <div class="settings-section" id="security">
+                <h2><i class="fas fa-lock"></i> 安全设置</h2>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="allow_registration" name="allow_registration" {% if not settings or settings.allow_registration %}checked{% endif %}>
+                        允许新用户注册
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="email_verification" name="email_verification" {% if settings and settings.email_verification %}checked{% endif %}>
+                        邮箱验证
+                    </label>
+                </div>
+            </div>
+            
+            <div class="settings-section" id="notifications">
+                <h2><i class="fas fa-bell"></i> 通知设置</h2>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="send_notifications" name="send_notifications" {% if not settings or settings.send_notifications %}checked{% endif %}>
+                        发送系统通知
+                    </label>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 15px; margin-top: 30px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> 保存设置
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.reload()">
+                    <i class="fas fa-undo"></i> 重置
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

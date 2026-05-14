@@ -1,0 +1,251 @@
+﻿{% extends "base.html" %}
+
+{% block title %}学习推荐 - C++学习平台{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2><i class="fas fa-lightbulb"></i> 个性化学习推荐</h2>
+            <p class="text-muted">根据你的学习进度和薄弱点，为你推荐最适合的学习内容</p>
+            
+            <!-- 学习路径 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-road"></i> 推荐学习路径
+                </div>
+                <div class="card-body">
+                    <div id="learningPath">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 推荐资源 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-book"></i> 推荐资源
+                </div>
+                <div class="card-body">
+                    <div id="recommendations">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 侧边栏 -->
+        <div class="col-md-4">
+            <!-- 学习进度 -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie"></i> 学习进度
+                </div>
+                <div class="card-body">
+                    <div id="progressStats">
+                        <div class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 代码分析工具 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-code"></i> 代码分析工具
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">粘贴你的代码，获取质量评分和改进建议</p>
+                    <textarea class="form-control font-monospace mb-2" id="codeInput" rows="6" placeholder="// 在此粘贴你的C++代码..."></textarea>
+                    <button class="btn btn-primary btn-sm w-100" onclick="analyzeCode()">
+                        <i class="fas fa-search"></i> 分析代码
+                    </button>
+                    <div id="codeAnalysisResult" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 加载学习路径
+async function loadLearningPath() {
+    try {
+        const response = await fetch('/recommendation/learning-path');
+        const data = await response.json();
+        
+        if (data.success && data.learning_path.length > 0) {
+            const html = data.learning_path.map(item => `
+                <div class="d-flex align-items-start mb-3">
+                    <div class="badge bg-primary rounded-circle p-2 me-3" style="font-size: 1rem;">
+                        ${item.step}
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${item.topic}</h6>
+                        <p class="text-muted small mb-1">${item.description}</p>
+                        <small class="text-muted"><i class="fas fa-clock"></i> 预计学习时间: ${item.estimated_time}</small>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('learningPath').innerHTML = html;
+        } else {
+            document.getElementById('learningPath').innerHTML = `
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <p>暂无推荐的学习路径，继续保持学习吧！</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        document.getElementById('learningPath').innerHTML = `
+            <div class="alert alert-danger">加载失败</div>
+        `;
+    }
+}
+
+// 加载推荐
+async function loadRecommendations() {
+    try {
+        const response = await fetch('/recommendation/recommendations');
+        const data = await response.json();
+        
+        if (data.success && data.recommendations.length > 0) {
+            const html = data.recommendations.map(rec => `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="card-title">${rec.topic}</h6>
+                            <span class="badge bg-${rec.priority > 70 ? 'danger' : rec.priority > 40 ? 'warning' : 'success'}">
+                                优先级: ${rec.priority}
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-2">${rec.reason}</p>
+                        <div class="mt-2">
+                            ${rec.resources.map(r => `
+                                <span class="badge bg-secondary me-1">${r.title}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('recommendations').innerHTML = html;
+        } else {
+            document.getElementById('recommendations').innerHTML = `
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-thumbs-up fa-2x mb-2"></i>
+                    <p>太棒了！你已经掌握了所有推荐的知识点！</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        document.getElementById('recommendations').innerHTML = `
+            <div class="alert alert-danger">加载失败</div>
+        `;
+    }
+}
+
+// 加载进度统计
+async function loadProgressStats() {
+    try {
+        const response = await fetch('/recommendation/progress');
+        const data = await response.json();
+        
+        if (data.success) {
+            const p = data.progress;
+            document.getElementById('progressStats').innerHTML = `
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>题目完成率</span>
+                        <span>${(p.completion_rate * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: ${p.completion_rate * 100}%"></div>
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h5 class="text-success">${p.accepted}</h5>
+                        <small class="text-muted">通过</small>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="text-danger">${p.wrong_answer}</h5>
+                        <small class="text-muted">错误</small>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="text-warning">${p.runtime_error}</h5>
+                        <small class="text-muted">运行错误</small>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        document.getElementById('progressStats').innerHTML = `
+            <div class="text-muted text-center">加载失败</div>
+        `;
+    }
+}
+
+// 分析代码
+async function analyzeCode() {
+    const code = document.getElementById('codeInput').value;
+    
+    if (!code.trim()) {
+        alert('请输入代码');
+        return;
+    }
+    
+    document.getElementById('codeAnalysisResult').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border spinner-border-sm" role="status"></div>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch('/ai/analyze_code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                code: code,
+                model: 'local'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const scoreColor = data.score >= 80 ? 'success' : data.score >= 60 ? 'warning' : 'danger';
+            document.getElementById('codeAnalysisResult').innerHTML = `
+                <div class="alert alert-${scoreColor}">
+                    <strong>代码质量评分: ${data.score}/100</strong>
+                    <hr>
+                    <small>发现问题: ${data.issues_count} 个</small><br>
+                    <small>优化建议: ${data.optimizations_count} 个</small>
+                </div>
+            `;
+        } else {
+            document.getElementById('codeAnalysisResult').innerHTML = `
+                <div class="alert alert-danger">分析失败: ${data.error}</div>
+            `;
+        }
+    } catch (error) {
+        document.getElementById('codeAnalysisResult').innerHTML = `
+            <div class="alert alert-danger">分析失败</div>
+        `;
+    }
+}
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadLearningPath();
+    loadRecommendations();
+    loadProgressStats();
+});
+</script>
+{% endblock %}

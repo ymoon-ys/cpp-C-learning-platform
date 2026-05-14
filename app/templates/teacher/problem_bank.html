@@ -1,0 +1,329 @@
+﻿{% extends "base.html" %}
+
+{% block title %}题库浏览 - C++学习平台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1E293B;
+    }
+    
+    .page-subtitle {
+        color: #64748B;
+        font-size: 15px;
+        margin-top: 5px;
+    }
+    
+    .nav-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+        border-bottom: 2px solid #F1F5F9;
+        padding-bottom: 0;
+    }
+    
+    .nav-tab {
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #64748B;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .nav-tab:hover {
+        color: #6C5CE7;
+        background: #F8FAFC;
+    }
+    
+    .nav-tab.active {
+        color: #6C5CE7;
+        border-bottom-color: #6C5CE7;
+        background: transparent;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
+    }
+    
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        align-items: end;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .filter-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1E293B;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 10px 15px;
+        border: 2px solid #E2E8F0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s;
+        font-family: inherit;
+    }
+    
+    .filter-group input:focus,
+    .filter-group select:focus {
+        outline: none;
+        border-color: #6C5CE7;
+    }
+    
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .problems-table {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .problems-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .problems-table th,
+    .problems-table td {
+        padding: 15px 20px;
+        text-align: left;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .problems-table th {
+        background: #F8FAFC;
+        font-weight: 600;
+        color: #1E293B;
+        font-size: 14px;
+    }
+    
+    .problems-table td {
+        color: #64748B;
+        font-size: 14px;
+    }
+    
+    .problems-table tr:hover {
+        background: #F8FAFC;
+    }
+    
+    .problem-title {
+        font-weight: 600;
+        color: #1E293B;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    
+    .problem-title:hover {
+        color: #6C5CE7;
+    }
+    
+    .difficulty-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .difficulty-easy {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .difficulty-medium {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .difficulty-hard {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .btn-add {
+        padding: 8px 20px;
+        background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+    }
+    
+    .problem-desc {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">题库浏览</h1>
+    <p class="page-subtitle">浏览管理员导入的题目，选择适合学生的练习题</p>
+</div>
+
+<div class="nav-tabs">
+    <a href="{{ url_for('teacher.problem_bank') }}" class="nav-tab active">
+        <i class="fas fa-book"></i> 题库浏览
+    </a>
+    <a href="{{ url_for('teacher.selected_problems') }}" class="nav-tab">
+        <i class="fas fa-check-circle"></i> 我的选题 ({{ selected_list|length if selected_list is defined else 0 }})
+    </a>
+</div>
+
+<div class="filter-section">
+    <form method="GET" action="{{ url_for('teacher.problem_bank') }}">
+        <div class="filter-grid">
+            <div class="filter-group">
+                <label for="search">关键词</label>
+                <input type="text" id="search" name="search" placeholder="请输入关键词" value="{{ current_search }}">
+            </div>
+            
+            <div class="filter-group">
+                <label for="category">分类</label>
+                <select id="category" name="category">
+                    <option value="">全部</option>
+                    <option value="C语言基础" {{ 'selected' if current_category == 'C语言基础' else '' }}>C语言基础</option>
+                    <option value="数据结构" {{ 'selected' if current_category == '数据结构' else '' }}>数据结构</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="chapter">章节</label>
+                <select id="chapter" name="chapter">
+                    <option value="">全部</option>
+                    <option value="分支结构" {{ 'selected' if current_chapter == '分支结构' else '' }}>分支结构</option>
+                    <option value="循环结构" {{ 'selected' if current_chapter == '循环结构' else '' }}>循环结构</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="bank_source">题库来源</label>
+                <select id="bank_source" name="bank_source">
+                    <option value="">全部</option>
+                    <option value="实验312" {{ 'selected' if current_bank_source == '实验312' else '' }}>实验312</option>
+                    <option value="实验313" {{ 'selected' if current_bank_source == '实验313' else '' }}>实验313</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="difficulty">难度</label>
+                <select id="difficulty" name="difficulty">
+                    <option value="">全部</option>
+                    <option value="easy" {{ 'selected' if current_difficulty == 'easy' else '' }}>易</option>
+                    <option value="medium" {{ 'selected' if current_difficulty == 'medium' else '' }}>中</option>
+                    <option value="hard" {{ 'selected' if current_difficulty == 'hard' else '' }}>难</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> 自定义查询
+            </button>
+            <a href="{{ url_for('teacher.problem_bank') }}" class="btn btn-secondary">
+                <i class="fas fa-redo"></i> 重置
+            </a>
+        </div>
+    </form>
+</div>
+
+{% if problems %}
+<div class="problems-table">
+    <table>
+        <thead>
+            <tr>
+                <th>编号</th>
+                <th>标题</th>
+                <th>题目内容</th>
+                <th>分类</th>
+                <th>章节</th>
+                <th>题库来源</th>
+                <th>难度</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for problem in problems %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>
+                    <a href="{{ url_for('teacher.problem_detail', problem_id=problem.id) }}" class="problem-title">
+                        {{ problem.title }}
+                    </a>
+                </td>
+                <td class="problem-desc">{{ problem.description[:50] }}{% if problem.description|length > 50 %}...{% endif %}</td>
+                <td>{{ problem.category or 'C语言基础' }}</td>
+                <td>{{ problem.chapter or '分支结构' }}</td>
+                <td>{{ problem.bank_source or '实验312' }}</td>
+                <td>
+                    <span class="difficulty-badge difficulty-{{ problem.difficulty }}">
+                        {% if problem.difficulty == 'easy' %}易
+                        {% elif problem.difficulty == 'medium' %}中
+                        {% else %}难{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <form action="{{ url_for('teacher.select_problem', problem_id=problem.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn-add">
+                            <i class="fas fa-plus"></i> 添加
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state" style="text-align: center; padding: 60px 20px; background: white; border-radius: 16px;">
+    <i class="fas fa-search" style="font-size: 64px; color: #CBD5E1; margin-bottom: 20px;"></i>
+    <h3 style="font-size: 20px; color: #64748B; margin-bottom: 10px;">暂无符合条件的题目</h3>
+    <p style="color: #94A3B8; font-size: 14px;">尝试调整筛选条件或重置搜索</p>
+</div>
+{% endif %}
+{% endblock %}

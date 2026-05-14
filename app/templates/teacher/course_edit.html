@@ -1,0 +1,2274 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑课程 - {{ course.title }} - C++学习平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .edit-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .top-header {
+            background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        
+        .top-header h1 {
+            font-size: 22px;
+            margin: 0;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        /* 美化的操作按钮 - 强制生效 */
+        .header-actions .action-btn,
+        .action-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 12px 24px !important;
+            border-radius: 12px !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease !important;
+            border: 2px solid transparent !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+            position: relative !important;
+            overflow: hidden !important;
+            color: white !important;
+            background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%) !important;
+            text-transform: none !important;
+            letter-spacing: 0.5px !important;
+        }
+        
+        /* 移除默认样式 */
+        .header-actions .action-btn:hover,
+        .action-btn:hover {
+            text-decoration: none !important;
+            transform: translateY(-3px) !important;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2) !important;
+        }
+        
+        /* 涟漪效果 */
+        .header-actions .action-btn::before,
+        .action-btn::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            width: 0 !important;
+            height: 0 !important;
+            border-radius: 50% !important;
+            background: rgba(255,255,255,0.3) !important;
+            transform: translate(-50%, -50%) !important;
+            transition: width 0.6s, height 0.6s !important;
+        }
+        
+        .header-actions .action-btn:hover::before,
+        .action-btn:hover::before {
+            width: 350px !important;
+            height: 350px !important;
+        }
+        
+        .header-actions .action-btn i,
+        .header-actions .action-btn span,
+        .action-btn i,
+        .action-btn span {
+            position: relative !important;
+            z-index: 1 !important;
+        }
+        
+        /* 预览学生视图 - 蓝紫渐变 */
+        .btn-preview {
+            background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%) !important;
+            box-shadow: 0 4px 20px rgba(108, 92, 231, 0.4) !important;
+        }
+        
+        .btn-preview:hover {
+            box-shadow: 0 8px 30px rgba(108, 92, 231, 0.6) !important;
+        }
+        
+        /* 编辑器模式 - 青绿渐变 */
+        .btn-editor-mode {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+            box-shadow: 0 4px 20px rgba(17, 153, 142, 0.4) !important;
+        }
+        
+        .btn-editor-mode:hover {
+            box-shadow: 0 8px 30px rgba(17, 153, 142, 0.6) !important;
+        }
+        
+        /* 删除课程 - 红橙渐变 */
+        .btn-delete {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%) !important;
+            box-shadow: 0 4px 20px rgba(235, 51, 73, 0.4) !important;
+        }
+        
+        .btn-delete:hover {
+            box-shadow: 0 8px 30px rgba(235, 51, 73, 0.6) !important;
+        }
+        
+        /* 返回仪表盘 - 灰银渐变 */
+        .btn-back {
+            background: linear-gradient(135deg, #606c88 0%, #3f4c6b 100%) !important;
+            box-shadow: 0 4px 20px rgba(96, 108, 136, 0.4) !important;
+        }
+        
+        .btn-back:hover {
+            box-shadow: 0 8px 30px rgba(96, 108, 136, 0.6) !important;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* 左侧导航栏 */
+        .sidebar-nav {
+            width: 300px;
+            background: #F8FAFC;
+            border-right: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .sidebar-header h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .add-chapter-btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+        }
+        
+        .add-chapter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+        }
+        
+        .chapter-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .chapter-item {
+            margin-bottom: 10px;
+        }
+        
+        .chapter-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #e9ecef;
+        }
+        
+        .chapter-header:hover {
+            border-color: #6C5CE7;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.15);
+        }
+        
+        .chapter-toggle {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: #6c757d;
+            transition: transform 0.3s;
+        }
+        
+        .chapter-item.expanded .chapter-toggle {
+            transform: rotate(90deg);
+        }
+        
+        .chapter-title {
+            flex: 1;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .chapter-actions {
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .chapter-header:hover .chapter-actions {
+            opacity: 1;
+        }
+        
+        .chapter-action-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #F8FAFC;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .chapter-action-btn:hover {
+            background: #6C5CE7;
+            color: white;
+        }
+        
+        .chapter-action-btn.delete:hover {
+            background: #e74c3c;
+        }
+        
+        .lesson-list {
+            display: none;
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        
+        .chapter-item.expanded .lesson-list {
+            display: block;
+        }
+        
+        .lesson-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        
+        .lesson-item:hover {
+            background: #f0f4ff;
+            border-color: #6C5CE7;
+        }
+        
+        .lesson-item.active {
+            background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .lesson-title {
+            flex: 1;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .lesson-actions {
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .lesson-item:hover .lesson-actions,
+        .lesson-item.active .lesson-actions {
+            opacity: 1;
+        }
+        
+        .lesson-action-btn {
+            width: 26px;
+            height: 26px;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: inherit;
+            transition: all 0.3s;
+        }
+        
+        .lesson-item:not(.active) .lesson-action-btn {
+            background: #e9ecef;
+            color: #666;
+        }
+        
+        .lesson-item:not(.active) .lesson-action-btn:hover {
+            background: #6C5CE7;
+            color: white;
+        }
+        
+        .lesson-item.active .lesson-action-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .add-lesson-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            background: none;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .add-lesson-btn:hover {
+            border-color: #6C5CE7;
+            color: #6C5CE7;
+            background: #f0f4ff;
+        }
+        
+        /* 右侧编辑区域 */
+        .editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .editor-toolbar {
+            padding: 16px 24px;
+            background: white;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .editor-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #F8FAFC;
+            color: #333;
+            border: 1px solid #dee2e6;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+        
+        .btn-outline-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn-outline-secondary:hover {
+            background: white;
+            color: #6C5CE7;
+        }
+        
+        .editor-container {
+            flex: 1;
+            overflow-y: auto;
+            background: #F8FAFC;
+        }
+        
+        .editor-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        .lesson-header-edit,
+        .lesson-description-edit {
+            margin-bottom: 20px;
+        }
+        
+        .lesson-header-edit input,
+        .lesson-description-edit textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .lesson-header-edit input:focus,
+        .lesson-description-edit textarea:focus {
+            border-color: #6C5CE7;
+            box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1);
+        }
+        
+        .lesson-description-edit textarea {
+            min-height: 60px;
+            resize: vertical;
+            font-size: 14px;
+        }
+        
+        #editor {
+            min-height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 30px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state p {
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        /* 模态框 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            width: 90%;
+            max-width: 480px;
+            box-shadow: 0 25px 65px rgba(0,0,0,0.35);
+        }
+        
+        .modal h3 {
+            margin: 0 0 24px 0;
+            font-size: 20px;
+            color: #212529;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 15px;
+            margin-bottom: 24px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .modal input:focus {
+            border-color: #6C5CE7;
+            box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1);
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        /* 预览模态框特殊样式 */
+        .preview-modal-overlay {
+            z-index: 2000;
+        }
+        
+        .preview-modal {
+            max-width: 95% !important;
+            width: 1200px !important;
+            height: 90vh !important;
+            padding: 0 !important;
+            display: flex !important;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .preview-modal-header {
+            padding: 20px 30px;
+            background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .preview-modal-header h3 {
+            margin: 0 !important;
+            font-size: 18px;
+            color: white;
+        }
+        
+        .preview-close-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .preview-close-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .preview-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            background: #f5f6fa;
+            padding: 30px;
+        }
+        
+        .student-preview-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .preview-content-area {
+            min-height: 500px;
+            padding: 40px;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #34495e;
+        }
+        
+        .empty-preview-state {
+            text-align: center;
+            padding: 80px 40px;
+            color: #94A3B8;
+        }
+        
+        .empty-preview-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        .empty-preview-state p {
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        /* 预览内容中的PDF/视频样式 */
+        .preview-content-area .pdf-embed-container {
+            margin: 24px 0;
+            border: 1px solid #E2E8F0 !important;
+            border-radius: 12px !important;
+            overflow: hidden !important;
+            background: white !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important;
+        }
+        
+        .preview-content-area .pdf-viewer-wrapper {
+            position: relative !important;
+            min-height: 600px !important;
+            background: #f5f5f5 !important;
+            padding: 20px !important;
+            overflow: auto !important;
+        }
+        
+        .preview-content-area .pdf-object {
+            width: 100% !important;
+            height: 600px !important;
+            min-height: 600px !important;
+            max-height: 800px !important;
+            border: none !important;
+            display: block !important;
+            background: white !important;
+            border-radius: 8px !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+        }
+        
+        .preview-content-area .pdf-fallback {
+            text-align: center !important;
+            padding: 60px 40px !important;
+        }
+        
+        .preview-content-area video {
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        
+        .preview-content-area img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .preview-content-area figure.image {
+            margin: 24px 0;
+        }
+        
+        .preview-content-area h1,
+        .preview-content-area h2,
+        .preview-content-area h3 {
+            margin-top: 28px;
+            margin-bottom: 14px;
+            font-weight: 700;
+            color: #1E293B;
+        }
+        
+        .preview-content-area p {
+            margin-bottom: 18px;
+        }
+        
+        .preview-modal-footer {
+            padding: 15px 30px;
+            background: #F8FAFC;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .preview-tip {
+            font-size: 13px;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .preview-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .save-status {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+            font-weight: 600;
+        }
+        
+        .save-status.saving {
+            display: inline-flex;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
+        }
+        
+        .save-status.saved {
+            display: inline-flex;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+        }
+        
+        .save-status.error {
+            display: inline-flex;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+        }
+
+        .save-status.warning {
+            display: inline-flex;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* 文件上传区域 */
+        .upload-section {
+            background: linear-gradient(135deg, #F8FAFC 0%, #e9ecef 100%);
+            border: 3px dashed #94A3B8;
+            border-radius: 16px;
+            padding: 36px 28px;
+            text-align: center;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .upload-section:hover {
+            border-color: #6C5CE7;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(108, 92, 231, 0.15);
+        }
+        
+        .upload-section.dragover {
+            border-color: #6C5CE7;
+            background: linear-gradient(135deg, #e8f0ff 0%, #dce5ff 100%);
+            transform: scale(1.02);
+            box-shadow: 0 12px 35px rgba(108, 92, 231, 0.25);
+        }
+        
+        .upload-icon-wrapper {
+            width: 88px;
+            height: 88px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 22px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 8px 25px rgba(108, 92, 231, 0.35);
+        }
+        
+        .upload-section:hover .upload-icon-wrapper,
+        .upload-section.dragover .upload-icon-wrapper {
+            transform: translateY(-8px) rotate(5deg);
+        }
+        
+        .upload-icon-wrapper i {
+            font-size: 42px;
+            color: white;
+        }
+        
+        .upload-text h4 {
+            font-size: 19px;
+            font-weight: 700;
+            color: #1E293B;
+            margin-bottom: 10px;
+        }
+        
+        .upload-text p {
+            font-size: 14px;
+            color: #64748B;
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+        
+        .upload-types {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+        
+        .upload-type-badge {
+            padding: 7px 16px;
+            background: white;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6C5CE7;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        
+        .file-input-hidden {
+            display: none;
+        }
+        
+        .upload-main-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 36px;
+            background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 22px rgba(108, 92, 231, 0.4);
+        }
+        
+        .upload-main-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(108, 92, 231, 0.5);
+        }
+        
+        .upload-progress-area {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .upload-progress-area.active {
+            display: block;
+        }
+        
+        .progress-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            border-left: 4px solid #6C5CE7;
+        }
+        
+        .progress-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .progress-card-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1E293B;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .progress-card-status {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6C5CE7;
+        }
+        
+        .progress-bar-track {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6C5CE7 0%, #7C3AED 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .upload-success-msg {
+            display: none;
+            padding: 18px;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-radius: 12px;
+            margin-top: 18px;
+            text-align: center;
+            border: 1px solid #b1dfbb;
+        }
+        
+        .upload-success-msg.active {
+            display: block;
+        }
+        
+        .upload-success-msg i {
+            font-size: 26px;
+            color: #28a745;
+            margin-right: 10px;
+        }
+        
+        .upload-success-msg-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="edit-container">
+        <!-- 顶部标题栏 -->
+        <div class="top-header">
+            <h1>
+                <i class="fas fa-edit"></i> 编辑课程：{{ course.title }}
+            </h1>
+            <div class="header-actions" style="display: flex; gap: 15px; align-items: center;">
+                <!-- 预览学生视图 - 蓝紫色 -->
+                <a href="{{ url_for('teacher.preview_as_student', course_id=course.id) }}"
+                   target="_blank"
+                   title="预览学生看到的页面效果"
+                   style="text-decoration: none;">
+                    <div style="background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%); color: white; padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(102,126,234,0.4); transition: all 0.3s; border: none;"
+                         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(102,126,234,0.6)'"
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(102,126,234,0.4)'">
+                        <i class="fas fa-eye" style="font-size: 18px;"></i>
+                        <span>预览学生视图</span>
+                    </div>
+                </a>
+
+                <!-- 编辑器模式 - 青绿色 -->
+                <div onclick="previewLesson()"
+                     title="在当前页面预览学生端效果"
+                     style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(17,153,142,0.4); transition: all 0.3s; border: none;"
+                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(17,153,142,0.6)'"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(17,153,142,0.4)'">
+                    <i class="fas fa-desktop" style="font-size: 18px;"></i>
+                    <span>编辑器模式</span>
+                </div>
+
+                <!-- 删除课程 - 红橙色 -->
+                <div onclick="if(confirm('确定要删除这个课程吗？此操作不可恢复！')){window.location.href='{{ url_for('teacher.delete_course', course_id=course.id) }}'}"
+                     title="删除当前课程"
+                     style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); color: white; padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(235,51,73,0.4); transition: all 0.3s; border: none;"
+                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(235,51,73,0.6)'"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(235,51,73,0.4)'">
+                    <i class="fas fa-trash-alt" style="font-size: 18px;"></i>
+                    <span>删除课程</span>
+                </div>
+
+                <!-- 返回仪表盘 - 灰蓝色 -->
+                <a href="{{ url_for('teacher.dashboard') }}"
+                   title="返回教师仪表盘"
+                   style="text-decoration: none;">
+                    <div style="background: linear-gradient(135deg, #606c88 0%, #3f4c6b 100%); color: white; padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(96,108,136,0.4); transition: all 0.3s; border: none;"
+                         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(96,108,136,0.6)'"
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(96,108,136,0.4)'">
+                        <i class="fas fa-arrow-left" style="font-size: 18px;"></i>
+                        <span>返回仪表盘</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- 左侧导航栏 -->
+            <div class="sidebar-nav">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-book"></i> 课程目录</h3>
+                    <button class="add-chapter-btn" onclick="showAddChapterModal()">
+                        <i class="fas fa-plus"></i> 添加章节
+                    </button>
+                </div>
+                <div class="chapter-list" id="chapterList">
+                    {% if chapters %}
+                    {% for chapter in chapters %}
+                    <div class="chapter-item {% if loop.first %}expanded{% endif %}" data-chapter-id="{{ chapter.id }}">
+                        <div class="chapter-header" onclick="toggleChapter({{ chapter.id }})">
+                            <span class="chapter-toggle"><i class="fas fa-chevron-right"></i></span>
+                            <span class="chapter-title">{{ chapter.title }}</span>
+                            <div class="chapter-actions">
+                                <button class="chapter-action-btn" onclick="event.stopPropagation(); showEditChapterModal({{ chapter.id }}, '{{ chapter.title }}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="chapter-action-btn" onclick="event.stopPropagation(); showAddLessonModal({{ chapter.id }})">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="chapter-action-btn delete" onclick="event.stopPropagation(); deleteChapter({{ chapter.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="lesson-list">
+                            {% if chapter.lessons %}
+                            {% for lesson in chapter.lessons %}
+                            <div class="lesson-item {% if loop.first %}active{% endif %}" data-lesson-id="{{ lesson.id }}" onclick="selectLesson({{ lesson.id }})">
+                                <span class="lesson-title">{{ lesson.title }}</span>
+                                <div class="lesson-actions">
+                                    <button class="lesson-action-btn" onclick="event.stopPropagation(); showEditLessonModal({{ lesson.id }}, '{{ lesson.title }}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="lesson-action-btn" onclick="event.stopPropagation(); deleteLesson({{ lesson.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                            <button class="add-lesson-btn" onclick="showAddLessonModal({{ chapter.id }})">
+                                <i class="fas fa-plus"></i> 添加小节
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state" style="padding: 40px 20px;">
+                        <i class="fas fa-folder-open"></i>
+                        <p>暂无章节，点击上方添加</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 右侧编辑区域 -->
+            <div class="editor-area">
+                <div class="editor-toolbar">
+                    <div>
+                        <span class="editor-title" id="editorTitle">
+                            {% if chapters and chapters[0].lessons %}
+                            {{ chapters[0].lessons[0].title }}
+                            {% else %}
+                            请选择或创建一个小节
+                            {% endif %}
+                        </span>
+                        <span class="save-status" id="saveStatus"></span>
+                    </div>
+                    <div class="editor-actions">
+                        <button class="btn btn-secondary" onclick="previewLesson()">
+                            <i class="fas fa-eye"></i> 预览
+                        </button>
+                        <button class="btn btn-primary" onclick="saveLesson()">
+                            <i class="fas fa-save"></i> 保存
+                        </button>
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <div class="editor-wrapper">
+                        {% if chapters and chapters[0] and chapters[0].lessons and chapters[0].lessons[0] %}
+                        {% set first_lesson = chapters[0].lessons[0] %}
+
+                        <div class="lesson-header-edit">
+                            <input type="text" id="lessonTitleInput" value="{{ first_lesson.title if first_lesson.title else '' }}" placeholder="输入小节标题...">
+                        </div>
+                        <div class="lesson-description-edit">
+                            <textarea id="lessonDescriptionInput" placeholder="输入小节描述（可选）...">{{ first_lesson.description if first_lesson.description else '' }}</textarea>
+                        </div>
+
+                        <!-- 上传进度区域 -->
+                        <div class="upload-progress-area" id="uploadProgressArea" style="margin-bottom: 15px;"></div>
+
+                        <!-- 上传成功提示 -->
+                        <div class="upload-success-msg" id="uploadSuccessMsg" style="margin-bottom: 15px;">
+                            <i class="fas fa-check-circle"></i>
+                            <span class="upload-success-msg-text">文件上传成功！已自动插入到编辑器中</span>
+                        </div>
+
+                        <div id="editor">
+                            <textarea id="editor-textarea" name="content" placeholder="请输入课程内容（支持 Markdown 语法）..." style="width: 100%; min-height: 500px; padding: 20px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 15px; line-height: 1.8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; resize: vertical; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#6C5CE7'" onblur="this.style.borderColor='#E2E8F0'">{{ first_lesson.content if first_lesson.content else '' }}</textarea>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-file-alt"></i>
+                            <p>请从左侧选择一个小节，或创建新的小节开始编辑</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 模态框 -->
+    <div class="modal-overlay" id="addChapterModal">
+        <div class="modal">
+            <h3><i class="fas fa-folder-plus"></i> 添加章节</h3>
+            <input type="text" id="chapterTitleInput" placeholder="请输入章节标题">
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('addChapterModal')">取消</button>
+                <button class="btn btn-primary" onclick="addChapter()">添加</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="editChapterModal">
+        <div class="modal">
+            <h3><i class="fas fa-edit"></i> 编辑章节</h3>
+            <input type="text" id="editChapterTitleInput" placeholder="请输入章节标题">
+            <input type="hidden" id="editChapterId">
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('editChapterModal')">取消</button>
+                <button class="btn btn-primary" onclick="updateChapter()">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="addLessonModal">
+        <div class="modal">
+            <h3><i class="fas fa-file-plus"></i> 添加小节</h3>
+            <input type="text" id="lessonTitleModalInput" placeholder="请输入小节标题">
+            <input type="hidden" id="addLessonChapterId">
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('addLessonModal')">取消</button>
+                <button class="btn btn-primary" onclick="addLesson()">添加</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="editLessonModal">
+        <div class="modal">
+            <h3><i class="fas fa-edit"></i> 编辑小节</h3>
+            <input type="text" id="editLessonTitleInput" placeholder="请输入小节标题">
+            <input type="hidden" id="editLessonId">
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('editLessonModal')">取消</button>
+                <button class="btn btn-primary" onclick="updateLesson()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 学生端预览模态框 -->
+    <div class="modal-overlay preview-modal-overlay" id="previewModal">
+        <div class="modal preview-modal">
+            <div class="preview-modal-header">
+                <h3><i class="fas fa-eye"></i> 学生端预览 - {{ course.title }}</h3>
+                <button class="preview-close-btn" onclick="closePreviewModal()">
+                    <i class="fas fa-times"></i> 关闭
+                </button>
+            </div>
+            <div class="preview-modal-body">
+                <div class="student-preview-container">
+                    <!-- 预览内容区域 -->
+                    <div id="previewContent" class="document-content preview-content-area">
+                        <div class="empty-preview-state">
+                            <i class="fas fa-file-alt"></i>
+                            <p>暂无内容，请在编辑器中添加内容后预览</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="preview-modal-footer">
+                <span class="preview-tip">
+                    <i class="fas fa-info-circle"></i>
+                    这是学生看到的效果预览
+                </span>
+                <div class="preview-actions">
+                    <button class="btn btn-secondary" onclick="closePreviewModal()">关闭预览</button>
+                    <button class="btn btn-primary" onclick="saveAndPreview()">
+                        <i class="fas fa-save"></i> 保存并刷新预览
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let editor = null;
+        {% if chapters and chapters[0] %}
+        let currentLessonId = {% if chapters[0].lessons and chapters[0].lessons[0] %}{{ chapters[0].lessons[0].id }}{% else %}null{% endif %};
+        let currentChapterId = {{ chapters[0].id }};
+        {% else %}
+        let currentLessonId = null;
+        let currentChapterId = null;
+        {% endif %}
+        let autoSaveTimer = null;
+        
+        // 多媒体文件列表（单独存储，避免被CKEditor过滤）
+        let uploadedFiles = [];
+
+        // 初始化编辑器 - 使用原生 textarea（100% 可靠）
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[DEBUG] DOM loaded, initializing editor...');
+
+            const textarea = document.getElementById('editor-textarea');
+            console.log('[DEBUG] Textarea element found:', textarea ? 'YES' : 'NO');
+
+            if (textarea) {
+                // 监听内容变化，触发自动保存
+                textarea.addEventListener('input', function() {
+                    scheduleAutoSave();
+                });
+
+                // 尝试加载 CKEditor 增强功能（可选）
+                if (typeof ClassicEditor !== 'undefined') {
+                    console.log('[DEBUG] CKEditor available, attempting to enhance...');
+                    ClassicEditor
+                        .create(textarea, {
+                            toolbar: ['heading', '|', 'bold', 'italic', 'underline', '|', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                            language: 'zh-cn'
+                        })
+                        .then(newEditor => {
+                            console.log('[OK] CKEditor enhanced successfully!');
+                            editor = newEditor;
+                        })
+                        .catch(error => {
+                            console.warn('[WARN] CKEditor enhancement failed, using native textarea:', error);
+                        });
+                } else {
+                    console.log('[INFO] Using native textarea (CKEditor not available)');
+                }
+            }
+
+            // 初始化编辑器拖放上传功能
+            initEditorDragDrop();
+
+            // 初始化预览模态框点击关闭
+            initPreviewModal();
+        });
+        
+        // 初始化预览模态框
+        function initPreviewModal() {
+            const previewModal = document.getElementById('previewModal');
+            if (previewModal) {
+                previewModal.addEventListener('click', function(e) {
+                    if (e.target === previewModal) {
+                        closePreviewModal();
+                    }
+                });
+                
+                // ESC键关闭
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && previewModal.classList.contains('active')) {
+                        closePreviewModal();
+                    }
+                });
+            }
+        }
+        
+        // 初始化编辑器拖放和粘贴功能
+        function initEditorDragDrop() {
+            // 等待编辑器初始化完成
+            const checkEditor = setInterval(() => {
+                const editorElement = document.querySelector('.ck-editor__editable');
+                if (editorElement) {
+                    clearInterval(checkEditor);
+                    setupDragDrop(editorElement);
+                    setupPaste(editorElement);
+                }
+            }, 100);
+        }
+        
+        // 设置拖放功能
+        function setupDragDrop(element) {
+            element.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                element.style.borderColor = '#6C5CE7';
+                element.style.backgroundColor = '#f8f9ff';
+            });
+            
+            element.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                element.style.borderColor = '';
+                element.style.backgroundColor = '';
+            });
+            
+            element.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                element.style.borderColor = '';
+                element.style.backgroundColor = '';
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleEditorFiles(files);
+                }
+            });
+        }
+        
+        // 设置粘贴功能
+        function setupPaste(element) {
+            element.addEventListener('paste', (e) => {
+                const items = e.clipboardData.items;
+                const files = [];
+                
+                for (let item of items) {
+                    if (item.kind === 'file') {
+                        files.push(item.getAsFile());
+                    }
+                }
+                
+                if (files.length > 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleEditorFiles(files);
+                }
+            });
+        }
+        
+        // 处理编辑器中的文件
+        async function handleEditorFiles(files) {
+            if (!currentLessonId) {
+                alert('请先选择一个小节');
+                return;
+            }
+            
+            for (let file of files) {
+                await uploadAndInsertFile(file);
+            }
+        }
+        
+        // 上传并插入文件到编辑器
+        async function uploadAndInsertFile(file) {
+            const fileType = getFileType(file);
+            const progressArea = document.getElementById('uploadProgressArea');
+            progressArea.classList.add('active');
+
+            // 创建进度卡片
+            const progressCard = document.createElement('div');
+            progressCard.className = 'progress-card';
+            progressCard.innerHTML = `
+                <div class="progress-card-header">
+                    <span class="progress-card-name">${file.name}</span>
+                    <span class="progress-card-status">准备上传...</span>
+                </div>
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+            `;
+            progressArea.appendChild(progressCard);
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const xhr = new XMLHttpRequest();
+
+                // 监听上传进度
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = Math.round((e.loaded / e.total) * 100);
+                        progressCard.querySelector('.progress-bar-fill').style.width = percentComplete + '%';
+                        progressCard.querySelector('.progress-card-status').textContent = `上传中 ${percentComplete}%`;
+                    }
+                });
+
+                // 返回Promise以支持async/await
+                await new Promise((resolve, reject) => {
+                    xhr.onload = () => {
+                        if (xhr.status === 200) {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.success) {
+                                progressCard.querySelector('.progress-bar-fill').style.width = '100%';
+                                progressCard.querySelector('.progress-card-status').textContent = '✅ 上传完成';
+
+                                // 将文件信息添加到列表（包含 Base64 数据用于持久化）
+                                insertFileToEditor(response.url, fileType, response.filename || file.name, response.base64, response.mime_type);
+
+                                // 显示成功消息和保存提醒
+                                setTimeout(() => {
+                                    showUploadSuccess();
+                                    showSaveReminder();
+                                    setTimeout(() => {
+                                        hideUploadSuccess();
+                                        progressCard.remove();
+                                        if (progressArea.children.length === 0) {
+                                            progressArea.classList.remove('active');
+                                        }
+                                    }, 2000);
+                                }, 500);
+
+                                resolve(response);
+                            } else {
+                                progressCard.querySelector('.progress-card-status').textContent = '❌ 上传失败';
+                                reject(new Error(response.error));
+                            }
+                        } else {
+                            progressCard.querySelector('.progress-card-status').textContent = '❌ 上传失败';
+                            reject(new Error('Upload failed'));
+                        }
+                    };
+                    
+                    xhr.onerror = () => {
+                        progressCard.querySelector('.progress-card-status').textContent = '❌ 网络错误';
+                        reject(new Error('Network error'));
+                    };
+                    
+                    xhr.open('POST', '{{ url_for("teacher.upload_file") }}');
+                    xhr.send(formData);
+                });
+                
+            } catch (error) {
+                console.error('上传错误:', error);
+                progressCard.querySelector('.progress-card-status').textContent = '❌ 上传失败';
+            }
+        }
+        
+        // 获取文件类型
+        function getFileType(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+            const videoExts = ['mp4', 'webm', 'ogg', 'avi', 'mov'];
+            const pdfExts = ['pdf'];
+            const docExts = ['doc', 'docx'];
+            const pptExts = ['ppt', 'pptx'];
+            
+            if (imageExts.includes(ext)) return 'image';
+            if (videoExts.includes(ext)) return 'video';
+            if (pdfExts.includes(ext)) return 'pdf';
+            if (docExts.includes(ext)) return 'document';
+            if (pptExts.includes(ext)) return 'document';
+            
+            return 'other';
+        }
+        
+        // 将文件信息添加到列表（不插入到编辑器，避免被过滤）
+        function insertFileToEditor(url, fileType, fileName, base64Data = null, mimeType = null) {
+            // 添加到多媒体文件列表
+            const fileInfo = {
+                type: fileType,
+                url: url,
+                name: fileName || '未命名文件',
+                id: Date.now() + Math.random()
+            };
+
+            // 保存 Base64 数据（用于持久化存储，避免 Koyeb 文件系统重置）
+            if (base64Data) {
+                fileInfo.base64 = base64Data;
+                fileInfo.mime_type = mimeType;
+                console.log(`[OK] 已保存 ${fileName} 的 Base64 数据 (${(base64Data.length / 1024 / 1024).toFixed(2)} MB)`);
+            }
+
+            uploadedFiles.push(fileInfo);
+            
+            console.log('添加文件到列表:', fileInfo);
+            console.log('当前文件列表:', uploadedFiles);
+            
+            // 在编辑器下方显示文件预览区域
+            updateMediaPreview();
+        }
+        
+        // 更新多媒体预览区域
+        function updateMediaPreview() {
+            let previewArea = document.getElementById('mediaPreviewArea');
+            if (!previewArea) {
+                // 创建预览区域（在编辑器下方）
+                previewArea = document.createElement('div');
+                previewArea.id = 'mediaPreviewArea';
+                previewArea.className = 'media-preview-area';
+                previewArea.style.cssText = 'margin-top: 20px; padding: 20px; background: #f8f9ff; border: 2px dashed #6C5CE7; border-radius: 12px;';
+                
+                const editorContainer = document.querySelector('.ck-editor__editable')?.closest('.editor-container') || document.getElementById('editor')?.parentElement;
+                if (editorContainer) {
+                    editorContainer.appendChild(previewArea);
+                }
+            }
+            
+            // 生成预览HTML
+            let html = '<div style="font-weight: 600; color: #1E293B; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-paperclip"></i> 已上传的多媒体文件 (' + uploadedFiles.length + ')</div>';
+            
+            uploadedFiles.forEach((file, index) => {
+                html += `<div class="media-item" data-id="${file.id}" style="background: white; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">`;
+                
+                // 文件图标
+                switch(file.type) {
+                    case 'pdf':
+                        html += `<div style="width: 40px; height: 40px; background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;"><i class="fas fa-file-pdf" style="font-size: 18px;"></i></div>`;
+                        break;
+                    case 'video':
+                        html += `<div style="width: 40px; height: 40px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;"><i class="fas fa-video" style="font-size: 18px;"></i></div>`;
+                        break;
+                    case 'image':
+                        html += `<div style="width: 40px; height: 40px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;"><i class="fas fa-image" style="font-size: 18px;"></i></div>`;
+                        break;
+                    default:
+                        html += `<div style="width: 40px; height: 40px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;"><i class="fas fa-file" style="font-size: 18px;"></i></div>`;
+                }
+                
+                // 文件信息
+                html += `<div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 14px; color: #1E293B;">${file.name}</div>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 2px;">${file.type.toUpperCase()} • ${file.url.split('/').pop()}</div>
+                         </div>`;
+                
+                // 操作按钮
+                const safeFileId = String(file.id).replace(/'/g, "\\'");  // 转义单引号
+                html += `<div style="display: flex; gap: 8px;">
+                            <a href="${file.url}" target="_blank" style="padding: 6px 14px; background: #6C5CE7; color: white; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 600;">查看</a>
+                            <button onclick="removeMediaFile('${safeFileId}')" style="padding: 6px 14px; background: #e74c3c; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;" title="删除此文件">删除</button>
+                         </div>`;
+                
+                html += `</div>`;
+            });
+            
+            previewArea.innerHTML = html;
+            
+            // 如果没有文件，隐藏区域
+            previewArea.style.display = uploadedFiles.length > 0 ? 'block' : 'none';
+        }
+        
+        // 删除媒体文件
+        function removeMediaFile(fileId) {
+            console.log('[DEBUG] 尝试删除文件，ID:', fileId, '类型:', typeof fileId);
+            console.log('[DEBUG] 删除前文件列表长度:', uploadedFiles.length);
+
+            const fileIdStr = String(fileId);  // 确保 ID 是字符串
+            const beforeLength = uploadedFiles.length;
+
+            uploadedFiles = uploadedFiles.filter(f => {
+                const match = String(f.id) === fileIdStr;
+                if (match) {
+                    console.log('[OK] 找到并删除文件:', f.name || '未命名');
+                }
+                return !match;
+            });
+
+            const afterLength = uploadedFiles.length;
+            console.log('[DEBUG] 删除后文件列表长度:', afterLength);
+
+            if (beforeLength === afterLength) {
+                console.error('[ERROR] 未找到匹配的文件！ID:', fileId);
+                alert('删除失败：未找到该文件');
+                return;
+            }
+
+            // 更新预览
+            updateMediaPreview();
+
+            // 显示删除成功提示
+            showSaveReminder();
+
+            console.log('[OK] ✅ 文件删除成功！剩余', afterLength, '个文件');
+        }
+        
+        // 显示上传成功消息
+        function showUploadSuccess() {
+            const successMsg = document.getElementById('uploadSuccessMsg');
+            successMsg.classList.add('active');
+        }
+        
+        // 隐藏上传成功消息
+        function hideUploadSuccess() {
+            const successMsg = document.getElementById('uploadSuccessMsg');
+            successMsg.classList.remove('active');
+        }
+
+        // 显示保存提醒
+        function showSaveReminder() {
+            const saveStatus = document.getElementById('saveStatus');
+            saveStatus.className = 'save-status warning';
+            saveStatus.textContent = '⚠️ 请点击保存按钮保存上传的文件';
+            saveStatus.style.display = 'inline-flex';
+
+            // 5秒后自动隐藏
+            setTimeout(() => {
+                if (saveStatus.textContent.includes('请点击保存')) {
+                    saveStatus.style.display = 'none';
+                }
+            }, 5000);
+        }
+
+        // 切换章节展开/收起
+        function toggleChapter(chapterId) {
+            const chapterItem = document.querySelector(`.chapter-item[data-chapter-id="${chapterId}"]`);
+            if (chapterItem) {
+                chapterItem.classList.toggle('expanded');
+            }
+        }
+        
+        // 选择小节
+        function selectLesson(lessonId) {
+            if (currentLessonId && !confirm('当前内容未保存，确定要切换吗？')) {
+                return;
+            }
+            
+            document.querySelectorAll('.lesson-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.lesson-item[data-lesson-id="${lessonId}"]`).classList.add('active');
+            
+            currentLessonId = lessonId;
+            loadLessonContent(lessonId);
+        }
+        
+        // 加载小节内容
+        function loadLessonContent(lessonId) {
+            fetch(`/teacher/lessons/${lessonId}/content`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('lessonTitleInput').value = data.lesson.title;
+                        document.getElementById('lessonDescriptionInput').value = data.lesson.description || '';
+                        document.getElementById('editorTitle').textContent = data.lesson.title;
+
+                        const content = data.lesson.content || '';
+
+                        // 同步内容到 textarea（重要！保存时从这里读取）
+                        const textarea = document.getElementById('editor-textarea');
+                        if (textarea) {
+                            textarea.value = content;
+                        }
+
+                        // 同步内容到 CKEditor
+                        if (editor) {
+                            editor.setData(content);
+                        }
+                        
+                        // 恢复多媒体文件列表
+                        if (data.lesson.media_files) {
+                            try {
+                                uploadedFiles = typeof data.lesson.media_files === 'string' 
+                                    ? JSON.parse(data.lesson.media_files) 
+                                    : data.lesson.media_files;
+                                updateMediaPreview();
+                            } catch(e) {
+                                console.error('解析media_files失败:', e);
+                                uploadedFiles = [];
+                            }
+                        } else {
+                            uploadedFiles = [];
+                        }
+                    }
+                })
+                .catch(error => console.error('加载失败:', error));
+        }
+        
+        // 自动保存
+        function scheduleAutoSave() {
+            if (autoSaveTimer) {
+                clearTimeout(autoSaveTimer);
+            }
+            autoSaveTimer = setTimeout(() => {
+                saveLesson(true);
+            }, 3000);
+        }
+        
+        // 保存小节
+        function saveLesson(isAuto = false) {
+            if (!currentLessonId) {
+                if (!isAuto) {
+                    alert('请先选择一个小节');
+                }
+                return;
+            }
+
+            const saveStatus = document.getElementById('saveStatus');
+            saveStatus.className = 'save-status saving';
+            saveStatus.textContent = isAuto ? '自动保存中...' : '保存中...';
+            saveStatus.style.display = 'inline-flex';
+
+            const title = document.getElementById('lessonTitleInput').value || '';
+            const description = document.getElementById('lessonDescriptionInput').value || '';
+
+            // 获取编辑器内容（优先从 CKEditor 获取，fallback 到 textarea）
+            let content = '';
+
+            // 优先尝试从 CKEditor 获取（如果已初始化）
+            if (editor && typeof editor.getData === 'function') {
+                try {
+                    content = editor.getData();
+                    console.log('[DEBUG] 从 CKEditor 获取内容, 长度:', content.length);
+                } catch (e) {
+                    console.error('[ERROR] CKEditor getData 失败:', e);
+                    content = '';
+                }
+            }
+
+            // 如果 CKEditor 没有内容或未初始化，则从 textarea 获取
+            if (!content) {
+                const textarea = document.getElementById('editor-textarea');
+                if (textarea) {
+                    content = textarea.value;
+                    console.log('[DEBUG] 从 textarea 获取内容, 长度:', content.length);
+                }
+            }
+
+            console.log('=== 保存调试信息 ===');
+            console.log('小节ID:', currentLessonId);
+            console.log('标题:', title);
+            console.log('描述:', description);
+            console.log('内容长度:', content.length);
+            console.log('内容预览:', content.substring(0, 300));
+            console.log('多媒体文件数:', uploadedFiles.length);
+
+            // 详细输出每个文件的 Base64 状态
+            if (uploadedFiles.length > 0) {
+                console.log('=== 多媒体文件详情 ===');
+                uploadedFiles.forEach((file, index) => {
+                    console.log(`文件 ${index + 1}:`, {
+                        name: file.name,
+                        type: file.type,
+                        hasBase64: !!file.base64,
+                        base64Length: file.base64 ? file.base64.length : 0,
+                        hasMimeType: !!file.mime_type,
+                        mimeType: file.mime_type
+                    });
+                });
+            }
+
+            // 使用JSON格式发送数据（避免FormData的编码问题）
+            const payload = {
+                title: title,
+                description: description,
+                content: content,
+                media_files: JSON.stringify(uploadedFiles)  // 多媒体文件列表（包含 Base64）
+            };
+
+            fetch(`/teacher/lessons/${currentLessonId}/save`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                console.log('响应状态:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('服务器响应:', data);
+                if (data.success) {
+                    saveStatus.className = 'save-status saved';
+                    saveStatus.textContent = isAuto ? '已自动保存 ✓' : '已保存 ✓';
+                    document.getElementById('editorTitle').textContent = document.getElementById('lessonTitleInput').value;
+                    
+                    const lessonItem = document.querySelector(`.lesson-item[data-lesson-id="${currentLessonId}"] .lesson-title`);
+                    if (lessonItem) {
+                        lessonItem.textContent = document.getElementById('lessonTitleInput').value;
+                    }
+                    
+                    setTimeout(() => {
+                        saveStatus.style.display = 'none';
+                    }, 3000);
+                } else {
+                    saveStatus.className = 'save-status error';
+                    saveStatus.textContent = data.error || '保存失败';
+                    console.error('保存失败:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('保存请求错误:', error);
+                saveStatus.className = 'save-status error';
+                saveStatus.textContent = '网络错误: ' + error.message;
+            });
+        }
+        
+        // 预览小节（在当前页面打开模态框）
+        function previewLesson() {
+            if (!currentLessonId) {
+                alert('请先选择一个小节进行预览');
+                return;
+            }
+            
+            // 获取编辑器当前内容
+            let content = '';
+            if (editor) {
+                try {
+                    content = editor.getData();
+                } catch (e) {
+                    console.error('获取编辑器内容失败:', e);
+                    content = '';
+                }
+            }
+            
+            // 显示预览模态框
+            const previewModal = document.getElementById('previewModal');
+            const previewContent = document.getElementById('previewContent');
+            
+            // 生成完整的预览HTML（文字 + 多媒体）
+            let fullHtml = '';
+            
+            // 1. 添加文字内容
+            if (content && content.trim()) {
+                fullHtml += `<div class="text-content">${content}</div>`;
+            }
+            
+            // 2. 动态渲染多媒体文件（使用object/embed标签，不被CKEditor过滤）
+            if (uploadedFiles.length > 0) {
+                fullHtml += '<div class="media-section" style="margin-top: 30px;">';
+                fullHtml += '<h3 style="font-size: 18px; color: #1E293B; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #6C5CE7;"><i class="fas fa-paperclip"></i> 附件资料</h3>';
+                
+                uploadedFiles.forEach((file, index) => {
+                    switch(file.type) {
+                        case 'pdf':
+                            fullHtml += `
+                                <div class="pdf-embed-container" style="margin: 20px 0; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+                                    <div style="padding: 14px 20px; background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%); color: white; display: flex; align-items: center; gap: 10px;">
+                                        <i class="fas fa-file-pdf" style="font-size: 22px;"></i>
+                                        <span style="font-weight: 600; font-size: 15px;">${file.name}</span>
+                                    </div>
+                                    <div style="background: #f5f5f5; padding: 20px;">
+                                        <object data="${file.url}" 
+                                               type="application/pdf"
+                                               style="width: 100%; height: 600px; min-height: 600px; border: none; display: block; background: white; border-radius: 8px;"
+                                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                        </object>
+                                        <div style="display: none; text-align: center; padding: 60px 40px;">
+                                            <div style="font-size: 64px; margin-bottom: 16px;">📄</div>
+                                            <h3 style="margin-bottom: 12px; color: #1E293B;">PDF文档</h3>
+                                            <p style="color: #666; margin-bottom: 24px;">您的浏览器不支持直接预览PDF</p>
+                                            <a href="${file.url}" target="_blank" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
+                                                📥 查看或下载 PDF 文档
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 12px 20px; background: #F8FAFC; text-align: center; border-top: 1px solid #E2E8F0;">
+                                        <a href="${file.url}" target="_blank" style="color: #6C5CE7; text-decoration: none; font-size: 13px; font-weight: 600;"><i class="fas fa-external-link-alt"></i> 在新窗口中打开</a>
+                                        <a href="${file.url}" download style="color: #6C5CE7; text-decoration: none; font-size: 13px; font-weight: 600; margin-left: 20px;"><i class="fas fa-download"></i> 下载</a>
+                                    </div>
+                                </div>`;
+                            break;
+                            
+                        case 'video':
+                            fullHtml += `
+                                <div style="margin: 20px 0; background: black; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
+                                    <div style="padding: 12px 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; display: flex; align-items: center; gap: 10px;">
+                                        <i class="fas fa-video" style="font-size: 20px;"></i>
+                                        <span style="font-weight: 600; font-size: 14px;">${file.name}</span>
+                                    </div>
+                                    <video controls style="width: 100%; max-height: 500px;" poster="">
+                                        <source src="${file.url}" type="video/mp4">
+                                        您的浏览器不支持视频播放。
+                                    </video>
+                                </div>`;
+                            break;
+                            
+                        case 'image':
+                            fullHtml += `
+                                <figure style="margin: 24px 0;">
+                                    <img src="${file.url}" alt="${file.name}" style="max-width: 100%; height: auto; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+                                    <figcaption style="text-align: center; color: #666; margin-top: 8px; font-size: 13px;">${file.name}</figcaption>
+                                </figure>`;
+                            break;
+                            
+                        default:
+                            fullHtml += `
+                                <div style="margin: 20px 0; padding: 24px; background: #F8FAFC; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                    <i class="fas fa-file" style="font-size: 48px; color: #6C5CE7; margin-bottom: 12px;"></i>
+                                    <h3 style="color: #1E293B; margin-bottom: 8px;">${file.name}</h3>
+                                    <a href="${file.url}" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
+                                        📥 下载文件
+                                    </a>
+                                </div>`;
+                    }
+                });
+                
+                fullHtml += '</div>'; // 关闭 media-section
+            }
+            
+            // 更新预览内容
+            if (fullHtml.trim()) {
+                previewContent.innerHTML = fullHtml;
+            } else {
+                previewContent.innerHTML = `
+                    <div class="empty-preview-state">
+                        <i class="fas fa-file-alt"></i>
+                        <p>暂无内容，请在编辑器中添加内容后预览</p>
+                    </div>
+                `;
+            }
+            
+            // 显示模态框
+            previewModal.classList.add('active');
+        }
+        
+        // 修复PDF显示（支持object和iframe）
+        function fixPdfDisplay(container) {
+            // 查找所有PDF元素
+            const pdfObjects = container.querySelectorAll('object[type="application/pdf"], .pdf-object');
+            const pdfContainers = container.querySelectorAll('.pdf-embed-container');
+            
+            console.log(`找到 ${pdfObjects.length} 个PDF对象, ${pdfContainers.length} 个PDF容器`);
+            
+            // 确保object标签有正确的尺寸
+            pdfObjects.forEach(obj => {
+                if (!obj.style.height || parseInt(obj.style.height) < 400) {
+                    obj.style.height = '600px';
+                    obj.style.minHeight = '600px';
+                }
+                obj.style.width = '100%';
+                obj.style.display = 'block';
+                
+                console.log('PDF object已设置样式, data:', obj.data);
+            });
+            
+            // 确保容器有最小高度
+            pdfContainers.forEach(container => {
+                container.style.minHeight = '650px';
+            });
+        }
+        
+        // 关闭预览模态框
+        function closePreviewModal() {
+            const previewModal = document.getElementById('previewModal');
+            previewModal.classList.remove('active');
+        }
+        
+        // 保存并刷新预览
+        function saveAndPreview() {
+            saveLesson(false);
+            setTimeout(() => {
+                previewLesson();
+            }, 500);
+        }
+        
+        // 模态框操作
+        function showAddChapterModal() {
+            document.getElementById('chapterTitleInput').value = '';
+            document.getElementById('addChapterModal').classList.add('active');
+        }
+        
+        function showEditChapterModal(chapterId, title) {
+            document.getElementById('editChapterId').value = chapterId;
+            document.getElementById('editChapterTitleInput').value = title;
+            document.getElementById('editChapterModal').classList.add('active');
+        }
+        
+        function showAddLessonModal(chapterId) {
+            document.getElementById('addLessonChapterId').value = chapterId;
+            document.getElementById('lessonTitleModalInput').value = '';
+            document.getElementById('addLessonModal').classList.add('active');
+        }
+        
+        function showEditLessonModal(lessonId, title) {
+            document.getElementById('editLessonId').value = lessonId;
+            document.getElementById('editLessonTitleInput').value = title;
+            document.getElementById('editLessonModal').classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // 添加章节
+        function addChapter() {
+            const title = document.getElementById('chapterTitleInput').value;
+            if (!title) {
+                alert('请输入章节标题');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('title', title);
+            
+            fetch(`{{ url_for('teacher.create_chapter', course_id=course.id) }}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(() => {
+                location.reload();
+            });
+        }
+        
+        // 更新章节
+        function updateChapter() {
+            const chapterId = document.getElementById('editChapterId').value;
+            const title = document.getElementById('editChapterTitleInput').value;
+            if (!title) {
+                alert('请输入章节标题');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('title', title);
+            
+            fetch(`/teacher/chapters/${chapterId}/edit`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(() => {
+                location.reload();
+            });
+        }
+        
+        // 删除章节
+        function deleteChapter(chapterId) {
+            if (confirm('确定要删除这个章节吗？所有小节也会被删除。')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/teacher/chapters/${chapterId}/delete`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        // 添加小节
+        function addLesson() {
+            const chapterId = document.getElementById('addLessonChapterId').value;
+            const title = document.getElementById('lessonTitleModalInput').value;
+            if (!title) {
+                alert('请输入小节标题');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('content_type', 'text');
+            
+            fetch(`/teacher/chapters/${chapterId}/lessons/create`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(() => {
+                location.reload();
+            });
+        }
+        
+        // 更新小节
+        function updateLesson() {
+            const lessonId = document.getElementById('editLessonId').value;
+            const title = document.getElementById('editLessonTitleInput').value;
+            if (!title) {
+                alert('请输入小节标题');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('title', title);
+            
+            fetch(`/teacher/lessons/${lessonId}/update-title`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const lessonItem = document.querySelector(`.lesson-item[data-lesson-id="${lessonId}"] .lesson-title`);
+                    if (lessonItem) {
+                        lessonItem.textContent = title;
+                    }
+                    if (currentLessonId == lessonId) {
+                        document.getElementById('lessonTitleInput').value = title;
+                        document.getElementById('editorTitle').textContent = title;
+                    }
+                    closeModal('editLessonModal');
+                }
+            });
+        }
+        
+        // 删除小节
+        function deleteLesson(lessonId) {
+            if (confirm('确定要删除这个小节吗？')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/teacher/lessons/${lessonId}/delete`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        // 点击模态框外部关闭
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+        
+        // 强制美化右上角按钮（JavaScript方式 - 100%可靠）
+        setTimeout(function() {
+            var buttons = document.querySelectorAll('.header-actions a, .header-actions button');
+            
+            buttons.forEach(function(btn, index) {
+                // 移除所有可能的类名
+                btn.className = '';
+                
+                // 设置基础样式
+                btn.style.cssText = `
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    padding: 14px 28px !important;
+                    border-radius: 12px !important;
+                    font-size: 14px !important;
+                    font-weight: 700 !important;
+                    text-decoration: none !important;
+                    color: #ffffff !important;
+                    border: none !important;
+                    cursor: pointer !important;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+                    transition: all 0.3s ease !important;
+                    position: relative !important;
+                    overflow: hidden !important;
+                    line-height: 1.4 !important;
+                    height: auto !important;
+                    min-height: auto !important;
+                    background-image: none !important;
+                    background-color: transparent !important;
+                `;
+                
+                // 根据索引设置不同的渐变色
+                switch(index) {
+                    case 0: // 预览学生视图 - 蓝紫
+                        btn.style.background = 'linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%)';
+                        btn.style.boxShadow = '0 4px 25px rgba(102,126,234,0.5)';
+                        break;
+                    case 1: // 编辑器模式 - 青绿
+                        btn.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+                        btn.style.boxShadow = '0 4px 25px rgba(17,153,142,0.5)';
+                        break;
+                    case 2: // 删除课程 - 红橙
+                        btn.style.background = 'linear-gradient(135deg, #eb3349 0%, #f45c43 100%)';
+                        btn.style.boxShadow = '0 4px 25px rgba(235,51,73,0.5)';
+                        break;
+                    case 3: // 返回仪表盘 - 灰蓝
+                        btn.style.background = 'linear-gradient(135deg, #606c88 0%, #3f4c6b 100%)';
+                        btn.style.boxShadow = '0 4px 25px rgba(96,108,136,0.5)';
+                        break;
+                }
+                
+                // 添加悬停效果
+                btn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px)';
+                    this.style.boxShadow = '0 8px 35px rgba(0,0,0,0.3)';
+                });
+                
+                btn.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    
+                    // 恢复原始阴影
+                    switch(index) {
+                        case 0:
+                            this.style.boxShadow = '0 4px 25px rgba(102,126,234,0.5)';
+                            break;
+                        case 1:
+                            this.style.boxShadow = '0 4px 25px rgba(17,153,142,0.5)';
+                            break;
+                        case 2:
+                            this.style.boxShadow = '0 4px 25px rgba(235,51,73,0.5)';
+                            break;
+                        case 3:
+                            this.style.boxShadow = '0 4px 25px rgba(96,108,136,0.5)';
+                            break;
+                    }
+                });
+            });
+            
+            console.log('✅ 右上角按钮已美化完成！共处理', buttons.length, '个按钮');
+        }, 100);
+    </script>
+    
+    <!-- 强制美化按钮 - 最高优先级 -->
+    <style>
+        /* 覆盖所有外部样式 */
+        .header-actions a,
+        .header-actions button,
+        [style*="linear-gradient"] {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 12px 24px !important;
+            border-radius: 12px !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            text-decoration: none !important;
+            color: white !important;
+            background-image: none !important;
+            border: none !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+            transition: all 0.3s ease !important;
+            line-height: 1.4 !important;
+            height: auto !important;
+            min-height: auto !important;
+        }
+        
+        /* 预览按钮 */
+        .header-actions a[href*="preview"] {
+            background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%) !important;
+            color: white !important;
+        }
+        
+        /* 编辑器模式按钮 */
+        .header-actions button[onclick*="previewLesson"] {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+            color: white !important;
+        }
+        
+        /* 删除按钮 */
+        .header-actions button[onclick*="delete_course"],
+        .header-actions button[onclick*="confirm"] {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%) !important;
+            color: white !important;
+        }
+        
+        /* 返回按钮 */
+        .header-actions a[href*="dashboard"] {
+            background: linear-gradient(135deg, #606c88 0%, #3f4c6b 100%) !important;
+            color: white !important;
+        }
+    </style>
+</body>
+</html>

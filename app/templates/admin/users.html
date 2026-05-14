@@ -1,0 +1,290 @@
+﻿{% extends "base.html" %}
+
+{% block title %}用户管理 - C++学习平台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1E293B;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .search-box {
+        flex: 1;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .search-box input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 2px solid #E2E8F0;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: #6C5CE7;
+    }
+    
+    .filter-select {
+        padding: 10px 15px;
+        border: 2px solid #E2E8F0;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+    }
+    
+    .users-table {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .users-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .users-table th,
+    .users-table td {
+        padding: 15px 20px;
+        text-align: left;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .users-table th {
+        background: #F8FAFC;
+        font-weight: 600;
+        color: #1E293B;
+        font-size: 14px;
+    }
+    
+    .users-table td {
+        color: #64748B;
+        font-size: 14px;
+    }
+    
+    .users-table tr:hover {
+        background: #F8FAFC;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .user-avatar-small {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .user-name {
+        font-weight: 600;
+        color: #1E293B;
+    }
+    
+    .role-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .role-admin {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .role-teacher {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .role-student {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+    
+    .action-btns {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-edit {
+        background: #6C5CE7;
+        color: white;
+    }
+    
+    .btn-edit:hover {
+        background: #7C3AED;
+    }
+    
+    .btn-delete {
+        background: #e74c3c;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background: #c0392b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">用户管理</h1>
+    <button class="btn btn-primary" onclick="showAddUserModal()">
+        <i class="fas fa-plus"></i> 添加用户
+    </button>
+</div>
+
+<div class="filter-section">
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="搜索用户名或邮箱...">
+        <button class="btn btn-primary" onclick="searchUsers()">
+            <i class="fas fa-search"></i> 搜索
+        </button>
+    </div>
+    <select class="filter-select" id="roleFilter" onchange="filterByRole()">
+        <option value="">全部角色</option>
+        <option value="admin">管理员</option>
+        <option value="teacher">教师</option>
+        <option value="student">学生</option>
+    </select>
+</div>
+
+<div class="users-table">
+    <table>
+        <thead>
+            <tr>
+                <th>用户信息</th>
+                <th>邮箱</th>
+                <th>角色</th>
+                <th>状态</th>
+                <th>注册时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>
+                    <div class="user-info">
+                        <img src="{{ user.avatar }}"
+                             alt="用户头像" class="user-avatar"
+                             onerror="this.style.display='none'">
+                        <span class="user-name">{{ user.nickname or user.username }}</span>
+                    </div>
+                </td>
+                <td>{{ user.email }}</td>
+                <td>
+                    <span class="role-badge role-{{ user.role }}">
+                        {% if user.role == 'admin' %}管理员
+                        {% elif user.role == 'teacher' %}教师
+                        {% else %}学生{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge status-{{ 'active' if user.is_active else 'inactive' }}">
+                        {{ '活跃' if user.is_active else '未激活' }}
+                    </span>
+                </td>
+                <td>{{ user.created_at }}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-sm btn-edit" onclick="editUser({{ user.id }})">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button class="btn-sm btn-delete" onclick="deleteUser({{ user.id }})">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function searchUsers() {
+    const search = document.getElementById('searchInput').value;
+    const role = document.getElementById('roleFilter').value;
+    window.location.href = `{{ url_for('admin.users') }}?search=${search}&role=${role}`;
+}
+
+function filterByRole() {
+    const search = document.getElementById('searchInput').value;
+    const role = document.getElementById('roleFilter').value;
+    window.location.href = `{{ url_for('admin.users') }}?search=${search}&role=${role}`;
+}
+
+function showAddUserModal() {
+    alert('添加用户功能开发中...');
+}
+
+function editUser(userId) {
+    alert('编辑用户: ' + userId);
+}
+
+function deleteUser(userId) {
+    if (confirm('确定要删除这个用户吗？')) {
+        alert('删除用户: ' + userId);
+    }
+}
+</script>
+{% endblock %}

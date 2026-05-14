@@ -1,0 +1,243 @@
+﻿{% extends "base.html" %}
+
+{% block title %}题目管理 - C++学习平台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1E293B;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .search-box {
+        flex: 1;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .search-box input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 2px solid #E2E8F0;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: #6C5CE7;
+    }
+    
+    .problems-table {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .problems-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .problems-table th,
+    .problems-table td {
+        padding: 15px 20px;
+        text-align: left;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .problems-table th {
+        background: #F8FAFC;
+        font-weight: 600;
+        color: #1E293B;
+        font-size: 14px;
+    }
+    
+    .problems-table td {
+        color: #64748B;
+        font-size: 14px;
+    }
+    
+    .problems-table tr:hover {
+        background: #F8FAFC;
+    }
+    
+    .difficulty-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .difficulty-easy {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .difficulty-medium {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .difficulty-hard {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .action-btns {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .btn-edit {
+        background: #6C5CE7;
+        color: white;
+    }
+    
+    .btn-edit:hover {
+        background: #7C3AED;
+    }
+    
+    .btn-delete {
+        background: #e74c3c;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background: #c0392b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">题目管理</h1>
+</div>
+
+<div class="filter-section">
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="搜索题目名称...">
+        <button class="btn btn-primary" onclick="searchProblems()">
+            <i class="fas fa-search"></i> 搜索
+        </button>
+    </div>
+    <select class="filter-select" style="padding: 10px 15px; border: 2px solid #E2E8F0; border-radius: 8px; background: white;" onchange="filterByDifficulty()">
+        <option value="">全部难度</option>
+        <option value="easy">简单</option>
+        <option value="medium">中等</option>
+        <option value="hard">困难</option>
+    </select>
+</div>
+
+<div class="problems-table">
+    <table>
+        <thead>
+            <tr>
+                <th>题目名称</th>
+                <th>难度</th>
+                <th>分类</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for problem in problems %}
+            <tr>
+                <td><strong style="color: #1E293B;">{{ problem.title }}</strong></td>
+                <td>
+                    <span class="difficulty-badge difficulty-{{ problem.difficulty }}">
+                        {% if problem.difficulty == 'easy' %}简单
+                        {% elif problem.difficulty == 'medium' %}中等
+                        {% else %}困难{% endif %}
+                    </span>
+                </td>
+                <td>{{ problem.category or '未分类' }}</td>
+                <td>{{ problem.created_at }}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-sm btn-edit" onclick="alert('编辑功能开发中...')">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button class="btn-sm btn-delete" onclick="deleteProblem({{ problem.id }})">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if not problems %}
+<div class="empty-state" style="text-align: center; padding: 60px 20px; background: white; border-radius: 16px;">
+    <i class="fas fa-tasks" style="font-size: 64px; color: #CBD5E1; margin-bottom: 20px;"></i>
+    <h3 style="font-size: 20px; color: #64748B; margin-bottom: 10px;">还没有任何题目</h3>
+    <p style="color: #94A3B8; font-size: 14px;">暂无题目</p>
+</div>
+{% endif %}
+
+<script>
+function searchProblems() {
+    const search = document.getElementById('searchInput').value;
+    window.location.href = `{{ url_for('admin.problems') }}?search=${search}`;
+}
+
+function filterByDifficulty() {
+    const search = document.getElementById('searchInput').value;
+    const difficulty = event.target.value;
+    window.location.href = `{{ url_for('admin.problems') }}?search=${search}&difficulty=${difficulty}`;
+}
+
+function deleteProblem(problemId) {
+    if (confirm('确定要删除这个题目吗？')) {
+        fetch(`/admin/problems/${problemId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('删除失败，请重试');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

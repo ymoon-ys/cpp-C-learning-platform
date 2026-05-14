@@ -1,0 +1,386 @@
+﻿{% extends "base.html" %}
+
+{% block title %}我的选题 - C++学习平台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1E293B;
+    }
+    
+    .page-subtitle {
+        color: #64748B;
+        font-size: 15px;
+        margin-top: 5px;
+    }
+    
+    .nav-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+        border-bottom: 2px solid #F1F5F9;
+        padding-bottom: 0;
+    }
+    
+    .nav-tab {
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #64748B;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .nav-tab:hover {
+        color: #6C5CE7;
+        background: #F8FAFC;
+    }
+    
+    .nav-tab.active {
+        color: #6C5CE7;
+        border-bottom-color: #6C5CE7;
+        background: transparent;
+    }
+    
+    .problems-table {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .problems-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .problems-table th,
+    .problems-table td {
+        padding: 15px 20px;
+        text-align: left;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .problems-table th {
+        background: #F8FAFC;
+        font-weight: 600;
+        color: #1E293B;
+        font-size: 14px;
+    }
+    
+    .problems-table td {
+        color: #64748B;
+        font-size: 14px;
+    }
+    
+    .problems-table tr:hover {
+        background: #F8FAFC;
+    }
+    
+    .difficulty-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .difficulty-easy {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .difficulty-medium {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .difficulty-hard {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .action-btns {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .btn-primary {
+        background: #6C5CE7;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #7C3AED;
+    }
+    
+    .btn-danger {
+        background: #e74c3c;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #c0392b;
+    }
+    
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-overlay.active {
+        display: flex;
+    }
+    
+    .modal {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+        margin-bottom: 20px;
+    }
+    
+    .modal-header h3 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1E293B;
+        margin: 0;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1E293B;
+        margin-bottom: 8px;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #E2E8F0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s;
+        font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #6C5CE7;
+    }
+    
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 25px;
+    }
+    
+    .btn-secondary {
+        padding: 10px 20px;
+        background: #F8FAFC;
+        color: #64748B;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-secondary:hover {
+        background: #e9ecef;
+        color: #1E293B;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">我的选题</h1>
+        <p class="page-subtitle">管理您为学生选择的题目，设置可见时间</p>
+    </div>
+</div>
+
+<div class="nav-tabs">
+    <a href="{{ url_for('teacher.problem_bank') }}" class="nav-tab">
+        <i class="fas fa-book"></i> 题库浏览
+    </a>
+    <a href="{{ url_for('teacher.selected_problems') }}" class="nav-tab active">
+        <i class="fas fa-check-circle"></i> 我的选题 ({{ selected_list|length }})
+    </a>
+</div>
+
+{% if selected_list %}
+<div class="problems-table">
+    <table>
+        <thead>
+            <tr>
+                <th>题目ID</th>
+                <th>题目名称</th>
+                <th>难度</th>
+                <th>来源</th>
+                <th>可见时间</th>
+                <th>备注</th>
+                <th>选择时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for selected in selected_list %}
+            <tr>
+                <td>{{ selected.problem_id }}</td>
+                <td>
+                    {% if selected.problem %}
+                    <a href="{{ url_for('teacher.problem_detail', problem_id=selected.problem_id) }}" style="color: #6C5CE7; text-decoration: none; font-weight: 600;">
+                        {{ selected.problem.title }}
+                    </a>
+                    {% else %}
+                    <span style="color: #94A3B8;">题目已删除</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if selected.problem %}
+                    <span class="difficulty-badge difficulty-{{ selected.problem.difficulty }}">
+                        {% if selected.problem.difficulty == 'easy' %}简单
+                        {% elif selected.problem.difficulty == 'medium' %}中等
+                        {% else %}困难{% endif %}
+                    </span>
+                    {% endif %}
+                </td>
+                <td>{{ selected.problem.source if selected.problem and selected.problem.source else '-' }}</td>
+                <td style="font-size: 13px;">
+                    {% if selected.visible_start or selected.visible_end %}
+                        {% if selected.visible_start %}开始: {{ selected.visible_start }}{% endif %}
+                        {% if selected.visible_end %}<br>结束: {{ selected.visible_end }}{% endif %}
+                    {% else %}
+                        始终可见
+                    {% endif %}
+                </td>
+                <td style="max-width: 150px;">
+                    {{ selected.notes[:30] + '...' if selected.notes and selected.notes|length > 30 else (selected.notes or '-') }}
+                </td>
+                <td>{{ selected.selected_at }}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-sm btn-primary" onclick="openEditModal({{ selected.id }}, '{{ selected.visible_start or '' }}', '{{ selected.visible_end or '' }}', '{{ selected.notes or '' }}')">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <form action="{{ url_for('teacher.unselect_problem', problem_id=selected.problem_id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn-sm btn-danger" onclick="return confirm('确定要取消选择吗？');">
+                                <i class="fas fa-times"></i> 取消
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state" style="text-align: center; padding: 60px 20px; background: white; border-radius: 16px;">
+    <i class="fas fa-tasks" style="font-size: 64px; color: #CBD5E1; margin-bottom: 20px;"></i>
+    <h3 style="font-size: 20px; color: #64748B; margin-bottom: 10px;">您还没有选择任何题目</h3>
+    <p style="color: #94A3B8; font-size: 14px;">
+        前往 <a href="{{ url_for('teacher.problem_bank') }}" style="color: #6C5CE7; text-decoration: none; font-weight: 600;">题库浏览</a> 选择题目
+    </p>
+</div>
+{% endif %}
+
+<div id="editModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>编辑选题设置</h3>
+        </div>
+        <form id="editForm" method="POST">
+            <div class="form-group">
+                <label for="edit_visible_start">可见开始时间</label>
+                <input type="datetime-local" name="visible_start" id="edit_visible_start">
+            </div>
+            <div class="form-group">
+                <label for="edit_visible_end">可见结束时间</label>
+                <input type="datetime-local" name="visible_end" id="edit_visible_end">
+            </div>
+            <div class="form-group">
+                <label for="edit_notes">备注</label>
+                <textarea name="notes" id="edit_notes" rows="3" placeholder="添加备注信息..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeEditModal()">取消</button>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditModal(selectedId, visibleStart, visibleEnd, notes) {
+    document.getElementById('editForm').action = '/teacher/problems/selected/' + selectedId + '/edit';
+    document.getElementById('edit_visible_start').value = visibleStart ? visibleStart.replace(' ', 'T') : '';
+    document.getElementById('edit_visible_end').value = visibleEnd ? visibleEnd.replace(' ', 'T') : '';
+    document.getElementById('edit_notes').value = notes;
+    document.getElementById('editModal').classList.add('active');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+}
+
+document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeEditModal();
+    }
+});
+</script>
+{% endblock %}

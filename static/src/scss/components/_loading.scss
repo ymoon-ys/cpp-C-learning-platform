@@ -1,0 +1,386 @@
+﻿@use '../variables' as *;
+@use '../mixins' as *;
+
+// ============================================
+// 加载动画组件 (Loading Components)
+// Spinner / 骨架屏 / 全屏遮罩
+// ============================================
+
+// ------------------------------------------
+// Spinner 旋转加载器
+// ------------------------------------------
+.spinner {
+  display: inline-block;
+  border-radius: $radius-full;
+  animation: spinnerRotate 0.75s linear infinite;
+  border: 3px solid $border-color;
+  border-top-color: $primary-color;
+
+  // 尺寸变体
+  &--small {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
+  }
+
+  &--default {
+    width: 32px;
+    height: 32px;
+  }
+
+  &--large {
+    width: 48px;
+    height: 48px;
+    border-width: 4px;
+  }
+
+  // 颜色变体
+  &--white {
+    border-color: rgba(255, 255, 255, 0.3);
+    border-top-color: $text-white;
+  }
+
+  &--success {
+    border-color: rgba($success-color, 0.2);
+    border-top-color: $success-color;
+  }
+
+  &--danger {
+    border-color: rgba($danger-color, 0.2);
+    border-top-color: $danger-color;
+  }
+}
+
+@keyframes spinnerRotate {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Spinner 容器（居中显示）
+.spinner-wrapper {
+  @include flex-center;
+  padding: 40px;
+
+  &--full {
+    min-height: 200px;
+  }
+
+  &--screen {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: $z-modal;
+  }
+
+  p {
+    margin-top: $spacing-md;
+    color: $text-secondary;
+    font-size: $font-size-sm;
+  }
+}
+
+// ------------------------------------------
+// 骨架屏占位符 (Skeleton)
+// ------------------------------------------
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    $bg-light 25%,
+    #EEF2F7 37%,
+    $bg-light 63%
+  );
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+  border-radius: $radius-sm;
+
+  // 文本骨架行
+  &--text {
+    height: 16px;
+    margin-bottom: 8px;
+
+    &--short  { width: 40%; }
+    &--medium { width: 70%; }
+    &--long   { width: 90%; }
+    &--full   { width: 100%; }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  // 标题骨架
+  &--title {
+    height: 24px;
+    width: 50%;
+    margin-bottom: 16px;
+  }
+
+  // 圆形骨架（头像等）
+  &--circle {
+    border-radius: $radius-full;
+
+    &--sm { width: 36px; height: 36px; }
+    &--md { width: 48px; height: 48px; }
+    &--lg { width: 64px; height: 64px; }
+  }
+
+  // 矩形骨架（图片/封面）
+  &--rect {
+    &--cover {
+      width: 100%;
+      height: 160px;
+      border-radius: $radius-lg $radius-lg 0 0;
+    }
+
+    &--card {
+      width: 100%;
+      height: 200px;
+      border-radius: $radius-lg;
+    }
+
+    &--thumb {
+      width: 120px;
+      height: 90px;
+      border-radius: $radius-md;
+    }
+  }
+
+  // 卡片骨架
+  &--card {
+    background: $bg-white;
+    border-radius: $radius-lg;
+    padding: 20px;
+    box-shadow: $shadow-sm;
+  }
+}
+
+@keyframes skeletonShimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+// 骨架屏卡片组合
+.skeleton-card {
+  background: $bg-white;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-sm;
+
+  &__cover {
+    @extend .skeleton;
+    @extend .skeleton--rect--cover;
+  }
+
+  &__content {
+    padding: 20px;
+
+    .skeleton__title {
+      @extend .skeleton;
+      @extend .skeleton--title;
+    }
+
+    .skeleton__meta {
+      @extend .skeleton;
+      @extend .skeleton--text--medium;
+      margin-top: 12px;
+    }
+
+    .skeleton__line {
+      @extend .skeleton;
+      @extend .skeleton--text--full;
+    }
+
+    .skeleton__line--short {
+      @extend .skeleton;
+      @extend .skeleton--text--short;
+    }
+  }
+}
+
+// ------------------------------------------
+// 全屏加载遮罩
+// ------------------------------------------
+.loading-overlay {
+  @include fixed-overlay;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: $z-modal-backdrop;
+  opacity: 0;
+  visibility: hidden;
+  transition: all $transition-base;
+
+  &.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  &--dark {
+    background: rgba(0, 0, 0, 0.7);
+
+    .spinner {
+      border-color: rgba(255, 255, 255, 0.2);
+      border-top-color: $text-white;
+    }
+
+    .loading-text {
+      color: $text-white;
+    }
+  }
+}
+
+.loading-text {
+  margin-top: $spacing-md;
+  color: $text-secondary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+// 页面加载动画
+.page-loader {
+  position: fixed;
+  inset: 0;
+  background: $bg-white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+
+  &--hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .loader-logo {
+    font-size: 48px;
+    margin-bottom: $spacing-lg;
+    animation: loaderPulse 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes loaderPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.05); opacity: 0.8; }
+}
+
+// ------------------------------------------
+// 按钮 Loading 状态
+// ------------------------------------------
+.btn-loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.8;
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: calc(50% - 8px);
+    left: calc(50% - 8px);
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: $radius-full;
+    animation: spinnerRotate 0.6s linear infinite;
+  }
+
+  // 文字隐藏模式
+  &--hide-text {
+    color: transparent !important;
+
+    &::after {
+      top: calc(50% - 10px);
+      left: calc(50% - 10px);
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+// 加载更多按钮状态
+.load-more {
+  text-align: center;
+  padding: 30px;
+}
+
+.load-more-btn {
+  padding: 12px 36px;
+  background: $bg-white;
+  border: 2px solid $border-color;
+  border-radius: 24px;
+  color: $text-secondary;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  transition: all $transition-base;
+
+  &:hover {
+    border-color: $primary-color;
+    color: $primary-color;
+  }
+
+  &.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+}
+
+// ------------------------------------------
+// 打字机指示器 (Typing Indicator)
+// ------------------------------------------
+.typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+
+  span {
+    width: 8px;
+    height: 8px;
+    background: $primary-color;
+    border-radius: $radius-full;
+    animation: typingBounce 1.4s infinite ease-in-out both;
+
+    &:nth-child(1) { animation-delay: -0.32s; }
+    &:nth-child(2) { animation-delay: -0.16s; }
+  }
+}
+
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+  40%           { transform: scale(1); opacity: 1; }
+}
+
+// ------------------------------------------
+// 点状加载动画 (Dots)
+// ------------------------------------------
+.dots-loading {
+  display: inline-flex;
+  gap: 6px;
+
+  span {
+    width: 8px;
+    height: 8px;
+    background: $primary-color;
+    border-radius: $radius-full;
+    animation: dotsPulse 1.2s ease-in-out infinite;
+
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+}
+
+@keyframes dotsPulse {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

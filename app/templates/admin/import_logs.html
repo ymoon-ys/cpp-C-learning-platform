@@ -1,0 +1,172 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导入日志 - C++学习平台</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .log-container {
+            padding: 20px;
+        }
+        .log-header {
+            margin-bottom: 30px;
+        }
+        .log-header h2 {
+            margin-bottom: 10px;
+        }
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .log-table th, .log-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .log-table th {
+            background: #F8FAFC;
+            font-weight: 500;
+        }
+        .log-table tr:hover {
+            background: #F8FAFC;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .status-success { background: #d4edda; color: #155724; }
+        .status-partial { background: #fff3cd; color: #856404; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        .error-details {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .error-details:hover {
+            white-space: normal;
+        }
+        .no-logs {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .back-link {
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>C++学习平台</h1>
+        </div>
+        <div class="header-right">
+            <div class="greeting">
+                <p>上午好，{{ current_user.nickname if current_user.nickname else current_user.username }}</p>
+                <p class="sub-greeting">管理员后台</p>
+            </div>
+            <div class="user-icon">
+                <img src="{{ current_user.avatar }}" alt="用户头像"
+                     class="user-icon" onerror="this.style.display='none'">
+                <div class="user-avatar user-avatar--gradient" style="display:none;">
+                    {{ (current_user.nickname if current_user.nickname else current_user.username)[:1] }}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="learning-stats">
+                    <p class="days">管理员</p>
+                    <p class="number">{{ consecutive_days }}天</p>
+                    <p class="streak">继续加油</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/admin/dashboard">仪表盘</a></li>
+                    <li><a href="/admin/users">用户管理</a></li>
+                    <li><a href="/admin/courses">课程管理</a></li>
+                    <li class="active"><a href="/admin/problems">题目管理</a></li>
+                    <li><a href="/community">社区管理</a></li>
+                    <li><a href="/admin/settings">设置</a></li>
+                    <li><a href="/logout">退出登录</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <div class="log-container">
+                <div class="log-header">
+                    <h2>导入日志</h2>
+                    <p>查看题库导入历史记录</p>
+                </div>
+                
+                {% if logs %}
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>操作者</th>
+                            <th>来源</th>
+                            <th>导入数量</th>
+                            <th>状态</th>
+                            <th>错误信息</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.id }}</td>
+                            <td>{{ log.admin.nickname if log.admin and log.admin.nickname else (log.admin.username if log.admin else '未知') }}</td>
+                            <td>{{ log.source or '未指定' }}</td>
+                            <td>{{ log.count }}</td>
+                            <td>
+                                {% if log.status == 'success' %}
+                                <span class="status-badge status-success">成功</span>
+                                {% elif log.status == 'partial' %}
+                                <span class="status-badge status-partial">部分成功</span>
+                                {% else %}
+                                <span class="status-badge status-failed">失败</span>
+                                {% endif %}
+                            </td>
+                            <td class="error-details" title="{{ log.error_message }}">
+                                {{ log.error_message[:50] + '...' if log.error_message and log.error_message|length > 50 else (log.error_message or '-') }}
+                            </td>
+                            <td>{{ log.created_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="no-logs">
+                    <p>暂无导入记录</p>
+                    <p>前往 <a href="{{ url_for('admin.import_problems_page') }}">题库导入</a> 开始导入题目</p>
+                </div>
+                {% endif %}
+                
+                <div class="back-link">
+                    <a href="{{ url_for('admin.import_problems_page') }}">← 返回题库导入</a>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

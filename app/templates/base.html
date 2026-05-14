@@ -1,0 +1,176 @@
+﻿﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}C++学习平台{% endblock %}</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}专业的C++编程在线学习平台，提供系统化课程、在线编程练习、AI智能辅导{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}C++,编程,在线学习,编程教程,代码练习,Flask{% endblock %}">
+    <meta name="author" content="C++学习平台">
+    <link rel="canonical" href="{{ request.url }}">
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+    <meta property="og:description" content="{{ self.meta_description() }}">
+    <meta property="og:site_name" content="C++学习平台">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#6C5CE7">
+    <meta name="msapplication-TileColor" content="#6C5CE7">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Vite Build Assets (CSS) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='dist/assets/main.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="dashboard-container">
+        <!-- 移动端汉堡菜单按钮 (由JS模块动态创建) -->
+        <div id="mobile-menu-placeholder"></div>
+
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="user-profile">
+                    {% set user_initial = (current_user.nickname|default(current_user.username))[:1] %}
+                    {% if current_user.avatar and current_user.avatar != '' and current_user.avatar != '/uploads/avatars/default.png' %}
+                    <img src="{{ current_user.avatar }}?t={{ current_user.updated_at|default('now') }}"
+                         alt="用户头像" class="user-avatar"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    {% endif %}
+                    <div class="user-avatar" style="{% if current_user.avatar and current_user.avatar != '' and current_user.avatar != '/uploads/avatars/default.png' %}display:none;{% else %}display:flex;{% endif %} background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%); color: white; font-size: 18px; font-weight: 700; align-items: center; justify-content: center;">
+                        {{ user_initial }}
+                    </div>
+                    <div class="user-info">
+                        <h3>{{ current_user.nickname if current_user.nickname else current_user.username }}</h3>
+                        <p>
+                            {% if current_user.role == 'admin' %}管理员
+                            {% elif current_user.role == 'teacher' %}教师
+                            {% else %}学生{% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 学习统计卡片 -->
+                <div class="learning-stats">
+                    <p class="stats-label">连续学习</p>
+                    <p class="stats-number">{{ consecutive_days | default(0) }}</p>
+                    <p class="streak">天 🔥</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    <span>仪表盘</span>
+                </a>
+                <a href="{{ url_for('admin.users') }}" class="nav-item {% if request.endpoint == 'admin.users' %}active{% endif %}">
+                    <i class="fas fa-users"></i>
+                    <span>用户管理</span>
+                </a>
+                <a href="{{ url_for('admin.courses') }}" class="nav-item {% if request.endpoint == 'admin.courses' %}active{% endif %}">
+                    <i class="fas fa-book"></i>
+                    <span>课程管理</span>
+                </a>
+                <a href="{{ url_for('admin.problems') }}" class="nav-item {% if request.endpoint == 'admin.problems' %}active{% endif %}">
+                    <i class="fas fa-tasks"></i>
+                    <span>题目管理</span>
+                </a>
+                <a href="{{ url_for('community.community_page') }}" class="nav-item {% if request.endpoint == 'community.community_page' %}active{% endif %}">
+                    <i class="fas fa-comments"></i>
+                    <span>社区管理</span>
+                </a>
+                <a href="{{ url_for('admin.settings') }}" class="nav-item {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+                    <i class="fas fa-cog"></i>
+                    <span>设置</span>
+                </a>
+                {% elif current_user.role == 'teacher' %}
+                <a href="{{ url_for('teacher.dashboard') }}" class="nav-item {% if request.endpoint == 'teacher.dashboard' %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    <span>仪表盘</span>
+                </a>
+                <a href="{{ url_for('teacher.create_course') }}" class="nav-item {% if request.endpoint == 'teacher.create_course' %}active{% endif %}">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>创建课程</span>
+                </a>
+                <a href="{{ url_for('teacher.problem_bank') }}" class="nav-item {% if request.endpoint == 'teacher.problem_bank' %}active{% endif %}">
+                    <i class="fas fa-book"></i>
+                    <span>题库管理</span>
+                </a>
+                <a href="{{ url_for('community.community_page') }}" class="nav-item {% if request.endpoint == 'community.community_page' %}active{% endif %}">
+                    <i class="fas fa-users"></i>
+                    <span>社区</span>
+                </a>
+                <a href="{{ url_for('teacher.settings') }}" class="nav-item {% if request.endpoint == 'teacher.settings' %}active{% endif %}">
+                    <i class="fas fa-cog"></i>
+                    <span>设置</span>
+                </a>
+                {% else %}
+                <a href="{{ url_for('student.dashboard') }}" class="nav-item {% if request.endpoint == 'student.dashboard' %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    <span>我的课程</span>
+                </a>
+                <a href="{{ url_for('student.practice') }}" class="nav-item {% if request.endpoint == 'student.practice' %}active{% endif %}">
+                    <i class="fas fa-tasks"></i>
+                    <span>练习</span>
+                </a>
+                <a href="{{ url_for('ai_assistant.index') }}" class="nav-item {% if request.endpoint == 'ai_assistant.index' %}active{% endif %}">
+                    <i class="fas fa-robot"></i>
+                    <span>AI助手</span>
+                </a>
+                <a href="{{ url_for('community.community_page') }}" class="nav-item {% if request.endpoint == 'community.community_page' %}active{% endif %}">
+                    <i class="fas fa-comments"></i>
+                    <span>社区</span>
+                </a>
+                <a href="{{ url_for('student.settings') }}" class="nav-item {% if request.endpoint == 'student.settings' %}active{% endif %}">
+                    <i class="fas fa-cog"></i>
+                    <span>设置</span>
+                </a>
+                {% endif %}
+                <a href="{{ url_for('auth.logout') }}" class="nav-item nav-item--logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>退出登录</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% else %}
+    <main class="auth-main">
+        {% block content_unauthenticated %}{% endblock %}
+    </main>
+    {% endif %}
+
+    <!-- Flash消息容器 (Toast组件将使用此容器) -->
+    <div class="toast-container flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="toast toast-{{ category }}">
+                    <i class="fas {{ 'fa-check-circle' if category == 'success' else 'fa-exclamation-circle' }}"></i>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Vite Build Assets (JS) -->
+    <script src="{{ url_for('static', filename='dist/assets/main.js') }}"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

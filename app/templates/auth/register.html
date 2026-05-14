@@ -1,0 +1,114 @@
+﻿{% extends "base.html" %}
+
+{% block title %}注册 - C++学习平台{% endblock %}
+
+{% block content_unauthenticated %}
+<div class="auth-page">
+    <div class="auth-container auth-container--register">
+        <div class="auth-left">
+            <div class="auth-left-content">
+                <h1><i class="fas fa-rocket"></i> 加入我们</h1>
+                <p>开启您的编程学习之旅，与千万学员一起成长</p>
+
+                <div class="auth-features">
+                    <div class="feature-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>海量优质课程资源</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-laptop-code"></i>
+                        <span>在线编程练习环境</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-certificate"></i>
+                        <span>完成课程获得证书</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-headset"></i>
+                        <span>7×24小时学习支持</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-right">
+            <div class="auth-header">
+                <h2>创建账户</h2>
+                <p>填写以下信息完成注册</p>
+            </div>
+
+            <form class="login-form register-form" method="POST" action="{{ url_for('auth.register') }}">
+                {{ form.hidden_tag() }}
+
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">邮箱地址</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" name="email" placeholder="请输入邮箱地址" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">密码</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">确认密码</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="confirm_password" name="confirm_password" placeholder="请再次输入密码" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="role">选择角色</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user-tag"></i>
+                        <select id="role" name="role">
+                            <option value="student">学生 - 学习课程</option>
+                            <option value="teacher">教师 - 创建课程</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary register-btn">
+                    <i class="fas fa-user-plus"></i> 立即注册
+                </button>
+
+                <div class="divider">
+                    <span>或使用以下方式注册</span>
+                </div>
+
+                <div class="social-login social-register">
+                    <button type="button" class="social-btn">
+                        <i class="fab fa-weixin" style="color: #07c160;"></i>
+                        微信注册
+                    </button>
+                    <button type="button" class="social-btn">
+                        <i class="fab fa-qq" style="color: #12b7f5;"></i>
+                        QQ注册
+                    </button>
+                </div>
+
+                <div class="register-link login-link">
+                    <p>已有账户？<a href="{{ url_for('auth.login') }}">立即登录</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

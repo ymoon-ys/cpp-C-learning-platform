@@ -1,0 +1,432 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ============================================
+// 侧边栏组件 (Sidebar Component)
+// ============================================
+
+// 仪表盘布局容器
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+// 侧边栏主体 - 保持原来的紫色渐变
+.sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, #6C5CE7 0%, #7C3AED 100%);
+  color: white;
+  padding: 0;
+  box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+  @include flex-column;
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: $z-fixed;
+  transition: width 0.3s ease, transform 0.3s ease;
+
+  // 收起状态（平板）
+  &--collapsed {
+    width: 80px;
+
+    .sidebar-header,
+    .nav-item span {
+      display: none;
+    }
+
+    .nav-item {
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .nav-item i {
+      margin: 0;
+    }
+
+    .user-avatar {
+      margin: 0 auto;
+    }
+
+    .user-info,
+    .learning-stats {
+      display: none;
+    }
+  }
+
+  // 移动端隐藏状态
+  &--hidden {
+    transform: translateX(-100%);
+
+    &.sidebar--visible {
+      transform: translateX(0);
+    }
+  }
+}
+
+// 侧边栏头部 - 保持原来的毛玻璃效果
+.sidebar-header {
+  padding: 30px 25px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+// 用户资料区
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.user-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.3);
+  object-fit: cover;
+  flex-shrink: 0;
+
+  // 无头像时的默认样式
+  &--default {
+    @include flex-center;
+    background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+  }
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    // 防止文字溢出
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  p {
+    font-size: 13px;
+    opacity: 0.9;
+    // 防止文字溢出
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// 学习统计卡片 - 保持原来的风格
+.learning-stats {
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.stats-number {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  line-height: 1.2;
+  // 防止数字溢出
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-label {
+  font-size: 14px;
+  opacity: 0.9;
+  // 防止文字溢出
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 导航菜单
+.sidebar-nav {
+  flex: 1;
+  padding: 20px 0;
+  overflow-y: auto;
+
+  // 自定义滚动条
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+  }
+}
+
+// 导航项 - 保持原来的左侧边框高亮风格
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 25px;
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-size: 15px;
+  border-left: 4px solid transparent;
+  // 防止文字溢出
+  overflow: hidden;
+
+  &:hover {
+    background: rgba(255,255,255,0.1);
+    border-left-color: white;
+  }
+
+  &.active {
+    background: rgba(255,255,255,0.2);
+    border-left-color: white;
+    font-weight: 600;
+  }
+
+  i {
+    width: 20px;
+    text-align: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// 主内容区域 - 保持原来的浅色背景
+.main-content {
+  flex: 1;
+  margin-left: 260px;
+  padding: 30px 40px;
+  overflow-y: auto;
+  transition: margin-left 0.3s ease;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+}
+
+// 顶部操作栏
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.greeting {
+  flex: 1;
+  min-width: 0;
+
+  h1 {
+    font-size: 32px;
+    color: #1E293B;
+    margin-bottom: 8px;
+    font-weight: 700;
+    // 防止文字溢出
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  p {
+    font-size: 16px;
+    color: #64748B;
+    // 防止文字溢出
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 15px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+// 操作按钮 - 保持原来的风格
+.action-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-family: inherit;
+  // 防止文字溢出
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.primary {
+    background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+    }
+  }
+
+  &.secondary {
+    background: white;
+    color: #6C5CE7;
+    border: 2px solid #6C5CE7;
+
+    &:hover {
+      background: #6C5CE7;
+      color: white;
+    }
+  }
+}
+
+// 移动端菜单切换按钮
+.sidebar-toggle {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: $z-fixed + 1;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  @include flex-center;
+}
+
+// 遮罩层（移动端打开菜单时）
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: $z-fixed - 1;
+
+  &.show {
+    display: block;
+  }
+}
+
+// ============================================
+// 响应式适配
+// ============================================
+
+@include respond-below('lg') {
+  .sidebar {
+    width: 80px;
+
+    .sidebar-header,
+    .nav-item span {
+      display: none;
+    }
+
+    .nav-item {
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .nav-item i {
+      margin: 0;
+    }
+
+    .learning-stats {
+      display: none;
+    }
+  }
+
+  .main-content {
+    margin-left: 80px;
+  }
+}
+
+@include respond-below('md') {
+  .sidebar-toggle {
+    display: flex;
+  }
+
+  .sidebar {
+    width: 280px;
+    transform: translateX(-100%);
+    z-index: $z-modal;
+
+    &.sidebar--visible {
+      transform: translateX(0);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+    }
+
+    .sidebar-header {
+      display: block;
+    }
+
+    .nav-item span {
+      display: inline;
+    }
+
+    .nav-item {
+      padding: 15px 25px;
+      justify-content: flex-start;
+    }
+
+    .learning-stats {
+      display: block;
+    }
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+    padding-top: 70px;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .greeting {
+    h1 {
+      font-size: 24px;
+      white-space: normal;
+      @include text-clamp(1);
+    }
+
+    p {
+      white-space: normal;
+      @include text-clamp(1);
+    }
+  }
+}

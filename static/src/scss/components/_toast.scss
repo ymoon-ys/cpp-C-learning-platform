@@ -1,0 +1,284 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+// ============================================
+// Toast 提示消息组件
+// 成功/错误/警告/信息 四种类型
+// ============================================
+
+// ------------------------------------------
+// Toast 容器
+// ------------------------------------------
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: $z-toast + 9999;
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+
+  // 不同位置变体
+  &--top-left {
+    left: 20px;
+    right: auto;
+  }
+
+  &--top-center {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  &--bottom-right {
+    top: auto;
+    bottom: 20px;
+  }
+
+  &--bottom-center {
+    top: auto;
+    bottom: 20px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  &--center {
+    top: 50%;
+    right: 50%;
+    bottom: auto;
+    transform: translate(50%, -50%);
+  }
+}
+
+// ------------------------------------------
+// Toast 消息项
+// ------------------------------------------
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 20px;
+  border-radius: $radius-md;
+  margin-bottom: 10px;
+  box-shadow: $shadow-lg;
+  color: $text-white;
+  font-weight: $font-weight-medium;
+  font-size: $font-size-sm;
+  pointer-events: auto;
+  animation: toastSlideIn 0.3s ease forwards;
+  position: relative;
+  overflow: hidden;
+
+  // 进入动画
+  &.toast-enter {
+    animation: toastSlideIn 0.3s ease forwards;
+  }
+
+  // 退出动画
+  &.toast-exit {
+    animation: toastSlideOut 0.3s ease forwards;
+  }
+
+  // 类型颜色
+  &--success {
+    background: $success-gradient;
+
+    .toast__icon { color: #fff; }
+  }
+
+  &--error {
+    background: $danger-gradient;
+
+    .toast__icon { color: #fff; }
+  }
+
+  &--warning {
+    background: $warning-gradient;
+
+    .toast__icon { color: #fff; }
+  }
+
+  &--info {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+
+    .toast__icon { color: #fff; }
+  }
+
+  // 深色主题
+  &--dark {
+    background: #2d2d2d;
+    color: $text-white;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+}
+
+// Toast 图标
+.toast__icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+// Toast 内容
+.toast__message {
+  flex: 1;
+  line-height: 1.5;
+}
+
+// Toast 关闭按钮
+.toast__close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px;
+  margin-left: 8px;
+  flex-shrink: 0;
+  transition: color $transition-fast;
+  @include flex-center;
+  border-radius: $radius-sm;
+
+  &:hover {
+    color: $text-white;
+    background: rgba(255,255,255,0.15);
+  }
+}
+
+// Toast 进度条（自动关闭倒计时）
+.toast__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 0 0 0 $radius-md;
+  animation: toastProgress linear forwards;
+}
+
+// ------------------------------------------
+// 动画定义
+// ------------------------------------------
+
+// 从右侧滑入
+@keyframes toastSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// 向右侧滑出
+@keyframes toastSlideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+// 从上方滑入
+@keyframes toastSlideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// 进度条动画
+@keyframes toastProgress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+// 淡入淡出
+@keyframes toastFadeInOut {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  20%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  80%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+}
+
+// ------------------------------------------
+// 兼容旧版 Flash 消息样式
+// （与 login.html/register.html 中的 flash-messages 兼容）
+// ------------------------------------------
+.flash-messages {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: $z-toast + 9999;
+  max-width: 400px;
+}
+
+.flash-message {
+  padding: 15px 20px;
+  border-radius: $radius-md;
+  margin-bottom: 10px;
+  box-shadow: $shadow-lg;
+  animation: flashMessageIn 0.3s ease;
+  color: $text-white;
+  font-weight: $font-weight-medium;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &.success { background: $success-gradient; }
+  &.error   { background: $danger-gradient; }
+  &.warning { background: $warning-gradient; }
+  &.info    { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); }
+}
+
+@keyframes flashMessageIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// ------------------------------------------
+// 简易 Toast（居中顶部，自动消失）
+// ------------------------------------------
+.toast-simple {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 28px;
+  background: #333;
+  color: $text-white;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  z-index: $z-toast + 10000;
+  animation: toastFadeInOut 2s ease forwards;
+  box-shadow: $shadow-lg;
+  pointer-events: none;
+
+  &--success { background: #28a745; }
+  &--error   { background: #dc3545; }
+  &--warning { background: #fd9644; }
+  &--info    { background: #3498db; }
+}

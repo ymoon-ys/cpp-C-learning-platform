@@ -1,0 +1,746 @@
+﻿{% extends "base.html" %}
+
+{% block title %}{{ course.title }} - 课程管理 - C++学习平台{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1E293B;
+    }
+    
+    .course-cover-card {
+        background: white;
+        border-radius: 16px;
+        padding: 0;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .course-cover {
+        width: 100%;
+        height: 280px;
+        background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    
+    .course-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .course-cover i {
+        font-size: 72px;
+        color: white;
+        opacity: 0.6;
+    }
+    
+    .course-info-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0,0,0,0.8));
+        padding: 30px;
+        color: white;
+    }
+    
+    .course-info-overlay h2 {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0 0 10px 0;
+    }
+    
+    .course-info-overlay p {
+        font-size: 14px;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    .course-meta-bar {
+        background: white;
+        padding: 20px 30px;
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #64748B;
+    }
+    
+    .meta-item i {
+        color: #6C5CE7;
+        font-size: 16px;
+    }
+    
+    .meta-value {
+        color: #1E293B;
+        font-weight: 600;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 25px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F1F5F9;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title i {
+        color: #6C5CE7;
+    }
+    
+    .add-form {
+        background: #F8FAFC;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .chapter-item {
+        background: #fafafa;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-left: 4px solid #6C5CE7;
+        transition: all 0.3s;
+    }
+    
+    .chapter-item:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transform: translateX(4px);
+    }
+    
+    .chapter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .chapter-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1E293B;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .chapter-lesson-count {
+        background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .lesson-item {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s;
+    }
+    
+    .lesson-item:hover {
+        border-color: #6C5CE7;
+        box-shadow: 0 2px 8px rgba(108, 92, 231, 0.1);
+    }
+    
+    .lesson-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        flex: 1;
+    }
+    
+    .lesson-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .lesson-details h5 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1E293B;
+        margin: 0 0 5px 0;
+    }
+    
+    .lesson-details p {
+        font-size: 13px;
+        color: #64748B;
+        margin: 0 0 5px 0;
+        line-height: 1.5;
+    }
+    
+    .lesson-meta {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .lesson-badge {
+        background: #e9ecef;
+        color: #495057;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    
+    .lesson-duration {
+        font-size: 12px;
+        color: #94A3B8;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 50px;
+        background: #F8FAFC;
+        border-radius: 12px;
+    }
+    
+    .empty-state i {
+        font-size: 48px;
+        color: #94A3B8;
+        margin-bottom: 15px;
+    }
+    
+    .empty-state p {
+        color: #64748B;
+        margin: 0;
+        font-size: 15px;
+    }
+    
+    .materials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    
+    .material-card {
+        background: #fafafa;
+        border-radius: 12px;
+        padding: 20px;
+        border: 2px solid transparent;
+        transition: all 0.3s;
+    }
+    
+    .material-card:hover {
+        border-color: #6C5CE7;
+        box-shadow: 0 4px 12px rgba(108, 92, 231, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .material-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .material-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 20px;
+    }
+    
+    .material-info h5 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1E293B;
+        margin: 0 0 4px 0;
+    }
+    
+    .material-info p {
+        font-size: 12px;
+        color: #94A3B8;
+        margin: 0;
+    }
+    
+    .material-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+    
+    @media (max-width: 768px) {
+        .section-card {
+            padding: 20px;
+        }
+        
+        .course-meta-bar {
+            padding: 15px 20px;
+            gap: 15px;
+        }
+        
+        .materials-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="page-title">课程管理：{{ course.title }}</h1>
+        <div class="d-flex gap-3" style="display: flex; gap: 15px; align-items: center;">
+            <!-- 预览学生视图 - 蓝紫色 -->
+            <a href="{{ url_for('teacher.preview_as_student', course_id=course.id) }}"
+               target="_blank"
+               title="在新窗口中预览学生看到的页面效果"
+               style="text-decoration: none;">
+                <div style="background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%); color: white; padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(102,126,234,0.4); transition: all 0.3s; border: none;"
+                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(102,126,234,0.6)'"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(102,126,234,0.4)'">
+                    <i class="fas fa-eye" style="font-size: 18px;"></i>
+                    <span>预览学生视图</span>
+                </div>
+            </a>
+
+            <!-- 编辑器模式 - 青绿色 -->
+            <a href="{{ url_for('teacher.course_edit', course_id=course.id) }}"
+               style="text-decoration: none;">
+                <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(17,153,142,0.4); transition: all 0.3s; border: none;"
+                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(17,153,142,0.6)'"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(17,153,142,0.4)'">
+                    <i class="fas fa-edit" style="font-size: 18px;"></i>
+                    <span>编辑器模式</span>
+                </div>
+            </a>
+
+            <!-- 删除课程 - 红橙色 -->
+            <form action="{{ url_for('teacher.delete_course', course_id=course.id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('确定要删除这个课程吗？删除后所有章节、小节和资料也会被删除，此操作不可恢复！')">
+                <div onclick="this.parentElement.submit()"
+                     style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); color: white; padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(235,51,73,0.4); transition: all 0.3s; border: none;"
+                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(235,51,73,0.6)'"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(235,51,73,0.4)'">
+                    <i class="fas fa-trash" style="font-size: 18px;"></i>
+                    <span>删除课程</span>
+                </div>
+            </form>
+
+            <!-- 返回仪表盘 - 灰蓝色 -->
+            <a href="{{ url_for('teacher.dashboard') }}"
+               style="text-decoration: none;">
+                <div style="background: linear-gradient(135deg, #606c88 0%, #3f4c6b 100%); color: white; padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(96,108,136,0.4); transition: all 0.3s; border: none;"
+                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(96,108,136,0.6)'"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(96,108,136,0.4)'">
+                    <i class="fas fa-arrow-left" style="font-size: 18px;"></i>
+                    <span>返回仪表盘</span>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 课程封面和基本信息 -->
+<div class="course-cover-card">
+    <div class="course-cover" style="background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%);">
+        {% if course.cover %}
+        <img src="{{ course.cover }}" alt="{{ course.title }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <i class="fas fa-book" style="display: none;"></i>
+        {% else %}
+        <i class="fas fa-book"></i>
+        {% endif %}
+    </div>
+    <div class="course-info-overlay">
+        <h2>{{ course.title }}</h2>
+        {% if course.description %}
+        <p>{{ course.description }}</p>
+        {% endif %}
+    </div>
+    <div class="course-meta-bar">
+        <div class="meta-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span>创建时间：</span>
+            <span class="meta-value">{{ course.created_at[:10] if course.created_at else '未知' }}</span>
+        </div>
+        <div class="meta-item">
+            <i class="fas fa-book"></i>
+            <span>章节数：</span>
+            <span class="meta-value">{{ chapters|length }}</span>
+        </div>
+        <div class="meta-item">
+            <i class="fas fa-file-alt"></i>
+            <span>资料数：</span>
+            <span class="meta-value">{{ materials|length }}</span>
+        </div>
+        {% if course.category %}
+        <div class="meta-item">
+            <i class="fas fa-tag"></i>
+            <span>分类：</span>
+            <span class="meta-value">{{ course.category }}</span>
+        </div>
+        {% endif %}
+        {% if course.difficulty %}
+        <div class="meta-item">
+            <i class="fas fa-signal"></i>
+            <span>难度：</span>
+            <span class="meta-value">
+                {% if course.difficulty == 'beginner' %}入门级{% elif course.difficulty == 'intermediate' %}中级{% elif course.difficulty == 'advanced' %}高级{% else %}{{ course.difficulty }}{% endif %}
+            </span>
+        </div>
+        {% endif %}
+        {% if course.duration %}
+        <div class="meta-item">
+            <i class="fas fa-clock"></i>
+            <span>学时：</span>
+            <span class="meta-value">{{ course.duration }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 章节管理 -->
+<div class="section-card">
+    <h3 class="section-title">
+        <i class="fas fa-list"></i>
+        章节管理
+    </h3>
+    
+    <!-- 创建章节表单 -->
+    <form action="{{ url_for('teacher.create_chapter', course_id=course.id) }}" method="POST" class="add-form">
+        <div class="form-group mb-0">
+            <div class="row">
+                <div class="col-md-8">
+                    <input type="text" class="form-control" name="title" placeholder="请输入章节标题" required>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-plus"></i> 添加章节
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    <!-- 章节列表 -->
+    {% if chapters %}
+        {% for chapter in chapters %}
+        <div class="chapter-item">
+            <div class="chapter-header">
+                <h4 class="chapter-title">
+                    <i class="fas fa-folder-open"></i>
+                    {{ chapter.title }}
+                </h4>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="chapter-lesson-count">{{ chapter.lessons|length }} 小节</span>
+                    <button type="button" class="btn btn-sm btn-info" onclick="toggleChapterEdit({{ chapter.id }})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <form action="{{ url_for('teacher.delete_chapter', chapter_id=chapter.id) }}" method="POST" style="margin: 0;">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除这个章节吗？删除后所有小节也会被删除。')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- 章节编辑表单 -->
+            <div id="chapter-edit-{{ chapter.id }}" style="display: none; margin-bottom: 20px; padding: 15px; background: #fff9e6; border-radius: 10px;">
+                <form action="{{ url_for('teacher.edit_chapter', chapter_id=chapter.id) }}" method="POST">
+                    <div class="row">
+                        <div class="col-md-10">
+                            <input type="text" class="form-control" name="title" value="{{ chapter.title }}" required>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-save"></i> 保存
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- 添加小节按钮 -->
+            <div class="mb-3">
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleLessonForm({{ chapter.id }})">
+                    <i class="fas fa-plus-circle"></i> 添加小节
+                </button>
+            </div>
+            
+            <!-- 添加小节表单 -->
+            <div id="lesson-form-{{ chapter.id }}" style="display: none; margin-bottom: 20px; padding: 15px; background: #e8f4ff; border-radius: 10px;">
+                <form action="{{ url_for('teacher.create_lesson', chapter_id=chapter.id) }}" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" name="title" placeholder="小节标题" required>
+                    </div>
+                    <div class="mb-3">
+                        <textarea class="form-control" name="description" rows="2" placeholder="小节描述（可选）"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <select class="form-select" name="content_type" onchange="toggleContentType({{ chapter.id }}, this.value)">
+                            <option value="text">文本内容</option>
+                            <option value="video">视频</option>
+                            <option value="image">图片</option>
+                            <option value="document">文档</option>
+                        </select>
+                    </div>
+                    <div id="text-input-{{ chapter.id }}" class="mb-3">
+                        <textarea class="form-control" name="content" rows="4" placeholder="请输入文本内容"></textarea>
+                    </div>
+                    <div id="file-input-{{ chapter.id }}" class="mb-3" style="display: none;">
+                        <input type="file" class="form-control" name="content_file">
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" class="form-control" name="duration" placeholder="时长（如：10:30，可选）">
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleLessonForm({{ chapter.id }})">取消</button>
+                        <button type="submit" class="btn btn-success btn-sm ms-2">
+                            <i class="fas fa-plus"></i> 添加
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- 小节列表 -->
+            {% if chapter.lessons %}
+                {% for lesson in chapter.lessons %}
+                <div class="lesson-item">
+                    <div class="lesson-info">
+                        <div class="lesson-icon">
+                            <i class="fas {% if lesson.content_type == 'video' %}fa-video{% elif lesson.content_type == 'document' %}fa-file{% elif lesson.content_type == 'image' %}fa-image{% else %}fa-file-alt{% endif %}"></i>
+                        </div>
+                        <div class="lesson-details">
+                            <h5>{{ lesson.title }}</h5>
+                            {% if lesson.description %}
+                            <p>{{ lesson.description }}</p>
+                            {% endif %}
+                            <div class="lesson-meta">
+                                <span class="lesson-badge">
+                                    {% if lesson.content_type == 'video' %}视频{% elif lesson.content_type == 'document' %}文档{% elif lesson.content_type == 'image' %}图片{% else %}文本{% endif %}
+                                </span>
+                                {% if lesson.duration %}
+                                <span class="lesson-duration"><i class="fas fa-clock"></i> {{ lesson.duration }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-1">
+                        {% if lesson.content_path %}
+                        <a href="{{ lesson.content_path }}" class="btn btn-sm btn-info" target="_blank">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% endif %}
+                        <button type="button" class="btn btn-sm btn-primary" onclick="toggleLessonEdit({{ lesson.id }})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form action="{{ url_for('teacher.delete_lesson', lesson_id=lesson.id) }}" method="POST" style="margin: 0;">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除这个小节吗？')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- 小节编辑表单 -->
+                <div id="lesson-edit-{{ lesson.id }}" style="display: none; margin-bottom: 10px; padding: 15px; background: #fff3cd; border-radius: 10px;">
+                    <form action="{{ url_for('teacher.edit_lesson', lesson_id=lesson.id) }}" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" name="title" value="{{ lesson.title }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <textarea class="form-control" name="description" rows="2" placeholder="小节描述（可选）">{{ lesson.description }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <select class="form-select" name="content_type">
+                                <option value="text" {% if lesson.content_type == 'text' %}selected{% endif %}>文本内容</option>
+                                <option value="video" {% if lesson.content_type == 'video' %}selected{% endif %}>视频</option>
+                                <option value="image" {% if lesson.content_type == 'image' %}selected{% endif %}>图片</option>
+                                <option value="document" {% if lesson.content_type == 'document' %}selected{% endif %}>文档</option>
+                            </select>
+                        </div>
+                        {% if lesson.content %}
+                        <div class="mb-3">
+                            <textarea class="form-control" name="content" rows="4">{{ lesson.content }}</textarea>
+                        </div>
+                        {% endif %}
+                        {% if lesson.content_path %}
+                        <div class="mb-3">
+                            <div class="alert alert-info">
+                                {% if lesson.content_type == 'video' %}
+                                <video controls style="max-width: 100%; max-height: 150px;">
+                                    <source src="{{ lesson.content_path }}" type="video/mp4">
+                                </video>
+                                {% elif lesson.content_type == 'image' %}
+                                <img src="{{ lesson.content_path }}" style="max-width: 100%; max-height: 150px;">
+                                {% else %}
+                                <a href="{{ lesson.content_path }}" target="_blank">
+                                    <i class="fas fa-file"></i> {{ lesson.content_path.split('/')[-1] }}
+                                </a>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">如需更换文件，请选择新文件上传</small>
+                        </div>
+                        {% endif %}
+                        <div class="mb-3">
+                            <input type="file" class="form-control" name="content_file" placeholder="上传新文件（可选）">
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" class="form-control" name="duration" value="{{ lesson.duration }}" placeholder="时长（可选）">
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleLessonEdit({{ lesson.id }})">取消</button>
+                            <button type="submit" class="btn btn-primary btn-sm ms-2">
+                                <i class="fas fa-save"></i> 保存
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-file-video"></i>
+                <p>暂无小节，点击上方添加</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-book-open"></i>
+        <p>暂无章节，点击上方添加第一个章节</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 资料管理 -->
+<div class="section-card">
+    <h3 class="section-title">
+        <i class="fas fa-folder-open"></i>
+        资料管理
+    </h3>
+    
+    <!-- 上传资料表单 -->
+    <form action="{{ url_for('course.upload_material', course_id=course.id) }}" method="POST" enctype="multipart/form-data" class="add-form">
+        <div class="form-group mb-0">
+            <div class="row">
+                <div class="col-md-5">
+                    <input type="text" class="form-control" name="title" placeholder="资料名称" required>
+                </div>
+                <div class="col-md-5">
+                    <input type="file" class="form-control" name="material_file" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-upload"></i> 上传
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    <!-- 资料列表 -->
+    {% if materials %}
+    <div class="materials-grid">
+        {% for material in materials %}
+        <div class="material-card">
+            <div class="material-header">
+                <div class="material-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="material-info">
+                    <h5>{{ material.title }}</h5>
+                    <p>{{ material.type or '资料' }}</p>
+                </div>
+            </div>
+            <div class="material-actions">
+                <a href="{{ material.file_url }}" class="btn btn-sm btn-info" target="_blank">
+                    <i class="fas fa-eye"></i> 查看
+                </a>
+                <a href="{{ url_for('course.download_material', material_id=material.id) }}" class="btn btn-sm btn-secondary">
+                    <i class="fas fa-download"></i> 下载
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-folder"></i>
+        <p>暂无资料，点击上方上传资料</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleChapterEdit(chapterId) {
+    const form = document.getElementById('chapter-edit-' + chapterId);
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleLessonForm(chapterId) {
+    const form = document.getElementById('lesson-form-' + chapterId);
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleLessonEdit(lessonId) {
+    const form = document.getElementById('lesson-edit-' + lessonId);
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleContentType(chapterId, type) {
+    const textInput = document.getElementById('text-input-' + chapterId);
+    const fileInput = document.getElementById('file-input-' + chapterId);
+    
+    if (type === 'text') {
+        textInput.style.display = 'block';
+        fileInput.style.display = 'none';
+    } else {
+        textInput.style.display = 'none';
+        fileInput.style.display = 'block';
+    }
+}
+</script>
+{% endblock %}
