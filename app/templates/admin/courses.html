@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}课程管理 - C++学习平台{% endblock %}
 
@@ -180,7 +180,7 @@
             <i class="fas fa-search"></i> 搜索
         </button>
     </div>
-    <select class="filter-select" style="padding: 10px 15px; border: 2px solid #E2E8F0; border-radius: 8px; background: white;" onchange="filterByStatus()">
+    <select class="filter-select" style="padding: 10px 15px; border: 2px solid #E2E8F0; border-radius: 8px; background: white;" onchange="filterByStatus(event)">
         <option value="">全部状态</option>
         <option value="active">已发布</option>
         <option value="inactive">未发布</option>
@@ -196,12 +196,12 @@
         <div class="course-content">
             <h3 class="course-title">{{ course.title }}</h3>
             <div class="course-meta">
-                <span><i class="fas fa-user"></i> {{ course.teacher.username if course.teacher else '未知' }}</span>
-                <span><i class="fas fa-users"></i> {{ course.students|length if course.students else 0 }} 学生</span>
+                <span><i class="fas fa-user"></i> 教师ID: {{ course.get('teacher_id', '未知') }}</span>
+                <span><i class="fas fa-users"></i> 暂无学生数据</span>
             </div>
             <div style="margin-bottom: 15px;">
-                <span class="status-badge status-{{ 'active' if course.is_published else 'inactive' }}">
-                    {{ '已发布' if course.is_published else '未发布' }}
+                <span class="status-badge status-{{ 'active' if course.get('status') == 'published' else 'inactive' }}">
+                    {{ '已发布' if course.get('status') == 'published' else '未发布' }}
                 </span>
             </div>
             <div class="course-actions">
@@ -234,7 +234,7 @@ function searchCourses() {
     window.location.href = `{{ url_for('admin.courses') }}?search=${search}`;
 }
 
-function filterByStatus() {
+function filterByStatus(event) {
     const search = document.getElementById('searchInput').value;
     const status = event.target.value;
     window.location.href = `{{ url_for('admin.courses') }}?search=${search}&status=${status}`;

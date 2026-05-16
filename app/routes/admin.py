@@ -18,7 +18,9 @@ def dashboard():
         'total_users': db.count('users'),
         'total_courses': db.count('courses'),
         'total_teachers': db.count('users', {'role': 'teacher'}),
-        'total_students': db.count('users', {'role': 'student'})
+        'total_students': db.count('users', {'role': 'student'}),
+        'total_problems': len(db.read_table('problems')),
+        'total_posts': len(db.read_table('discussions'))
     }
     
     users = User.get_all()
@@ -88,13 +90,42 @@ def delete_course(course_id):
     flash('课程已删除', 'success')
     return redirect(url_for('admin.courses'))
 
-@admin_bp.route('/settings')
+@admin_bp.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
     if current_user.role != 'admin':
         flash('您没有权限访问此页面', 'error')
         return redirect(url_for('student.dashboard'))
-    return render_template('admin/settings.html',
+
+    from flask import current_app
+    db = current_app.db
+
+    if request.method == 'POST':
+        setting_keys = ['site_name', 'site_description', 'contact_email',
+                        'allow_registration', 'email_verification', 'send_notifications']
+        for key in setting_keys:
+            value = request.form.get(key, '')
+            if key in ('allow_registration', 'email_verification', 'send_notifications'):
+                value = '1' if request.form.get(key) else '0'
+            existing = db.find_by_field('site_settings', 'setting_key', key)
+            if existing:
+                db.update('site_settings', existing[0]['id'], {'setting_value': value})
+            else:
+                db.insert('site_settings', {'setting_key': key, 'setting_value': value})
+        flash('设置已保存', 'success')
+        return redirect(url_for('admin.settings'))
+
+    settings_rows = db.read_table('site_settings')
+    settings = type('obj', (object,), {})()
+    for row in settings_rows:
+        key = row['setting_key']
+        value = row['setting_value']
+        if value in ('1', '0'):
+            setattr(settings, key, value == '1')
+        else:
+            setattr(settings, key, value)
+
+    return render_template('admin/settings.html', settings=settings,
                          consecutive_days=get_consecutive_learning_days(current_user))
 
 @admin_bp.route('/problems')
@@ -424,6 +455,8 @@ def import_logs():
     
     for log in logs:
         log.admin = User.get_by_id(log.admin_id)
+        if log.admin is None:
+            log.admin = type('obj', (object,), {'username': '未知用户'})()
     
     return render_template('admin/import_logs.html', logs=logs,
                          consecutive_days=get_consecutive_learning_days(current_user))

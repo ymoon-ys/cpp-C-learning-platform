@@ -11,59 +11,189 @@ import re
 
 class RecommendationEngine:
     """推荐引擎"""
-    
-    # 知识点分类和难度
-    KNOWLEDGE_TOPICS = {
-        '基础语法': ['Hello World', '变量', '数据类型', '运算符', '输入输出'],
-        '控制结构': ['循环', '条件语句', 'switch', 'break', 'continue'],
-        '函数': ['函数定义', '参数传递', '递归', '函数重载'],
-        '数组和指针': ['数组', '指针', '引用', '动态内存'],
-        '面向对象': ['类', '继承', '多态', '封装', '构造函数', '析构函数'],
-        'STL': ['vector', 'map', 'set', 'stack', 'queue', '迭代器'],
-        '高级特性': ['模板', '异常处理', '文件操作', '命名空间', 'lambda'],
-        '数据结构': ['链表', '栈和队列', '二叉树', '哈希表', '图'],
-        '算法': ['排序', '查找', '递归', '动态规划', '贪心算法']
-    }
-    
-    # 推荐资源库
-    RESOURCES = {
-        '基础语法': [
-            {'type': 'course', 'title': 'C++基础入门', 'description': '学习C++基本语法和概念'},
-            {'type': 'practice', 'title': '基础练习题', 'description': '变量、数据类型和运算符练习'}
-        ],
-        '控制结构': [
-            {'type': 'course', 'title': '流程控制', 'description': '掌握if、for、while等控制语句'},
-            {'type': 'practice', 'title': '循环练习', 'description': '各种循环结构的练习题'}
-        ],
-        '函数': [
-            {'type': 'course', 'title': '函数与递归', 'description': '函数定义、调用和递归思想'},
-            {'type': 'practice', 'title': '函数练习题', 'description': '函数定义和递归算法练习'}
-        ],
-        '数组和指针': [
-            {'type': 'course', 'title': '指针与内存', 'description': '深入理解指针和内存管理'},
-            {'type': 'practice', 'title': '指针练习', 'description': '指针操作和动态内存分配'}
-        ],
-        '面向对象': [
-            {'type': 'course', 'title': '面向对象编程', 'description': '类、对象、继承和多态'},
-            {'type': 'practice', 'title': 'OOP练习', 'description': '类和对象的实践练习'}
-        ],
-        'STL': [
-            {'type': 'course', 'title': 'STL标准库', 'description': '掌握vector、map等容器'},
-            {'type': 'practice', 'title': 'STL练习', 'description': 'STL容器的使用练习'}
-        ],
-        '高级特性': [
-            {'type': 'course', 'title': 'C++高级特性', 'description': '模板、异常、文件操作'},
-            {'type': 'practice', 'title': '高级练习', 'description': '模板和异常处理练习'}
-        ],
-        '数据结构': [
-            {'type': 'course', 'title': '数据结构基础', 'description': '链表、栈、队列、树'},
-            {'type': 'practice', 'title': '数据结构练习', 'description': '实现各种数据结构'}
-        ],
-        '算法': [
-            {'type': 'course', 'title': '算法基础', 'description': '排序、查找、递归、DP'},
-            {'type': 'practice', 'title': '算法练习', 'description': '经典算法题目练习'}
-        ]
-    }
+
+    _topics_cache = None
+    _resources_cache = None
+    _descriptions_cache = None
+    _time_cache = None
+
+    @classmethod
+    def _get_db_connection(cls):
+        from flask import current_app
+        db = current_app.config.get('DATABASE')
+        if db:
+            conn = db.get_connection()
+            return conn, db
+        return None, None
+
+    @classmethod
+    def _is_mysql(cls, db):
+        from app.mysql_database import MySQLDatabase
+        return isinstance(db, MySQLDatabase)
+
+    @classmethod
+    def get_knowledge_topics(cls):
+        if cls._topics_cache is not None:
+            return cls._topics_cache
+
+        topics = {}
+        conn, db = cls._get_db_connection()
+        if conn and db:
+            try:
+                is_mysql = cls._is_mysql(db)
+                cursor = conn.cursor(dictionary=True) if is_mysql else conn.cursor()
+                cursor.execute('SELECT category, keyword, description, estimated_time FROM knowledge_topics WHERE is_active = 1 ORDER BY category, sort_order')
+                rows = cursor.fetchall()
+                for row in rows:
+                    if is_mysql:
+                        cat = row['category']
+                        keyword = row['keyword']
+                        desc = row['description']
+                        est_time = row['estimated_time']
+                    else:
+                        cat = row['category']
+                        keyword = row['keyword']
+                        desc = row['description']
+                        est_time = row['estimated_time']
+                    if cat not in topics:
+                        topics[cat] = []
+                    topics[cat].append(keyword)
+                    if not hasattr(cls, '_desc_temp'):
+                        cls._desc_temp = {}
+                        cls._time_temp = {}
+                    cls._desc_temp[cat] = desc
+                    cls._time_temp[cat] = est_time
+                cursor.close()
+                cls._topics_cache = topics
+                if hasattr(cls, '_desc_temp'):
+                    cls._descriptions_cache = cls._desc_temp
+                    cls._time_cache = cls._time_temp
+                    del cls._desc_temp
+                    del cls._time_temp
+            except Exception as e:
+                print(f'[WARN] Failed to load knowledge topics from DB: {e}')
+                topics = cls._get_default_topics()
+                cls._topics_cache = topics
+            finally:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+        else:
+            topics = cls._get_default_topics()
+            cls._topics_cache = topics
+
+        return cls._topics_cache
+
+    @classmethod
+    def _get_default_topics(cls):
+        return {
+            '基础语法': ['Hello World', '变量', '数据类型', '运算符', '输入输出'],
+            '控制结构': ['循环', '条件语句', 'switch', 'break', 'continue'],
+            '函数': ['函数定义', '参数传递', '递归', '函数重载'],
+            '数组和指针': ['数组', '指针', '引用', '动态内存'],
+            '面向对象': ['类', '继承', '多态', '封装', '构造函数', '析构函数'],
+            'STL': ['vector', 'map', 'set', 'stack', 'queue', '迭代器'],
+            '高级特性': ['模板', '异常处理', '文件操作', '命名空间', 'lambda'],
+            '数据结构': ['链表', '栈和队列', '二叉树', '哈希表', '图'],
+            '算法': ['排序', '查找', '递归', '动态规划', '贪心算法']
+        }
+
+    @classmethod
+    def get_resources(cls):
+        if cls._resources_cache is not None:
+            return cls._resources_cache
+
+        resources = {}
+        conn, db = cls._get_db_connection()
+        if conn and db:
+            try:
+                is_mysql = cls._is_mysql(db)
+                cursor = conn.cursor(dictionary=True) if is_mysql else conn.cursor()
+                cursor.execute('SELECT category, resource_type, title, description FROM learning_resources WHERE is_active = 1 ORDER BY category, sort_order')
+                rows = cursor.fetchall()
+                for row in rows:
+                    if is_mysql:
+                        cat = row['category']
+                        rtype = row['resource_type']
+                        title = row['title']
+                        desc = row['description']
+                    else:
+                        cat = row['category']
+                        rtype = row['resource_type']
+                        title = row['title']
+                        desc = row['description']
+                    if cat not in resources:
+                        resources[cat] = []
+                    resources[cat].append({
+                        'type': rtype,
+                        'title': title,
+                        'description': desc
+                    })
+                cursor.close()
+                cls._resources_cache = resources
+            except Exception as e:
+                print(f'[WARN] Failed to load learning resources from DB: {e}')
+                resources = cls._get_default_resources()
+                cls._resources_cache = resources
+            finally:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+        else:
+            resources = cls._get_default_resources()
+            cls._resources_cache = resources
+
+        return cls._resources_cache
+
+    @classmethod
+    def _get_default_resources(cls):
+        return {
+            '基础语法': [
+                {'type': 'course', 'title': 'C++基础入门', 'description': '学习C++基本语法和概念'},
+                {'type': 'practice', 'title': '基础练习题', 'description': '变量、数据类型和运算符练习'}
+            ],
+            '控制结构': [
+                {'type': 'course', 'title': '流程控制', 'description': '掌握if、for、while等控制语句'},
+                {'type': 'practice', 'title': '循环练习', 'description': '各种循环结构的练习题'}
+            ],
+            '函数': [
+                {'type': 'course', 'title': '函数与递归', 'description': '函数定义、调用和递归思想'},
+                {'type': 'practice', 'title': '函数练习题', 'description': '函数定义和递归算法练习'}
+            ],
+            '数组和指针': [
+                {'type': 'course', 'title': '指针与内存', 'description': '深入理解指针和内存管理'},
+                {'type': 'practice', 'title': '指针练习', 'description': '指针操作和动态内存分配'}
+            ],
+            '面向对象': [
+                {'type': 'course', 'title': '面向对象编程', 'description': '类、对象、继承和多态'},
+                {'type': 'practice', 'title': 'OOP练习', 'description': '类和对象的实践练习'}
+            ],
+            'STL': [
+                {'type': 'course', 'title': 'STL标准库', 'description': '掌握vector、map等容器'},
+                {'type': 'practice', 'title': 'STL练习', 'description': 'STL容器的使用练习'}
+            ],
+            '高级特性': [
+                {'type': 'course', 'title': 'C++高级特性', 'description': '模板、异常、文件操作'},
+                {'type': 'practice', 'title': '高级练习', 'description': '模板和异常处理练习'}
+            ],
+            '数据结构': [
+                {'type': 'course', 'title': '数据结构基础', 'description': '链表、栈、队列、树'},
+                {'type': 'practice', 'title': '数据结构练习', 'description': '实现各种数据结构'}
+            ],
+            '算法': [
+                {'type': 'course', 'title': '算法基础', 'description': '排序、查找、递归、DP'},
+                {'type': 'practice', 'title': '算法练习', 'description': '经典算法题目练习'}
+            ]
+        }
+
+    @classmethod
+    def invalidate_cache(cls):
+        cls._topics_cache = None
+        cls._resources_cache = None
+        cls._descriptions_cache = None
+        cls._time_cache = None
     
     @classmethod
     def analyze_user_progress(cls, user_id):
@@ -79,7 +209,7 @@ class RecommendationEngine:
         
         # 统计知识点掌握情况
         topic_stats = {topic: {'attempted': 0, 'solved': 0, 'questions': []} 
-                      for topic in cls.KNOWLEDGE_TOPICS}
+                      for topic in cls.get_knowledge_topics()}
         
         # 分析提交记录
         for submission in submissions:
@@ -87,7 +217,7 @@ class RecommendationEngine:
             if problem:
                 # 从题目标题和描述中提取知识点
                 problem_text = f"{problem.title} {problem.description}"
-                for topic, keywords in cls.KNOWLEDGE_TOPICS.items():
+                for topic, keywords in cls.get_knowledge_topics().items():
                     for keyword in keywords:
                         if keyword in problem_text:
                             topic_stats[topic]['attempted'] += 1
@@ -98,7 +228,7 @@ class RecommendationEngine:
         # 分析AI对话历史
         for conversation in conversations:
             question = conversation.question
-            for topic, keywords in cls.KNOWLEDGE_TOPICS.items():
+            for topic, keywords in cls.get_knowledge_topics().items():
                 for keyword in keywords:
                     if keyword in question:
                         topic_stats[topic]['questions'].append(question)
@@ -148,8 +278,8 @@ class RecommendationEngine:
         recommendations = []
         for weak_topic in weak_topics:
             topic_name = weak_topic['topic']
-            if topic_name in cls.RESOURCES:
-                resources = cls.RESOURCES[topic_name]
+            if topic_name in cls.get_resources():
+                resources = cls.get_resources()[topic_name]
                 recommendations.append({
                     'topic': topic_name,
                     'reason': cls._generate_reason(weak_topic),
@@ -293,14 +423,15 @@ class RecommendationEngine:
                 'topic': topic,
                 'description': cls._get_topic_description(topic),
                 'estimated_time': cls._estimate_learning_time(topic),
-                'resources': cls.RESOURCES.get(topic, [])
+                'resources': cls.get_resources().get(topic, [])
             })
         
         return learning_path
     
     @classmethod
     def _get_topic_description(cls, topic):
-        """获取知识点描述"""
+        if cls._descriptions_cache is not None and topic in cls._descriptions_cache:
+            return cls._descriptions_cache[topic]
         descriptions = {
             '基础语法': '掌握C++的基本语法，包括变量、数据类型、运算符等',
             '控制结构': '学习条件语句和循环语句，控制程序执行流程',
@@ -316,7 +447,8 @@ class RecommendationEngine:
     
     @classmethod
     def _estimate_learning_time(cls, topic):
-        """估计学习时间"""
+        if cls._time_cache is not None and topic in cls._time_cache:
+            return cls._time_cache[topic]
         time_estimates = {
             '基础语法': '2-3天',
             '控制结构': '3-5天',
@@ -333,56 +465,125 @@ class RecommendationEngine:
 
 class CodeAnalyzer:
     """代码分析器"""
-    
-    COMMON_ERRORS = {
-        'segmentation fault': {
-            'pattern': r'Segmentation fault|段错误',
-            'cause': '访问了非法内存地址',
-            'solutions': [
-                '检查指针是否初始化',
-                '确保不要访问已释放的内存',
-                '检查数组下标是否越界',
-                '使用调试器定位问题'
-            ]
-        },
-        'memory leak': {
-            'pattern': r'memory leak|内存泄漏',
-            'cause': '动态分配的内存未释放',
-            'solutions': [
-                '使用智能指针管理内存',
-                '确保每个new都有对应的delete',
-                '使用RAII模式',
-                '使用valgrind检测内存泄漏'
-            ]
-        },
-        'undefined reference': {
-            'pattern': r'undefined reference|未定义引用',
-            'cause': '函数声明但未定义，或缺少库文件',
-            'solutions': [
-                '检查函数是否有定义',
-                '确保所有源文件都被编译',
-                '检查链接的库文件',
-                '检查函数签名是否匹配'
-            ]
-        },
-        'array bounds': {
-            'pattern': r'array subscript|数组越界',
-            'cause': '访问了数组范围之外的元素',
-            'solutions': [
-                '检查数组下标范围',
-                '使用STL容器的at()方法',
-                '添加边界检查',
-                '考虑使用动态数组'
-            ]
+
+    _errors_cache = None
+
+    @classmethod
+    def _get_db_connection(cls):
+        from flask import current_app
+        db = current_app.config.get('DATABASE')
+        if db:
+            conn = db.get_connection()
+            return conn, db
+        return None, None
+
+    @classmethod
+    def _is_mysql(cls, db):
+        from app.mysql_database import MySQLDatabase
+        return isinstance(db, MySQLDatabase)
+
+    @classmethod
+    def get_common_errors(cls):
+        if cls._errors_cache is not None:
+            return cls._errors_cache
+
+        errors = {}
+        conn, db = cls._get_db_connection()
+        if conn and db:
+            try:
+                import json
+                is_mysql = cls._is_mysql(db)
+                cursor = conn.cursor(dictionary=True) if is_mysql else conn.cursor()
+                cursor.execute('SELECT error_type, pattern, cause, solutions FROM common_errors WHERE is_active = 1 ORDER BY sort_order')
+                rows = cursor.fetchall()
+                for row in rows:
+                    if is_mysql:
+                        etype = row['error_type']
+                        pattern = row['pattern']
+                        cause = row['cause']
+                        solutions = row['solutions']
+                    else:
+                        etype = row['error_type']
+                        pattern = row['pattern']
+                        cause = row['cause']
+                        solutions = row['solutions']
+                    errors[etype] = {
+                        'pattern': pattern,
+                        'cause': cause,
+                        'solutions': json.loads(solutions) if isinstance(solutions, str) else solutions
+                    }
+                cursor.close()
+                cls._errors_cache = errors
+            except Exception as e:
+                print(f'[WARN] Failed to load common errors from DB: {e}')
+                errors = cls._get_default_errors()
+                cls._errors_cache = errors
+            finally:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+        else:
+            errors = cls._get_default_errors()
+            cls._errors_cache = errors
+
+        return cls._errors_cache
+
+    @classmethod
+    def _get_default_errors(cls):
+        return {
+            'segmentation fault': {
+                'pattern': r'Segmentation fault|段错误',
+                'cause': '访问了非法内存地址',
+                'solutions': [
+                    '检查指针是否初始化',
+                    '确保不要访问已释放的内存',
+                    '检查数组下标是否越界',
+                    '使用调试器定位问题'
+                ]
+            },
+            'memory leak': {
+                'pattern': r'memory leak|内存泄漏',
+                'cause': '动态分配的内存未释放',
+                'solutions': [
+                    '使用智能指针管理内存',
+                    '确保每个new都有对应的delete',
+                    '使用RAII模式',
+                    '使用valgrind检测内存泄漏'
+                ]
+            },
+            'undefined reference': {
+                'pattern': r'undefined reference|未定义引用',
+                'cause': '函数声明但未定义，或缺少库文件',
+                'solutions': [
+                    '检查函数是否有定义',
+                    '确保所有源文件都被编译',
+                    '检查链接的库文件',
+                    '检查函数签名是否匹配'
+                ]
+            },
+            'array bounds': {
+                'pattern': r'array subscript|数组越界',
+                'cause': '访问了数组范围之外的元素',
+                'solutions': [
+                    '检查数组下标范围',
+                    '使用STL容器的at()方法',
+                    '添加边界检查',
+                    '考虑使用动态数组'
+                ]
+            }
         }
-    }
+
+    @classmethod
+    def invalidate_cache(cls):
+        cls._errors_cache = None
     
     @classmethod
     def analyze_error(cls, error_message):
         """分析错误信息并提供解决方案"""
         error_message = error_message.lower()
         
-        for error_type, error_info in cls.COMMON_ERRORS.items():
+        for error_type, error_info in cls.get_common_errors().items():
             if re.search(error_info['pattern'], error_message, re.IGNORECASE):
                 return {
                     'error_type': error_type,

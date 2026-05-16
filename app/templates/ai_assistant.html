@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿{% extends "base.html" %}
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿{% extends "base.html" %}
 
 {% block title %}AI编程助手 - C++学习平台{% endblock %}
 
@@ -760,7 +760,7 @@
         <!-- 消息列表 -->
         <div class="chat-messages" id="chatMessages">
             <div class="message ai">
-                <img src="{{ url_for('static', filename='images/ai-avatar.png') }}" alt="AI" class="message-avatar" onerror="this.style.display='none'">
+                <div class="message-avatar" style="background:linear-gradient(135deg,#6C5CE7,#7C3AED);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;border-radius:50%;">AI</div>
                 <div class="message-bubble">
                     你好！我是你的 C++ 编程助手。我可以帮你：
                     <br><br>
@@ -974,8 +974,8 @@
                 <div>
                     <label style="font-size: 13px; color: #555; display: block; margin-bottom: 4px;">默认模型</label>
                     <select id="settingModel" onchange="switchModel(this.value)" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
-                        <option value="minimax">Minimax M2.7 (云端)</option>
-                        <option value="ollama">Ollama 本地模型</option>
+                        <option value="minimax" selected>CAIgpt 云端版 (Minimax)</option>
+                        <option value="ollama">CAIgpt 本地版 (Ollama)</option>
                         <option value="qwen">通义千问</option>
                     </select>
                 </div>
@@ -1035,6 +1035,7 @@
 let editor = null;
 let uploadedFiles = [];
 let isStreaming = false;
+let currentSessionId = null;
 
 // ===== 初始化 Monaco Editor =====
 require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }});
@@ -1542,7 +1543,7 @@ async function loadSettingsToForm() {
 
             // 填充表单
             document.getElementById('settingTheme').value = prefs.theme || 'light';
-            document.getElementById('settingModel').value = prefs.model_preference || 'caigpt';
+            document.getElementById('settingModel').value = prefs.model_preference || 'minimax';
             document.getElementById('settingFontSize').value = prefs.editor_font_size || 14;
             document.getElementById('settingWordWrap').value = prefs.editor_word_wrap || 'on';
             document.getElementById('settingMinimap').value = prefs.minimap_enabled ? 'on' : 'off';
@@ -1696,7 +1697,7 @@ window.resetAllSettings = async function() {
 
             // 重置表单
             document.getElementById('settingTheme').value = 'light';
-            document.getElementById('settingModel').value = 'caigpt';
+            document.getElementById('settingModel').value = 'minimax';
             document.getElementById('settingFontSize').value = 14;
             document.getElementById('settingWordWrap').value = 'on';
             document.getElementById('settingMinimap').value = 'on';
@@ -2032,7 +2033,8 @@ async function sendMessage() {
     // 准备请求数据
     const formData = new FormData();
     formData.append('question', question);
-    formData.append('model', 'caigpt');
+    const selectedModel = document.getElementById('settingModel') ? document.getElementById('settingModel').value : 'minimax';
+    formData.append('model', selectedModel);
 
     uploadedFiles.forEach((file, index) => {
         formData.append(`file_${index}`, file.file);
@@ -2116,7 +2118,7 @@ function addMessageToChat(type, content, isStreaming = false, customHtml = null)
     if (type === 'user') {
         avatarHtml = `<img src="{{ current_user.avatar or '' }}" alt="用户" class="message-avatar" onerror="this.style.display='none'">`;
     } else if (type === 'ai') {
-        avatarHtml = `<img src="{{ url_for('static', filename='images/ai-avatar.png') }}" alt="AI" class="message-avatar" onerror="this.style.display='none'">`;
+        avatarHtml = `<div class="message-avatar" style="background:linear-gradient(135deg,#6C5CE7,#7C3AED);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;border-radius:50%;">AI</div>`;
     }
 
     let bubbleContent = customHtml || (isStreaming ? '<div class="typing-indicator"><span></span><span></span><span></span></div>' : formatMarkdown(content));
@@ -2227,11 +2229,6 @@ function extractAllCodeBlocks(markdown) {
     }
 
     return codes;
-}
-
-function extractCodeFromMarkdown(markdown) {
-    const codes = extractAllCodeBlocks(markdown);
-    return codes[0] || '';
 }
 
 // 插入代码到编辑器（带反馈）

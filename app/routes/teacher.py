@@ -233,7 +233,7 @@ def save_lesson_content(lesson_id):
     
     # 支持JSON和FormData两种格式
     if request.is_json:
-        data = request.get_json()
+        data = request.get_json() or {}
         title = data.get('title', lesson.get('title'))
         description = data.get('description', lesson.get('description', ''))
         content = data.get('content', lesson.get('content', ''))
@@ -552,25 +552,51 @@ def upload_file():
     file_content = file.read()
     if len(file_content) > max_size:
         return jsonify({'success': False, 'error': '文件大小超过限制(50MB)'})
-    
+
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     unique_filename = f"{timestamp}_{filename}"
-    
+
     save_path = os.path.join(current_app.config['UPLOAD_FOLDER'], folder)
     os.makedirs(save_path, exist_ok=True)
-    
+
     with open(os.path.join(save_path, unique_filename), 'wb') as f:
         f.write(file_content)
-    
+
     url = f"/uploads/{folder}/{unique_filename}"
-    
-    return jsonify({
+
+    response_data = {
         'success': True,
         'url': url,
         'filename': filename,
         'file_type': file_type,
         'message': '文件上传成功'
-    })
+    }
+
+    if file_type in ['pdf', 'document', 'image']:
+        import base64
+        base64_data = base64.b64encode(file_content).decode('utf-8')
+        mime_types = {
+            'pdf': 'application/pdf',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'ppt': 'application/vnd.ms-powerpoint',
+            'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'xls': 'application/vnd.ms-excel',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'txt': 'text/plain',
+            'md': 'text/markdown',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'webp': 'image/webp',
+            'svg': 'image/svg+xml'
+        }
+        mime_type = mime_types.get(file_ext, 'application/octet-stream')
+        response_data['base64'] = base64_data
+        response_data['mime_type'] = mime_type
+
+    return jsonify(response_data)
 
 @teacher_bp.route('/courses/create', methods=['GET', 'POST'])
 @login_required
@@ -730,7 +756,13 @@ def create_lesson(chapter_id):
     from flask import current_app
     db = current_app.db
     chapter = db.find_by_id('chapters', chapter_id)
+    if not chapter:
+        flash('章节不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     course = db.find_by_id('courses', chapter['course_id'])
+    if not course:
+        flash('课程不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     
     if int(course['teacher_id']) != current_user.id:
         flash('您没有权限执行此操作', 'error')
@@ -829,7 +861,13 @@ def edit_chapter(chapter_id):
     from flask import current_app
     db = current_app.db
     chapter = db.find_by_id('chapters', chapter_id)
+    if not chapter:
+        flash('章节不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     course = db.find_by_id('courses', chapter['course_id'])
+    if not course:
+        flash('课程不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     
     if int(course['teacher_id']) != current_user.id:
         flash('您没有权限执行此操作', 'error')
@@ -851,13 +889,18 @@ def delete_chapter(chapter_id):
     from flask import current_app
     db = current_app.db
     chapter = db.find_by_id('chapters', chapter_id)
+    if not chapter:
+        flash('章节不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     course = db.find_by_id('courses', chapter['course_id'])
+    if not course:
+        flash('课程不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     
     if int(course['teacher_id']) != current_user.id:
         flash('您没有权限执行此操作', 'error')
         return redirect(url_for('teacher.dashboard'))
     
-    # 删除章节下的所有小节
     lessons = db.find_all('lessons', {'chapter_id': chapter_id})
     for lesson in lessons:
         db.delete('lessons', lesson['id'])
@@ -876,8 +919,17 @@ def edit_lesson(lesson_id):
     from flask import current_app
     db = current_app.db
     lesson = db.find_by_id('lessons', lesson_id)
+    if not lesson:
+        flash('小节不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     chapter = db.find_by_id('chapters', lesson['chapter_id'])
+    if not chapter:
+        flash('章节不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     course = db.find_by_id('courses', chapter['course_id'])
+    if not course:
+        flash('课程不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     
     if int(course['teacher_id']) != current_user.id:
         flash('您没有权限执行此操作', 'error')
@@ -948,8 +1000,17 @@ def delete_lesson(lesson_id):
     from flask import current_app
     db = current_app.db
     lesson = db.find_by_id('lessons', lesson_id)
+    if not lesson:
+        flash('小节不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     chapter = db.find_by_id('chapters', lesson['chapter_id'])
+    if not chapter:
+        flash('章节不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     course = db.find_by_id('courses', chapter['course_id'])
+    if not course:
+        flash('课程不存在', 'error')
+        return redirect(url_for('teacher.dashboard'))
     
     if int(course['teacher_id']) != current_user.id:
         flash('您没有权限执行此操作', 'error')
@@ -1111,8 +1172,9 @@ def batch_create_assignment():
         flash('请选择题目', 'error')
         return redirect(url_for('teacher.assignments'))
     
-    problem_ids = [int(id) for id in problem_ids_str.split(',')]
+    problem_ids = [int(id.strip()) for id in problem_ids_str.split(',') if id.strip()]
     
+    success_count = 0
     for problem_id in problem_ids:
         problem = db.find_by_id('problems', problem_id)
         if not problem:
@@ -1128,8 +1190,9 @@ def batch_create_assignment():
             end_time=end_time
         )
         assignment.save()
+        success_count += 1
     
-    flash(f'成功布置 {len(problem_ids)} 个题目', 'success')
+    flash(f'成功布置 {success_count} 个题目', 'success')
     return redirect(url_for('teacher.assignments'))
 
 @teacher_bp.route('/add-exercise')
@@ -1371,6 +1434,8 @@ def selected_problems():
     
     for selected in selected_list:
         selected.problem = Problem.get_by_id(selected.problem_id)
+        if selected.problem is None:
+            continue
     
     return render_template('teacher/selected_problems.html',
                           selected_list=selected_list,

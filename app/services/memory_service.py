@@ -332,6 +332,8 @@ class MemoryService:
         self._extract_mistake_memories(user_message, ai_response, memories_to_add)
         self._extract_weakness_memories(user_message, ai_response, memories_to_add)
         self._extract_preference_memories(user_message, memories_to_add)
+        self._extract_progress_memories(user_message, ai_response, memories_to_add)
+        self._extract_note_memories(user_message, ai_response, memories_to_add)
 
         for mem in memories_to_add:
             mem_id = self.add_memory(
@@ -435,13 +437,13 @@ class MemoryService:
             '继承': '面向对象继承',
             '多态': '多态概念',
             '虚函数': '虚函数机制',
-            'STL': 'STL使用',
+            'stl': 'STL使用',
             '引用': '引用与指针区别',
         }
 
         user_lower = user_message.lower()
         for pattern, weakness in weakness_indicators.items():
-            if re.search(pattern, user_message):
+            if re.search(pattern, user_lower):
                 existing_weakness = any(
                     m['type'] == 'weakness' and weakness in m['content']
                     for m in memories
@@ -471,6 +473,103 @@ class MemoryService:
                         'content': f"学习偏好: 喜欢{content}方式学习",
                         'importance': 5,
                         'tags': ['auto-extract', 'preference']
+                    })
+
+    def _extract_progress_memories(self, user_message: str, ai_response: str, memories: list):
+        progress_patterns = [
+            (r'我(?:已经|已)(?:学完|完成|做完|做完|刷完|看完)(?:了|啦)?(.+?)[。，！？]', 8),
+            (r'我(?:正在|现在在|准备)(?:学|做|看|刷|写)(.+?)[。，！？]', 6),
+            (r'第(?:一|二|三|四|五|六|七|八|九|十|\d+)(?:章|节|课|部分)(.+?)(?:学完|完成|做完)', 7),
+            (r'我(?:刚|刚刚)(?:学|做|看|写)(?:完|了)(.+?)[。，！？]', 7),
+            (r'(?:进入|开始)(?:了|啦)?(.+?)(?:阶段|部分|章节)', 6),
+        ]
+
+        for pattern, importance in progress_patterns:
+            matches = re.findall(pattern, user_message, re.IGNORECASE)
+            for match in matches:
+                content = match.strip()
+                if len(content) > 2:
+                    memories.append({
+                        'type': 'progress',
+                        'content': f"学习进度: {content}",
+                        'importance': importance,
+                        'tags': ['auto-extract', 'progress']
+                    })
+
+        chapter_section = re.findall(r'##\s*(第.+?章.+?)[\s\n]', ai_response)
+        for section in chapter_section[:2]:
+            memories.append({
+                'type': 'progress',
+                'content': f"学习进度: 正在学习{section.strip()}",
+                'importance': 4,
+                'tags': ['auto-extract', 'progress', 'topic']
+            })
+
+        ac_indicators = ['通过', 'AC', '正确', '成功', 'accepted']
+        if any(ind in user_message for ind in ac_indicators):
+            topic_match = re.findall(r'(?:题目|问题|练习|算法)(.+?)(?:通过|AC|正确|成功)', user_message)
+            for topic in topic_match:
+                memories.append({
+                    'type': 'progress',
+                    'content': f"学习进度: 已完成{topic.strip()}相关练习",
+                    'importance': 7,
+                    'tags': ['auto-extract', 'progress', 'practice']
+                })
+
+    def _extract_note_memories(self, user_message: str, ai_response: str, memories: list):
+        note_patterns = [
+            (r'(?:记住|记住啦|记下了|记一下|备忘|注意|重要|关键点|要点)[：:，]?\s*(.+?)[。，！？]', 7),
+            (r'(?:这个|这个要|一定要|千万别|别忘记|别忘了)(.+?)(?:容易错|容易忘|重要|关键)', 6),
+            (r'(?:tip|提示|技巧|窍门|经验)[：:]\s*(.+?)[。，！？]', 6),
+            (r'(?:注意|注意啦|小心|当心)[：:，]?\s*(.+?)[。，！？]', 5),
+        ]
+
+        for pattern, importance in note_patterns:
+            matches = re.findall(pattern, user_message, re.IGNORECASE)
+            for match in matches:
+                content = match.strip()
+                if len(content) > 3:
+                    memories.append({
+                        'type': 'note',
+                        'content': f"个人笔记: {content}",
+                        'importance': importance,
+                        'tags': ['auto-extract', 'note']
+                    })
+
+        ai_note_patterns = [
+            r'⚠️\s*(.+?)(?:\n|$)',
+            r'💡\s*(.+?)(?:\n|$)',
+            r'📌\s*(.+?)(?:\n|$)',
+            r'\*\*注意\*\*[：:]\s*(.+?)(?:\n|$)',
+            r'\*\*重要\*\*[：:]\s*(.+?)(?:\n|$)',
+        ]
+
+        for pattern in ai_note_patterns:
+            matches = re.findall(pattern, ai_response)
+            for match in matches[:2]:
+                content = match.strip()
+                if 5 < len(content) < 200:
+                    memories.append({
+                        'type': 'note',
+                        'content': f"知识要点: {content}",
+                        'importance': 5,
+                        'tags': ['auto-extract', 'note', 'ai-highlight']
+                    })
+
+        key_point_patterns = [
+            r'###\s*(.+?(?:注意|要点|关键|重点|核心|技巧))',
+            r'###\s*(常见(?:错误|陷阱|误区|坑))',
+        ]
+        for pattern in key_point_patterns:
+            matches = re.findall(pattern, ai_response)
+            for match in matches[:2]:
+                content = match.strip()
+                if len(content) > 3:
+                    memories.append({
+                        'type': 'note',
+                        'content': f"知识要点: {content}",
+                        'importance': 6,
+                        'tags': ['auto-extract', 'note', 'key-point']
                     })
 
     def get_memory_stats(self, user_id: int) -> Dict[str, Any]:
@@ -736,4 +835,106 @@ class MemoryService:
             'decayed': decay_result,
             'merged': merge_result,
             'stats': stats
+        }
+
+    def get_radar_chart_data(self, user_id: int) -> Dict[str, Any]:
+        """
+        生成学习能力雷达图数据
+        按记忆类型聚合，计算各维度得分（0-100）
+        六个维度：知识掌握、薄弱环节识别、学习偏好明确度、错误反思、学习进度、笔记积累
+        """
+        memories = self.get_memories(user_id, limit=200, active_only=True)
+        stats = self.get_memory_stats(user_id)
+
+        by_type: Dict[str, List] = {}
+        for m in memories:
+            mt = m['memory_type']
+            if mt not in by_type:
+                by_type[mt] = []
+            by_type[mt].append(m)
+
+        knowledge_count = len(by_type.get('knowledge', []))
+        weakness_count = len(by_type.get('weakness', []))
+        mistake_count = len(by_type.get('mistake', []))
+        preference_count = len(by_type.get('preference', []))
+        progress_count = len(by_type.get('progress', []))
+        note_count = len(by_type.get('note', []))
+
+        knowledge_score = min(100, knowledge_count * 10)
+        if knowledge_count > 0:
+            avg_importance = sum(m['importance'] for m in by_type['knowledge']) / knowledge_count
+            knowledge_score = min(100, int(knowledge_count * 5 + avg_importance * 8))
+
+        weakness_score = min(100, weakness_count * 15)
+        if weakness_count > 0:
+            weakness_score = min(100, int(weakness_count * 10 + 30))
+
+        mistake_score = min(100, mistake_count * 12)
+        if mistake_count > 0:
+            avg_importance = sum(m['importance'] for m in by_type['mistake']) / mistake_count
+            mistake_score = min(100, int(mistake_count * 8 + avg_importance * 6))
+
+        preference_score = min(100, preference_count * 20)
+        if preference_count > 0:
+            preference_score = min(100, int(preference_count * 15 + 40))
+
+        progress_score = min(100, progress_count * 15)
+        if progress_count > 0:
+            avg_importance = sum(m['importance'] for m in by_type['progress']) / progress_count
+            progress_score = min(100, int(progress_count * 10 + avg_importance * 5))
+
+        note_score = min(100, note_count * 12)
+        if note_count > 0:
+            avg_importance = sum(m['importance'] for m in by_type['note']) / note_count
+            note_score = min(100, int(note_count * 8 + avg_importance * 6))
+
+        dimensions = [
+            {'name': '知识掌握', 'key': 'knowledge', 'score': knowledge_score,
+             'count': knowledge_count, 'description': '已掌握的C++知识点数量和深度'},
+            {'name': '薄弱识别', 'key': 'weakness', 'score': weakness_score,
+             'count': weakness_count, 'description': '对自身薄弱环节的认知程度'},
+            {'name': '错误反思', 'key': 'mistake', 'score': mistake_score,
+             'count': mistake_count, 'description': '从错误中总结经验的能力'},
+            {'name': '偏好明确', 'key': 'preference', 'score': preference_score,
+             'count': preference_count, 'description': '学习方式和偏好的明确程度'},
+            {'name': '学习进度', 'key': 'progress', 'score': progress_score,
+             'count': progress_count, 'description': '学习路径的推进程度'},
+            {'name': '笔记积累', 'key': 'note', 'score': note_score,
+             'count': note_count, 'description': '知识要点的记录和积累'},
+        ]
+
+        overall_score = sum(d['score'] for d in dimensions) / len(dimensions)
+
+        if overall_score >= 80:
+            level = '优秀'
+            advice = '学习状态非常好，建议挑战更高难度的内容'
+        elif overall_score >= 60:
+            level = '良好'
+            advice = '学习状态不错，继续保持，注意补强薄弱环节'
+        elif overall_score >= 40:
+            level = '一般'
+            advice = '建议多与AI助手互动，系统会更好地了解你的学习状态'
+        else:
+            level = '起步'
+            advice = '刚开始学习，多提问、多练习，AI会逐渐了解你'
+
+        weakest = min(dimensions, key=lambda d: d['score'])
+        strongest = max(dimensions, key=lambda d: d['score'])
+
+        return {
+            'dimensions': dimensions,
+            'overall_score': round(overall_score, 1),
+            'level': level,
+            'advice': advice,
+            'strongest': strongest,
+            'weakest': weakest,
+            'total_memories': len(memories),
+            'by_type_counts': {
+                'knowledge': knowledge_count,
+                'weakness': weakness_count,
+                'mistake': mistake_count,
+                'preference': preference_count,
+                'progress': progress_count,
+                'note': note_count,
+            }
         }

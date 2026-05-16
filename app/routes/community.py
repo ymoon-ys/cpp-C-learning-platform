@@ -62,15 +62,17 @@ def get_user_info(user_id):
 
 @community_bp.route('/discussions', methods=['GET'])
 def get_discussions():
-    """获取讨论列表 - 贴吧风格"""
     try:
         db = current_app.db
         limit = request.args.get('limit', 20, type=int)
         offset = request.args.get('offset', 0, type=int)
-        
-        # 构建查询
+        sort = request.args.get('sort', 'latest')
+
         discussions = db.find_all('discussions')
-        discussions = sorted(discussions, key=lambda x: x.get('created_at', ''), reverse=True)
+        if sort == 'hot':
+            discussions = sorted(discussions, key=lambda x: (x.get('like_count') or 0, x.get('created_at', '')), reverse=True)
+        else:
+            discussions = sorted(discussions, key=lambda x: x.get('created_at', ''), reverse=True)
         
         # 分页
         discussions = discussions[offset:offset+limit]
@@ -338,31 +340,29 @@ def like_discussion(discussion_id):
                 break
         
         if existing_like:
-            # 取消点赞
             db.delete('discussion_likes', existing_like.get('id'))
-            
-            # 更新点赞数
+
             discussion = db.find_by_id('discussions', discussion_id)
+            like_count = 0
             if discussion:
                 like_count = max(0, (discussion.get('like_count') or 0) - 1)
                 db.update('discussions', discussion_id, {'like_count': like_count})
-            
+
             return jsonify({'success': True, 'liked': False, 'like_count': like_count})
         else:
-            # 添加点赞
             data = {
                 'discussion_id': discussion_id,
                 'user_id': current_user.id,
                 'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
             db.insert('discussion_likes', data)
-            
-            # 更新点赞数
+
             discussion = db.find_by_id('discussions', discussion_id)
+            like_count = 0
             if discussion:
                 like_count = (discussion.get('like_count') or 0) + 1
                 db.update('discussions', discussion_id, {'like_count': like_count})
-            
+
             return jsonify({'success': True, 'liked': True, 'like_count': like_count})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -384,31 +384,29 @@ def like_reply(reply_id):
                 break
         
         if existing_like:
-            # 取消点赞
             db.delete('reply_likes', existing_like.get('id'))
-            
-            # 更新点赞数
+
             reply = db.find_by_id('replies', reply_id)
+            like_count = 0
             if reply:
                 like_count = max(0, (reply.get('like_count') or 0) - 1)
                 db.update('replies', reply_id, {'like_count': like_count})
-            
+
             return jsonify({'success': True, 'liked': False, 'like_count': like_count})
         else:
-            # 添加点赞
             data = {
                 'reply_id': reply_id,
                 'user_id': current_user.id,
                 'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
             db.insert('reply_likes', data)
-            
-            # 更新点赞数
+
             reply = db.find_by_id('replies', reply_id)
+            like_count = 0
             if reply:
                 like_count = (reply.get('like_count') or 0) + 1
                 db.update('replies', reply_id, {'like_count': like_count})
-            
+
             return jsonify({'success': True, 'liked': True, 'like_count': like_count})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

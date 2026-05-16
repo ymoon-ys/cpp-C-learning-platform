@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}{{ problem.title }} - C++学习平台{% endblock %}
 
@@ -872,7 +872,7 @@ function loadCode(index) {
     }
 }
 
-function closeModalCodeToEditor() {
+function loadModalCodeToEditor() {
     if (currentViewingCodeIndex !== null) {
         loadCode(currentViewingCodeIndex);
         closeCodeModal();

@@ -33,8 +33,6 @@ logger = logging.getLogger(__name__)
 
 _ocr_token_cache = {"access_token": None, "expires_at": 0}
 
-dialog_history_cache = {}
-
 _memory_service = None
 
 
@@ -73,171 +71,71 @@ def get_ai_response(messages: list, stream: bool = False, **kwargs):
         logger.error(f"AI response error: {e}")
         raise
 
-CAIGPT_SYSTEM_PROMPT = """
-你是 **CAIgpt**，一位专为中国大学生设计的 C++ 编程教学智能助手。你拥有长期记忆能力，能记住每位学生的学习历程、薄弱环节和偏好，提供真正个性化的辅导。
+CAIGPT_SYSTEM_PROMPT = """你是CAIgpt，C++编程教学助手。你的核心原则：绝对不给代码，只提问引导。
 
----
+【最高优先级规则】
+你输出的一切内容中，不允许出现任何C++代码。包括变量声明、cin/cout、if/else、for/while、函数定义等。你只能用中文描述思路和提问。
 
-## 一、核心身份
+【解题引导——6大场景】
 
-- **角色**：C++ 编程私教 + 代码审查专家 + 学习陪伴者
-- **使命**：让每个学生通过"思考→实践→反思"的循环真正掌握 C++
-- **底线原则**：**绝不直接替学生完成作业或给出完整可运行的答案代码**
-- **风格**：简洁专业、循循善诱、因材施教
+场景1：学生问"怎么写某功能"（如"怎么判断奇偶数"）
+→ 确认理解 + 提问该功能涉及的底层原理
+例：你想判断奇偶数对吧？那你觉得，奇数和偶数在数学上的定义区别是什么？
 
----
+场景2：学生说"不知道""没思路"
+→ 拆解问题为更小的子问题，引导学生逐步推理
+例：没关系，我们把问题拆开。你能先说出，什么样的数叫偶数吗？只说定义就行。
 
-## 二、场景化交互规则
+场景3：学生问"这个程序怎么开始"
+→ 引导学生先描述程序的功能需求，再拆解为步骤
+例：先不管代码，你能用中文描述一下这个程序需要完成什么吗？输入是什么，输出是什么？
 
-### 场景1：学生提出问题（未给出代码）
+场景4：学生给代码问"哪里错了"
+→ 定位错误位置 + 指出涉及的知识点 + 提问引导修正
+例：我看到了你的代码，第X行有问题。这里涉及的知识点是XXX。你回顾一下这个知识点的定义，应该怎么正确使用？
 
-**目标**：引导思考，激发自主解题能力。
+场景5：学生提交了正确的代码
+→ 逐行分析代码中涉及的知识点，用规范术语列出，并追问一个延伸问题
+例：你的代码逻辑是正确的。这段代码涉及以下知识点：1.变量声明与整数类型 2.取模运算（%），用于求余数 3.条件判断（if-else），根据余数是否为0分支输出。你理解了取模运算后，想想取模运算除了判断奇偶，还能用在哪些场景？
 
-1. **第一步：问题确认**
-   - 用自己的话复述问题核心，确认理解无误
-   - 提问："我理解你想解决的是 [问题核心]，对吗？"
+场景6：学生坚持要代码或答案
+→ 重申教学原则 + 引导回思考路径
+例：直接给代码你学不到东西哦！我相信你能自己写出来，我们一步步来，你先告诉我第一步该做什么？
 
-2. **第二步：引导思考**
-   - 提出引导性问题，逐步拆解问题
-   - 每次只推进一个步骤，等待学生回应
-   - 话术："要解决这个问题，你觉得第一步应该考虑什么？"
+【概念解释——最书面化优先规则】
+当学生问概念（如"什么是指针""虚函数是什么"）时：
+1. 第一次解释：用最书面、最学术的规范术语直接给出定义，不做任何简化或比喻
+2. 如果学生表示听不懂，再逐步拆解术语，每次只降低一个理解层级
+3. 仍然不给代码示例
+4. 解释完后，追问一个引导性问题帮助学生深化理解
 
-3. **第三步：提供思路框架**
-   - 给出伪代码或算法思路（非 C++ 代码）
-   - 标注关键判断点和循环逻辑
-   - 话术："你可以按这个思路试试，遇到卡点随时告诉我"
+例：学生问"什么是指针"
+你的回复：
+指针是一种派生数据类型，其值为其所指向实体在内存中的虚拟地址。通过解引用操作可间接访问该地址处存储的数据对象。你理解了这个定义后，想想为什么程序需要通过地址间接访问数据，而非直接访问？
 
-4. **严格禁止**：
-   - ❌ 一次性输出"问题分析+引导思考+解题思路+代码框架+流程图"
-   - ❌ 提供任何可直接运行的代码
-   - ✅ 只输出当前阶段的引导内容，等待学生回应后再推进
+学生说"听不懂"
+你的回复：
+好，我拆开来讲。"派生数据类型"意思是它不是int、char这样的基础类型，而是从已有类型派生出来的。"虚拟地址"就是内存中每个字节的编号。所以指针这个变量里存的是一个编号，通过这个编号能找到另一个变量。你能理解"存的是编号"这个说法吗？
 
-### 场景2：学生给出了自己的解题答案/思路
+【学生说"不知道"时的处理规则——这是关键】
+当学生回答"不知道""不会""没思路"时：
+1. **绝对不能直接告诉方法或答案**
+2. **绝对不能说"比如用XXX"**
+3. **应该**：
+   - 把问题拆解为更小的子问题
+   - 引导学生从定义出发逐步推理
+   - 让学生回忆已学过的相关知识
+   - 用"你能先说出XXX的定义吗""我们回顾一下XXX"开头
 
-**目标**：提供可视化思考工具，强化理解。
+【绝对禁止的输出——出现以下任何一种都是错误】
+- int n; 或 cin >> n; 或 cout << "xxx";
+- if (条件) { ... } 或 for (...) { ... }
+- ```cpp 代码块
+- 任何可以复制到编译器运行的文字
+- **直接告诉学生方法或答案**（如"用除法余数判断""用取模运算"）
+- **"比如"后面接具体方法或代码**
 
-1. **第一步：肯定与确认**
-   - 先肯定学生的思考："你的思路很有价值，我们来一起把它可视化。"
-   - 根据学生的答案，生成一个**详细的流程图**（用文字描述），解释每一步的判断和逻辑
-
-2. **第二步：引导深化**
-   - 提问："这个流程图和你最初的想法有什么不同？有没有可以优化的地方？"
-   - **禁止**提供任何可直接运行的代码
-
-### 场景3：学生给出代码片段
-
-**目标**：精准纠错，结合知识点，不直接给正确代码。
-
-1. **第一步：定位错误**
-   - 明确指出代码片段中的语法错误或逻辑问题
-   - 如"这里缺少了分号"、"这个判断条件逻辑反了"
-
-2. **第二步：关联知识点**
-   - 解释错误背后的 C++ 知识点
-   - 如"在 C++ 中，变量必须先声明后使用"、"`=`是赋值运算符，`==`才是比较运算符"
-
-3. **第三步：提供修改方向**
-   - 给出修改思路："你可以尝试在这个地方添加一个判断，确保输入的合法性。"
-   - 如果代码正确，提示下一步："这段代码逻辑正确，可以考虑如何优化性能或添加异常处理。"
-   - **禁止**直接补全或重写代码
-
-### 场景4：学生给出整段代码
-
-**目标**：全面分析，提供理解，而非直接纠错。
-
-1. **第一步：整体评估**
-   - 先给出整体评价："我理解了你的代码，它的核心逻辑是……"
-   - 如果存在错误，按场景3的规则进行纠错
-   - 如果没有错误，提供理解和优化建议："你的代码实现了功能，我们可以从可读性和效率上进行一些优化，比如……"
-   - **禁止**直接提供优化后的完整代码
-
-### 场景5：学生坚持要答案
-
-**目标**：坚守原则，委婉拒绝，回归引导。
-
-1. **话术模板**：
-   - "直接给答案会错过思考的乐趣，我们一起拆解这道题的逻辑吧，你会更有成就感！"
-   - "学习的关键在于过程，我可以帮你一步步分析，但答案需要你自己写出来哦。"
-   - "我相信你已经有思路了，我们来验证一下你的想法怎么样？"
-
-2. **行动**：立即将对话拉回场景1或场景3，重新开始引导
-
----
-
-## 三、代码类型（新代码开发）
-
-当学生开始编写一段新的 C++ 代码时：
-
-1. **纠错模式**：如果代码有错，按场景3的规则处理
-2. **引导模式**：如果代码正确，提示下一步："这段基础功能已经实现了，你可以考虑添加用户交互，或者处理边界情况。"
-
----
-
-## 四、知识点类型
-
-当学生提问 C++ 知识点时：
-
-1. **详细解答**：清晰定义该知识点，解释其作用、用法和注意事项
-2. **知识衍生**：提供相关拓展内容：
-   - 讲解"指针"时，衍生到"引用"和"动态内存分配"
-   - 讲解"类"时，衍生到"封装"、"继承"和"多态"
-3. **示例辅助**：提供极简的代码片段辅助说明，但**绝不提供完整可运行的程序**
-
----
-
-## 五、记忆与个性化
-
-你拥有长期记忆能力，能记住每位学生的：
-- **知识掌握情况**：已掌握/未掌握的知识点
-- **薄弱环节**：经常出错的语法或逻辑
-- **学习偏好**：喜欢通过示例/图解/类比等方式学习
-- **常见错误**：重复犯的错误模式
-
-**记忆使用规则**：
-- 如果记忆显示学生之前学过某知识点，不要重复基础解释，直接进阶
-- 如果记忆显示学生在某方面反复出错，主动提醒并加强该方面练习
-- 如果记忆显示学生偏好某种学习方式，优先使用该方式
-
----
-
-## 六、回答格式规范
-
-1. **必须使用 Markdown 格式**，结构清晰
-2. **所有 C++ 代码**必须使用 ` ```cpp ... ``` ` 包裹
-3. 代码片段要有**注释**，解释关键步骤
-4. 知识点讲解使用**通俗语言**，避免过于学术化
-
----
-
-## 七、技术配置
-
-- **语言**：C++（C++11/14/17 标准）
-- **编译器假设**：g++ (MinGW/GCC)
-- **代码风格**：Google C++ Style Guide（简化版）
-
----
-
-## 八、禁止事项
-
-1. **禁止**直接给出竞赛题/作业的完整可运行代码
-2. **禁止**使用 Python 或其他非 C++ 语言作为主要示例
-3. **禁止**在未确认需求时一次性输出大量代码
-4. **禁止**忽略学生上传的文件内容
-5. **禁止**一次性输出完整的问题分析+解题思路+代码框架+流程图
-6. **禁止**直接补全或重写学生的代码（只指出方向）
-
----
-
-## 九、兜底规则
-
-- **无法识别**：当无法识别图片内容或信息不足时，应说："我需要更清晰的图片或文字描述，才能为你提供 C++ 相关的引导。"
-- **话题切换**：当发现学生问题与上下文无关时，先确认再处理，避免答非所问
-- **超纲问题**：如果问题超出 C++ 范围，礼貌说明并尝试关联到 C++ 知识
-
----
-
-现在，请以 CAIgpt 的身份开始与学生对话。记住你的核心使命：**让学生通过自己的思考掌握 C++，而不是依赖你给出的答案。**
-"""
+记住：你是引导者，不是答案提供者。每次只问一个问题，等学生思考。即使学生说不知道，也要引导他自己发现，而不是直接告诉。"""
 
 AI_MODELS = {
     'auto': {
@@ -278,6 +176,50 @@ AI_MODELS = {
         'model': 'local'
     }
 }
+
+_ai_models_cache = None
+
+def get_ai_models():
+    global _ai_models_cache, AI_MODELS
+    if _ai_models_cache is not None:
+        return _ai_models_cache
+
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute('SELECT model_key, name, api_url, api_key, model, provider, is_cloud, max_tokens, temperature, is_active FROM ai_models ORDER BY sort_order')
+            models = {}
+            for row in cursor.fetchall():
+                key = row['model_key']
+                model_config = {
+                    'name': row['name'],
+                    'api_url': 'cloud' if row['is_cloud'] else 'local',
+                    'api_key': row['api_key'] or '',
+                    'model': row['provider'] or row['model_key']
+                }
+                if row.get('max_tokens'):
+                    model_config['max_tokens'] = row['max_tokens']
+                if row.get('temperature'):
+                    model_config['temperature'] = float(row['temperature'])
+                if not row.get('is_active', 1):
+                    continue
+                models[key] = model_config
+            cursor.close()
+            if models:
+                _ai_models_cache = models
+                AI_MODELS = models
+                return models
+        except Exception as e:
+            logger.warning(f"Failed to load AI models from DB: {e}")
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+    _ai_models_cache = AI_MODELS
+    return AI_MODELS
 
 SYSTEM_PROMPT = """You are a C++ programming teaching assistant, helping students understand and solve programming problems.
 Important rules:
@@ -327,10 +269,14 @@ def init_caigpt_database(db=None):
                 session_id INT,
                 role VARCHAR(50) NOT NULL,
                 content TEXT NOT NULL,
-                images TEXT,
+                images JSON,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_user_session (user_id, session_id)
-            )
+                INDEX idx_user_id (user_id),
+                INDEX idx_role (role),
+                INDEX idx_created_at (created_at),
+                INDEX idx_user_session (user_id, session_id),
+                CONSTRAINT fk_caigpt_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ''')
 
             cursor.execute('''
@@ -344,8 +290,9 @@ def init_caigpt_database(db=None):
                 is_favorite TINYINT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                INDEX idx_user_id (user_id)
-            )
+                INDEX idx_user_id (user_id),
+                CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ''')
 
             cursor.execute('''
@@ -357,8 +304,10 @@ def init_caigpt_database(db=None):
                 content TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE KEY unique_favorite (user_id, session_id, message_id),
-                INDEX idx_user_id (user_id)
-            )
+                INDEX idx_user_id (user_id),
+                CONSTRAINT fk_favorites_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                CONSTRAINT fk_favorites_session FOREIGN KEY (session_id) REFERENCES caigpt_sessions (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ''')
 
             cursor.execute('''
@@ -372,7 +321,7 @@ def init_caigpt_database(db=None):
                 editor_word_wrap VARCHAR(10) DEFAULT 'on',
                 minimap_enabled TINYINT DEFAULT 1,
                 auto_save_enabled TINYINT DEFAULT 1,
-                last_code TEXT,
+                last_code LONGTEXT,
                 last_session_id INT,
                 language VARCHAR(10) DEFAULT 'cpp',
                 model_preference VARCHAR(50) DEFAULT 'caigpt',
@@ -380,18 +329,43 @@ def init_caigpt_database(db=None):
                 console_height INT DEFAULT 200,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                INDEX idx_user_id (user_id)
-            )
+                INDEX idx_user_id (user_id),
+                CONSTRAINT fk_preferences_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ''')
 
             conn.commit()
             logger.info("CAIgpt database initialized successfully")
+
+            _migrate_schema(conn)
         except Exception as e:
             logger.error(f"Failed to initialize database: {str(e)}")
         finally:
             conn.close()
     except Exception as e:
         logger.error(f"Database operation failed: {str(e)}")
+
+def _migrate_schema(conn):
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SHOW COLUMNS FROM caigpt_sessions LIKE 'tags'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE caigpt_sessions ADD COLUMN tags JSON")
+            logger.info("Migrated: added caigpt_sessions.tags")
+
+        cursor.execute("SHOW COLUMNS FROM caigpt_sessions LIKE 'is_favorite'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE caigpt_sessions ADD COLUMN is_favorite TINYINT DEFAULT 0")
+            logger.info("Migrated: added caigpt_sessions.is_favorite")
+
+        cursor.execute("SHOW COLUMNS FROM caigpt_dialog_history LIKE 'session_id'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE caigpt_dialog_history ADD COLUMN session_id INT")
+            logger.info("Migrated: added caigpt_dialog_history.session_id")
+
+        conn.commit()
+    except Exception as e:
+        logger.warning(f"Schema migration check failed: {e}")
 
 def get_baidu_access_token():
     """Get Baidu OCR access token with auto-refresh on expiration"""
@@ -467,9 +441,6 @@ def baidu_ocr(image_base64):
 
 def get_user_history(user_id, max_history=20):
     """Get user dialog history from database"""
-    if user_id in dialog_history_cache:
-        return dialog_history_cache[user_id]
-
     conn = get_db_connection()
     if not conn:
         return []
@@ -496,7 +467,6 @@ def get_user_history(user_id, max_history=20):
 
         history.reverse()
 
-        dialog_history_cache[user_id] = history
         return history
     except Exception as e:
         logger.error(f"Failed to get dialog history: {str(e)}")
@@ -521,17 +491,6 @@ def save_message(user_id, role, content, images=None, session_id=None, max_cache
 
         conn.commit()
 
-        cache_key = user_id if not session_id else f"{user_id}_{session_id}"
-        if cache_key not in dialog_history_cache:
-            dialog_history_cache[cache_key] = []
-        msg = {"role": role, "content": content}
-        if images:
-            msg["images"] = images
-        dialog_history_cache[cache_key].append(msg)
-
-        if len(dialog_history_cache[cache_key]) > max_cache:
-            dialog_history_cache[cache_key] = dialog_history_cache[cache_key][-max_cache:]
-
         return True
     except Exception as e:
         logger.error(f"Failed to save message: {str(e)}")
@@ -549,7 +508,8 @@ def build_messages(user_message, history=None, user=None, problem_id=None):
             if msg.get("role") != "system":
                 messages.append(msg)
 
-    messages.append({"role": "user", "content": user_message})
+    guided_message = user_message + "\n\n【提醒】你不允许输出任何C++代码，只能用中文提问引导我思考。"
+    messages.append({"role": "user", "content": guided_message})
 
     return messages
 
@@ -655,24 +615,25 @@ def chat():
     if not question:
         return jsonify({'error': 'Question cannot be empty'}), 400
 
-    if model_name not in AI_MODELS:
+    models = get_ai_models()
+    if model_name not in models:
         return jsonify({'error': 'Unsupported AI model'}), 400
 
     if model_name == 'auto':
         model_name = 'caigpt'
 
-    model_info = AI_MODELS[model_name]
+    model_info = models[model_name]
 
     if model_name != 'local':
         if not current_user.is_authenticated:
             return jsonify({'error': 'Login required to use this model'}), 401
-        if model_name != 'caigpt' and not model_info['api_key']:
+        if model_name not in ('caigpt', 'ollama') and not model_info['api_key']:
             return jsonify({'error': f'{model_info["name"]} API key not configured'}), 400
 
     try:
         if model_name == 'local':
             return handle_local_chat(question, problem_id, conversation_type, has_code, has_image, image_data)
-        elif model_name == 'caigpt' or model_name == 'ollama':
+        elif model_name in ('caigpt', 'ollama', 'minimax'):
             return handle_caigpt_chat(model_info, question, problem_id, conversation_type, has_code, has_image, image_data)
         elif model_name == 'gemini' or model_name == 'gemini3':
             return handle_gemini_chat(model_info, question, problem_id, conversation_type, has_code, has_image, image_data)
@@ -890,15 +851,16 @@ def analyze_code():
     if not code:
         return jsonify({'error': 'Code cannot be empty'}), 400
 
-    if model_name not in AI_MODELS:
+    models = get_ai_models()
+    if model_name not in models:
         return jsonify({'error': 'Unsupported AI model'}), 400
 
     if model_name == 'auto':
         model_name = 'caigpt'
 
-    model_info = AI_MODELS[model_name]
+    model_info = models[model_name]
 
-    if model_name != 'local' and model_name != 'caigpt' and not model_info['api_key']:
+    if model_name not in ('local', 'caigpt', 'ollama') and not model_info['api_key']:
         return jsonify({'error': f'{model_info["name"]} API key not configured'}), 400
 
     try:
@@ -911,7 +873,7 @@ def analyze_code():
 
         if model_name == 'local':
             return handle_local_analyze(question)
-        elif model_name == 'caigpt':
+        elif model_name in ('caigpt', 'ollama', 'minimax'):
             response = handle_caigpt_chat(model_info, question, problem_id, 'code_analysis', has_code=True, has_image=False, image_data='')
             if response.status_code == 200:
                 data = response.get_json()
@@ -1084,7 +1046,16 @@ def handle_caigpt_chat(model_info, question, problem_id, conversation_type, has_
     messages = build_messages(user_message, history, user=user, problem_id=problem_id)
 
     try:
-        response_message = get_ai_response(messages, stream=False)
+        config_dict = {k: v for k, v in current_app.config.items() if isinstance(v, (str, int, float, bool))}
+        manager = _get_provider_manager(config_dict)
+
+        if model_name in ('minimax', 'ollama', 'qwen'):
+            manager.switch_provider(model_name)
+
+        provider = manager.get_active_provider()
+        if provider is None:
+            raise Exception("No available AI provider")
+        response_message = provider.chat(messages)
 
         if user_id > 0:
             save_message(user_id, "user", user_message, [image_data] if has_image and image_data else None)
@@ -1125,6 +1096,7 @@ def handle_caigpt_chat(model_info, question, problem_id, conversation_type, has_
 def handle_caigpt_chat_stream(model_info, question, problem_id, conversation_type, has_code, has_image, image_data):
     """Handle CAIgpt model chat request with streaming support - 使用 ProviderManager + MemoryService"""
     user_id = current_user.id if current_user.is_authenticated else 0
+    model_name = model_info.get('model', 'caigpt')
     display_name = model_info.get('name', 'CAIgpt')
 
     logger.info(f"📸 图片处理状态: has_image={has_image}, image_data长度={len(image_data) if image_data else 0}")
@@ -1156,6 +1128,10 @@ def handle_caigpt_chat_stream(model_info, question, problem_id, conversation_typ
     try:
         config_dict = {k: v for k, v in current_app.config.items() if isinstance(v, (str, int, float, bool))}
         manager = _get_provider_manager(config_dict)
+
+        if model_name in ('minimax', 'ollama', 'qwen'):
+            manager.switch_provider(model_name)
+
         provider = manager.get_active_provider()
         if provider is None:
             raise Exception("No available AI provider")
@@ -1255,14 +1231,15 @@ def chat_stream():
     if not question:
         return jsonify({'error': 'Question cannot be empty'}), 400
 
-    if model_name not in AI_MODELS:
+    models = get_ai_models()
+    if model_name not in models:
         return jsonify({'error': 'Unsupported AI model'}), 400
 
     if model_name == 'auto':
         model_name = 'caigpt'
 
-    if model_name == 'caigpt' or model_name == 'ollama':
-        model_info = AI_MODELS[model_name]
+    if model_name in ('caigpt', 'ollama', 'minimax'):
+        model_info = models[model_name]
         return handle_caigpt_chat_stream(model_info, question, problem_id, conversation_type, has_code, has_image, image_data)
     else:
         return jsonify({'error': 'Streaming is only supported for CAIgpt model currently'}), 400
@@ -1750,9 +1727,6 @@ def delete_session(session_id):
         if cursor.rowcount == 0:
             return jsonify({'error': 'Session not found or no permission'}), 404
 
-        if session_id in dialog_history_cache:
-            del dialog_history_cache[session_id]
-
         return jsonify({'success': True})
     except Exception as e:
         logger.error(f"Failed to delete session: {str(e)}")
@@ -1781,8 +1755,6 @@ def clear_all_sessions():
         ''', (current_user.id,))
 
         conn.commit()
-
-        dialog_history_cache.clear()
 
         return jsonify({'success': True})
     except Exception as e:
@@ -1898,7 +1870,7 @@ def execute_code():
             execute_start = datetime.now()
 
             try:
-                stdin_data = input_data.encode('utf-8') if input_data else None
+                stdin_data = input_data if input_data else None
 
                 exec_process = subprocess.run(
                     [executable_file],
@@ -1951,28 +1923,30 @@ def execute_code():
 @ai_bp.route('/code/analyze', methods=['POST'])
 @login_required
 def analyze_code_complexity():
-    """Analyze code complexity and provide visualization data"""
+    """8项代码静态分析：命名规范、内存泄漏、数组越界、未使用变量、类型安全、代码复杂度、资源管理、潜在死循环"""
     data = request.get_json()
     code = data.get('code', '')
 
     if not code:
         return jsonify({'error': '代码不能为空'}), 400
 
+    lines = code.split('\n')
     analysis = {
-        'lines_of_code': len(code.split('\n')),
-        'blank_lines': len([l for l in code.split('\n') if not l.strip()]),
-        'comment_lines': len([l for l in code.split('\n') if l.strip().startswith('//')]),
+        'lines_of_code': len(lines),
+        'blank_lines': len([l for l in lines if not l.strip()]),
+        'comment_lines': len([l for l in lines if l.strip().startswith('//') or l.strip().startswith('/*') or l.strip().startswith('*')]),
         'code_lines': 0,
         'complexity': {'time': 'O(1)', 'space': 'O(1)'},
         'functions': [],
         'loops': [],
+        'static_checks': [],
         'warnings': [],
         'suggestions': []
     }
 
     analysis['code_lines'] = analysis['lines_of_code'] - analysis['blank_lines'] - analysis['comment_lines']
 
-    functions = re.findall(r'(?:void|int|float|double|char|string|bool|auto)\s+(\w+)\s*\(([^)]*)\)\s*(?:\{|;)', code)
+    functions = re.findall(r'(?:void|int|float|double|char|string|bool|auto|long|unsigned)\s+(\w+)\s*\(([^)]*)\)\s*(?:\{|;)', code)
     analysis['functions'] = [{'name': f, 'params': p} for f, p in functions]
 
     loop_patterns = [
@@ -1986,23 +1960,305 @@ def analyze_code_complexity():
         for m in matches:
             analysis['loops'].append({'type': name, 'pattern': m[:50]})
 
-    if any(x in code.lower() for x in ['malloc', 'calloc', 'realloc', 'free']):
-        analysis['warnings'].append('检测到动态内存分配，注意内存泄漏风险')
+    # ===== 检查1：命名规范 =====
+    naming_issues = []
+    single_char_vars = re.findall(r'\b(int|float|double|char|string|bool|auto|long)\s+([a-z])\s*[;=,\)]', code)
+    for var_type, var_name in single_char_vars:
+        if var_name not in ['i', 'j', 'k', 'n', 'm', 'x', 'y', 'z', 'r', 'g', 'b', 'e']:
+            naming_issues.append(f"变量 '{var_name}' 命名过短，建议使用更有意义的名称")
 
-    if 'new ' in code and 'delete ' not in code and '* new' not in code.replace('*delete', ''):
-        analysis['warnings'].append('使用了 new 但未找到对应的 delete，可能存在内存泄漏')
+    all_caps_vars = re.findall(r'\b(int|float|double|char|string|bool|auto|long)\s+([A-Z]{2,})\s*[;=,\)]', code)
+    for var_type, var_name in all_caps_vars:
+        naming_issues.append(f"变量 '{var_name}' 使用全大写命名，通常全大写用于常量/宏定义")
 
-    if 'scanf' in code or 'gets' in code:
-        analysis['warnings'].append('使用了不安全的输入函数，建议使用更安全的替代方案')
+    func_names_lower = re.findall(r'(?:void|int|float|double|char|string|bool|auto)\s+([a-z]+\_[a-z\_]+)\s*\(', code)
+    for fn in func_names_lower:
+        naming_issues.append(f"函数 '{fn}' 使用下划线命名，C++推荐驼峰命名法")
+
+    if naming_issues:
+        analysis['static_checks'].append({
+            'check': '命名规范',
+            'status': 'warning',
+            'count': len(naming_issues),
+            'details': naming_issues[:5],
+            'description': '检查变量和函数命名是否符合C++命名规范'
+        })
+    else:
+        analysis['static_checks'].append({
+            'check': '命名规范',
+            'status': 'pass',
+            'count': 0,
+            'details': [],
+            'description': '命名规范检查通过'
+        })
+
+    # ===== 检查2：内存泄漏风险 =====
+    memory_issues = []
+    new_count = len(re.findall(r'\bnew\b', code))
+    delete_count = len(re.findall(r'\bdelete\b', code))
+    malloc_count = len(re.findall(r'\bmalloc\b', code))
+    calloc_count = len(re.findall(r'\bcalloc\b', code))
+    realloc_count = len(re.findall(r'\brealloc\b', code))
+    free_count = len(re.findall(r'\bfree\b', code))
+
+    if new_count > 0 and delete_count < new_count:
+        memory_issues.append(f"使用了 {new_count} 次 new 但只有 {delete_count} 次 delete，可能存在内存泄漏")
+    if (malloc_count + calloc_count + realloc_count) > 0 and free_count < (malloc_count + calloc_count + realloc_count):
+        memory_issues.append(f"使用了 {malloc_count + calloc_count + realloc_count} 次 malloc/calloc/realloc 但只有 {free_count} 次 free")
+    if new_count > 0 and 'delete[]' not in code and re.search(r'new\s+\w+\s*\[', code):
+        memory_issues.append("使用 new[] 分配数组但未找到 delete[]，应使用 delete[] 释放数组内存")
+    if new_count > 0 and 'unique_ptr' not in code and 'shared_ptr' not in code and 'auto_ptr' not in code:
+        memory_issues.append("建议使用智能指针(unique_ptr/shared_ptr)代替裸指针new，可自动管理内存")
+
+    if memory_issues:
+        analysis['static_checks'].append({
+            'check': '内存泄漏风险',
+            'status': 'error',
+            'count': len(memory_issues),
+            'details': memory_issues,
+            'description': '检查动态内存分配是否正确释放'
+        })
+    else:
+        analysis['static_checks'].append({
+            'check': '内存泄漏风险',
+            'status': 'pass',
+            'count': 0,
+            'details': [],
+            'description': '内存管理检查通过'
+        })
+
+    # ===== 检查3：数组越界风险 =====
+    array_issues = []
+    array_access_no_check = re.findall(r'(\w+)\[(\w+)\]', code)
+    for arr_name, index_var in array_access_no_check:
+        if index_var.isdigit():
+            continue
+        bound_check_pattern = rf'\b(if|while|assert|check).*{index_var}\s*(<|<=|>|>=)'
+        if not re.search(bound_check_pattern, code):
+            array_issues.append(f"数组 '{arr_name}' 使用变量 '{index_var}' 作为下标，但未发现边界检查")
+
+    vla_pattern = re.findall(r'(\w+)\s+(\w+)\[(\w+)\]\s*;', code)
+    for type_name, arr_name, size_var in vla_pattern:
+        if not size_var.isdigit():
+            array_issues.append(f"数组 '{arr_name}' 使用变量 '{size_var}' 作为大小，可能是变长数组(VLA)，存在栈溢出风险")
+
+    fixed_array_access = re.findall(r'(\w+)\[(\d+)\]', code)
+    for arr_name, idx_str in fixed_array_access:
+        arr_decl = re.search(rf'{arr_name}\s+\w+\[(\d+)\]', code)
+        if arr_decl and int(idx_str) >= int(arr_decl.group(1)) - 1 and int(idx_str) > 0:
+            array_issues.append(f"数组 '{arr_name}' 大小为 {arr_decl.group(1)}，访问下标 {idx_str} 可能越界")
+
+    if array_issues:
+        analysis['static_checks'].append({
+            'check': '数组越界风险',
+            'status': 'error',
+            'count': len(array_issues),
+            'details': array_issues[:5],
+            'description': '检查数组访问是否有边界检查'
+        })
+    else:
+        analysis['static_checks'].append({
+            'check': '数组越界风险',
+            'status': 'pass',
+            'count': 0,
+            'details': [],
+            'description': '数组越界检查通过'
+        })
+
+    # ===== 检查4：未使用变量 =====
+    unused_issues = []
+    var_declarations = re.findall(r'\b(int|float|double|char|string|bool|auto|long|unsigned)\s+(\w+)\s*[;=]', code)
+    for var_type, var_name in var_declarations:
+        if var_name in ['main', 'argc', 'argv']:
+            continue
+        usage_pattern = rf'\b{re.escape(var_name)}\b'
+        usages = re.findall(usage_pattern, code)
+        if len(usages) <= 1:
+            unused_issues.append(f"变量 '{var_name}' ({var_type}) 声明后可能未被使用")
+
+    if unused_issues:
+        analysis['static_checks'].append({
+            'check': '未使用变量',
+            'status': 'warning',
+            'count': len(unused_issues),
+            'details': unused_issues[:5],
+            'description': '检查声明但未使用的变量'
+        })
+    else:
+        analysis['static_checks'].append({
+            'check': '未使用变量',
+            'status': 'pass',
+            'count': 0,
+            'details': [],
+            'description': '未使用变量检查通过'
+        })
+
+    # ===== 检查5：类型安全 =====
+    type_issues = []
+    c_style_casts = re.findall(r'\(\s*(int|float|double|char|long|unsigned)\s*\)\s*\w+', code)
+    if c_style_casts:
+        type_issues.append(f"发现 {len(c_style_casts)} 处C风格强制类型转换，建议使用 static_cast/const_cast/reinterpret_cast")
+
+    if 'scanf' in code:
+        type_issues.append("使用了 scanf，类型不安全，建议使用 cin 或 getline")
+    if 'gets' in code:
+        type_issues.append("使用了 gets()，该函数已在C11标准中移除，极度不安全，请使用 fgets 或 getline")
+    if 'printf' in code and 'scanf' in code:
+        type_issues.append("混用 C 风格 I/O (printf/scanf)，建议统一使用 C++ 风格 (cout/cin)")
+
+    implicit_conv = re.findall(r'\bdouble\s+\w+\s*=\s*\d+;', code)
+    float_assign = re.findall(r'\bfloat\s+\w+\s*=\s*\d+\.\d+', code)
+    if float_assign:
+        type_issues.append("float 类型赋值浮点常量未加 f 后缀，默认为 double 类型")
+
+    if type_issues:
+        analysis['static_checks'].append({
+            'check': '类型安全',
+            'status': 'warning',
+            'count': len(type_issues),
+            'details': type_issues,
+            'description': '检查类型转换和I/O操作的类型安全性'
+        })
+    else:
+        analysis['static_checks'].append({
+            'check': '类型安全',
+            'status': 'pass',
+            'count': 0,
+            'details': [],
+            'description': '类型安全检查通过'
+        })
+
+    # ===== 检查6：代码复杂度 =====
+    complexity_issues = []
+    nested_depth = 0
+    max_nested = 0
+    for line in lines:
+        depth_change = line.count('{') - line.count('}')
+        nested_depth += depth_change
+        if nested_depth > max_nested:
+            max_nested = nested_depth
+
+    if max_nested > 4:
+        complexity_issues.append(f"最大嵌套深度为 {max_nested} 层，建议不超过4层，考虑提取函数")
 
     if len(analysis['loops']) > 3:
+        complexity_issues.append(f"发现 {len(analysis['loops'])} 个循环，可能存在较高时间复杂度")
         analysis['complexity']['time'] = 'O(n^k) 或更高（嵌套循环较多）'
+    elif len(analysis['loops']) > 1:
+        analysis['complexity']['time'] = 'O(n^2) 或 O(n·m)（存在多重循环）'
+    elif len(analysis['loops']) == 1:
+        analysis['complexity']['time'] = 'O(n)（单层循环）'
 
-    if any('vector<' in code for _ in range(1)):
-        analysis['suggestions'].append('✅ 使用了 vector，这是良好的 C++ 实践')
+    long_lines = [i + 1 for i, l in enumerate(lines) if len(l) > 120]
+    if long_lines:
+        complexity_issues.append(f"发现 {len(long_lines)} 行超过120字符，影响可读性")
+
+    if analysis['code_lines'] > 50 and len(analysis['functions']) <= 1:
+        complexity_issues.append(f"代码共 {analysis['code_lines']} 行但只有 {len(analysis['functions'])} 个函数，建议拆分为更小的函数")
+
+    if complexity_issues:
+        analysis['static_checks'].append({
+            'check': '代码复杂度',
+            'status': 'warning',
+            'count': len(complexity_issues),
+            'details': complexity_issues,
+            'description': '检查代码嵌套深度、行数和函数拆分情况'
+        })
+    else:
+        analysis['static_checks'].append({
+            'check': '代码复杂度',
+            'status': 'pass',
+            'count': 0,
+            'details': [],
+            'description': '代码复杂度检查通过'
+        })
+
+    # ===== 检查7：资源管理 =====
+    resource_issues = []
+    file_open_no_close = re.findall(r'fopen\s*\(', code)
+    if file_open_no_close and 'fclose' not in code:
+        resource_issues.append("使用了 fopen 但未找到 fclose，文件资源可能泄漏")
+
+    if 'ifstream' in code or 'ofstream' in code:
+        if 'close()' not in code and 'RAII' not in code:
+            pass
+
+    if 'cin' in code and not re.search(r'cin\.(fail|clear|ignore|good)', code) and not re.search(r'if\s*\(\s*cin', code):
+        resource_issues.append("使用 cin 输入但未检查输入是否成功，可能导致无限循环或错误")
+
+    if 'cout' in code and 'endl' in code:
+        resource_issues.append("频繁使用 endl 会刷新缓冲区影响性能，建议使用 '\\n' 代替")
+
+    if resource_issues:
+        analysis['static_checks'].append({
+            'check': '资源管理',
+            'status': 'warning',
+            'count': len(resource_issues),
+            'details': resource_issues,
+            'description': '检查文件、流等资源的正确管理'
+        })
+    else:
+        analysis['static_checks'].append({
+            'check': '资源管理',
+            'status': 'pass',
+            'count': 0,
+            'details': [],
+            'description': '资源管理检查通过'
+        })
+
+    # ===== 检查8：潜在死循环 =====
+    loop_issues = []
+    while_true = re.findall(r'while\s*\(\s*true\s*\)|while\s*\(\s*1\s*\)|while\s*\(\s*True\s*\)', code)
+    if while_true:
+        has_break = 'break' in code
+        if not has_break:
+            loop_issues.append("发现 while(true) 循环但未找到 break 语句，可能存在死循环")
+
+    for_loops = re.findall(r'for\s*\(\s*;\s*;\s*\)', code)
+    if for_loops and 'break' not in code:
+        loop_issues.append("发现 for(;;) 无限循环但未找到 break 语句")
+
+    while_no_update = re.findall(r'while\s*\(\s*(\w+)\s*(<|<=|>|>=|!=|==)\s*(\w+)\s*\)', code)
+    for cond_var, op, cond_val in while_no_update:
+        if cond_var not in ['true', 'false', '1', '0']:
+            update_pattern = rf'\b{re.escape(cond_var)}\s*(\+\+|\-\-|\+=|\-=)'
+            if not re.search(update_pattern, code):
+                loop_issues.append(f"while 循环条件变量 '{cond_var}' 在循环体内可能未被更新，存在死循环风险")
+
+    if loop_issues:
+        analysis['static_checks'].append({
+            'check': '潜在死循环',
+            'status': 'error',
+            'count': len(loop_issues),
+            'details': loop_issues,
+            'description': '检查循环是否有正确的终止条件'
+        })
+    else:
+        analysis['static_checks'].append({
+            'check': '潜在死循环',
+            'status': 'pass',
+            'count': 0,
+            'details': [],
+            'description': '死循环检查通过'
+        })
+
+    # ===== 汇总 =====
+    error_count = sum(1 for c in analysis['static_checks'] if c['status'] == 'error')
+    warning_count = sum(1 for c in analysis['static_checks'] if c['status'] == 'warning')
+    pass_count = sum(1 for c in analysis['static_checks'] if c['status'] == 'pass')
+
+    analysis['summary'] = {
+        'total_checks': 8,
+        'passed': pass_count,
+        'warnings': warning_count,
+        'errors': error_count,
+        'overall': '优秀' if error_count == 0 and warning_count <= 1 else '需要改进' if error_count > 0 else '良好'
+    }
 
     if 'using namespace std;' in code:
         analysis['suggestions'].append('💡 在大型项目中建议避免使用 using namespace std;')
+    if 'vector<' in code:
+        analysis['suggestions'].append('✅ 使用了 vector，这是良好的 C++ 实践')
 
     return jsonify(analysis)
 
@@ -2464,7 +2720,7 @@ def get_saved_code():
         result = cursor.fetchone()
 
         return jsonify({
-            'code': result.get('last_code') or ''
+            'code': result.get('last_code') or '' if result else ''
         })
 
     except Exception as e:
@@ -2558,7 +2814,7 @@ def get_memories():
         memories = memory_svc.get_memories(
             current_user.id,
             memory_type=memory_type,
-            limit=limit,
+            limit=offset + limit,
             active_only=True
         )
 
@@ -2677,6 +2933,22 @@ def evolve_memories():
         })
     except Exception as e:
         logger.error(f"Memory evolution failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@ai_bp.route('/memories/radar', methods=['GET'])
+@login_required
+def get_radar_chart():
+    """获取学习能力雷达图数据"""
+    try:
+        memory_svc = get_memory_service()
+        radar_data = memory_svc.get_radar_chart_data(current_user.id)
+        return jsonify({
+            'success': True,
+            'radar': radar_data
+        })
+    except Exception as e:
+        logger.error(f"Failed to get radar chart: {e}")
         return jsonify({'error': str(e)}), 500
 
 

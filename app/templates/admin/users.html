@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}用户管理 - C++学习平台{% endblock %}
 
@@ -283,7 +283,18 @@ function editUser(userId) {
 
 function deleteUser(userId) {
     if (confirm('确定要删除这个用户吗？')) {
-        alert('删除用户: ' + userId);
+        fetch('/admin/users/' + userId + '/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('删除失败，请重试');
+            }
+        });
     }
 }
 </script>

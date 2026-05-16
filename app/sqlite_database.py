@@ -87,6 +87,7 @@ class SQLiteDatabase:
                     content_path VARCHAR(255),
                     duration VARCHAR(50),
                     order_index INTEGER,
+                    media_files TEXT,
                     created_at DATETIME,
                     updated_at DATETIME
                 )
@@ -125,6 +126,7 @@ class SQLiteDatabase:
                     images TEXT,
                     category VARCHAR(100),
                     tags TEXT,
+                    is_sticky INTEGER DEFAULT 0,
                     view_count INTEGER DEFAULT 0,
                     like_count INTEGER DEFAULT 0,
                     created_at DATETIME,
@@ -226,6 +228,7 @@ class SQLiteDatabase:
                     code TEXT NOT NULL,
                     status VARCHAR(50),
                     error_message TEXT,
+                    ai_analysis TEXT,
                     submit_time DATETIME,
                     created_at DATETIME,
                     updated_at DATETIME
@@ -288,10 +291,138 @@ class SQLiteDatabase:
                 CREATE TABLE IF NOT EXISTS caigpt_dialog_history (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER NOT NULL,
+                    session_id INTEGER,
                     role VARCHAR(50) NOT NULL,
                     content TEXT NOT NULL,
                     images TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''',
+            'caigpt_sessions': '''
+                CREATE TABLE IF NOT EXISTS caigpt_sessions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    title VARCHAR(200) DEFAULT '新对话',
+                    model_name VARCHAR(50) DEFAULT 'caigpt',
+                    problem_id INTEGER,
+                    tags TEXT,
+                    is_favorite INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''',
+            'caigpt_favorites': '''
+                CREATE TABLE IF NOT EXISTS caigpt_favorites (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    session_id INTEGER NOT NULL,
+                    message_id INTEGER,
+                    content TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(user_id, session_id, message_id)
+                )
+            ''',
+            'ai_user_preferences': '''
+                CREATE TABLE IF NOT EXISTS ai_user_preferences (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL UNIQUE,
+                    theme VARCHAR(20) DEFAULT 'light',
+                    editor_theme VARCHAR(30) DEFAULT 'vs-dark',
+                    editor_font_size INTEGER DEFAULT 14,
+                    editor_font_family VARCHAR(100) DEFAULT "'Consolas', 'Monaco', 'Courier New', monospace",
+                    editor_word_wrap VARCHAR(10) DEFAULT 'on',
+                    minimap_enabled INTEGER DEFAULT 1,
+                    auto_save_enabled INTEGER DEFAULT 1,
+                    last_code TEXT,
+                    last_session_id INTEGER,
+                    language VARCHAR(10) DEFAULT 'cpp',
+                    model_preference VARCHAR(50) DEFAULT 'caigpt',
+                    ui_layout VARCHAR(20) DEFAULT 'split',
+                    console_height INTEGER DEFAULT 200,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''',
+            'ai_memory': '''
+                CREATE TABLE IF NOT EXISTS ai_memory (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    memory_type VARCHAR(50) NOT NULL,
+                    content TEXT NOT NULL,
+                    source_session_id INTEGER,
+                    importance INTEGER DEFAULT 5,
+                    access_count INTEGER DEFAULT 0,
+                    tags TEXT,
+                    is_active INTEGER DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''',
+            'ai_memory_summary': '''
+                CREATE TABLE IF NOT EXISTS ai_memory_summary (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL UNIQUE,
+                    summary TEXT,
+                    last_memory_count INTEGER DEFAULT 0,
+                    last_summary_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''',
+            'knowledge_topics': '''
+                CREATE TABLE IF NOT EXISTS knowledge_topics (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    category VARCHAR(100) NOT NULL,
+                    keyword VARCHAR(100) NOT NULL,
+                    description TEXT,
+                    estimated_time VARCHAR(50),
+                    sort_order INTEGER DEFAULT 0,
+                    is_active INTEGER DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''',
+            'learning_resources': '''
+                CREATE TABLE IF NOT EXISTS learning_resources (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    category VARCHAR(100) NOT NULL,
+                    resource_type VARCHAR(50) NOT NULL,
+                    title VARCHAR(200) NOT NULL,
+                    description TEXT,
+                    url VARCHAR(500),
+                    sort_order INTEGER DEFAULT 0,
+                    is_active INTEGER DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''',
+            'common_errors': '''
+                CREATE TABLE IF NOT EXISTS common_errors (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    error_type VARCHAR(100) NOT NULL,
+                    pattern VARCHAR(500) NOT NULL,
+                    cause TEXT NOT NULL,
+                    solutions TEXT NOT NULL,
+                    sort_order INTEGER DEFAULT 0,
+                    is_active INTEGER DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''',
+            'ai_models': '''
+                CREATE TABLE IF NOT EXISTS ai_models (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    model_key VARCHAR(50) NOT NULL UNIQUE,
+                    name VARCHAR(200) NOT NULL,
+                    api_url VARCHAR(500) DEFAULT 'local',
+                    api_key VARCHAR(500) DEFAULT '',
+                    model VARCHAR(100) DEFAULT '',
+                    provider VARCHAR(50) DEFAULT '',
+                    is_cloud INTEGER DEFAULT 0,
+                    max_tokens INTEGER DEFAULT 4096,
+                    temperature REAL DEFAULT 0.70,
+                    is_active INTEGER DEFAULT 1,
+                    sort_order INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''',
         }

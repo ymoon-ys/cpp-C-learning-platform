@@ -20,7 +20,7 @@ class Config:
     QWEN_TIMEOUT = int(os.environ.get('QWEN_TIMEOUT', '120'))
 
     MINIMAX_API_KEY = os.environ.get('MINIMAX_API_KEY', '')
-    MINIMAX_BASE_URL = os.environ.get('MINIMAX_BASE_URL', 'https://api.minimaxi.chat/v1')
+    MINIMAX_BASE_URL = os.environ.get('MINIMAX_BASE_URL', 'https://api.minimaxi.com/v1')
     MINIMAX_MODEL = os.environ.get('MINIMAX_MODEL', 'MiniMax-M2.7')
     MINIMAX_TIMEOUT = int(os.environ.get('MINIMAX_TIMEOUT', '120'))
 

@@ -362,7 +362,7 @@ class Problem(BaseModel):
 
 class Submission:
     def __init__(self, id=None, user_id=None, problem_id=None, code=None, 
-                 status=None, error_message=None, submit_time=None):
+                 status=None, error_message=None, submit_time=None, ai_analysis=None):
         self.id = id
         self.user_id = user_id
         self.problem_id = problem_id
@@ -370,6 +370,7 @@ class Submission:
         self.status = status
         self.error_message = error_message
         self.submit_time = submit_time
+        self.ai_analysis = ai_analysis
     
     def save(self):
         from flask import current_app
@@ -380,6 +381,7 @@ class Submission:
             'code': self.code,
             'status': self.status,
             'error_message': self.error_message,
+            'ai_analysis': self.ai_analysis,
             'submit_time': self.submit_time
         }
         
@@ -403,7 +405,8 @@ class Submission:
                 code=data['code'],
                 status=data['status'],
                 error_message=data['error_message'],
-                submit_time=data['submit_time']
+                submit_time=data['submit_time'],
+                ai_analysis=data.get('ai_analysis')
             )
         return None
     
@@ -421,7 +424,8 @@ class Submission:
                 code=submission_data['code'],
                 status=submission_data['status'],
                 error_message=submission_data['error_message'],
-                submit_time=submission_data['submit_time']
+                submit_time=submission_data['submit_time'],
+                ai_analysis=submission_data.get('ai_analysis')
             ))
         return submissions
     
@@ -439,7 +443,8 @@ class Submission:
                 code=submission_data['code'],
                 status=submission_data['status'],
                 error_message=submission_data['error_message'],
-                submit_time=submission_data['submit_time']
+                submit_time=submission_data['submit_time'],
+                ai_analysis=submission_data.get('ai_analysis')
             ))
         return submissions
 
@@ -459,8 +464,12 @@ def _compile_code(source_file_path: str) -> tuple:
     if os.name == 'nt':
         executable_path += '.exe'
 
+    compile_cmd = ['g++', source_file_path, '-o', executable_path, '-O2', '-std=c++17']
+    if os.name == 'nt':
+        compile_cmd.append('-mconsole')
+
     compile_result = subprocess.run(
-        ['g++', source_file_path, '-o', executable_path, '-O2', '-std=c++17'],
+        compile_cmd,
         capture_output=True,
         text=True,
         timeout=10
@@ -519,6 +528,12 @@ def evaluate_code(code: str, test_cases: list, time_limit: int = 1, memory_limit
             return {
                 'status': 'CE',
                 'message': f'编译错误：{error}'
+            }
+
+        if not test_cases:
+            return {
+                'status': 'CE',
+                'message': '该题目没有测试用例，无法评测'
             }
 
         for i, test_case in enumerate(test_cases):

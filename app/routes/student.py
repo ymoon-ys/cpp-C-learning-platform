@@ -216,7 +216,14 @@ def complete_lesson(lesson_id):
         return redirect(url_for('student.dashboard'))
     
     chapter = db.find_by_id('chapters', lesson['chapter_id'])
+    if not chapter:
+        flash('章节不存在', 'error')
+        return redirect(url_for('student.dashboard'))
+
     course = db.find_by_id('courses', chapter['course_id'])
+    if not course:
+        flash('课程不存在', 'error')
+        return redirect(url_for('student.dashboard'))
     
     LearningProgressService.complete_lesson(
         user_id=current_user.id,
@@ -675,7 +682,7 @@ def problem_detail(problem_id):
 @student_bp.route('/practice/<int:problem_id>/submit', methods=['POST'])
 @login_required
 def submit_code(problem_id):
-    from flask import current_app
+    from flask import current_app, jsonify as _jsonify
     from app.models import Problem, Submission, evaluate_code
     import json
     db = current_app.db
@@ -694,12 +701,22 @@ def submit_code(problem_id):
     
     result = evaluate_code(code, problem.test_cases, problem.time_limit, problem.memory_limit)
     
+    ai_analysis = None
+    if result['status'] in ['WA', 'CE', 'TLE', 'RE']:
+        try:
+            ai_analysis = _generate_oj_ai_analysis(code, result, problem)
+        except Exception as ai_err:
+            import logging
+            logging.warning(f"OJ AI analysis failed: {ai_err}")
+            ai_analysis = None
+    
     submission_data = {
         'user_id': current_user.id,
         'problem_id': problem_id,
         'code': code,
         'status': result['status'],
         'error_message': result['message'],
+        'ai_analysis': ai_analysis,
         'submit_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
     
@@ -712,6 +729,133 @@ def submit_code(problem_id):
         flash(f'提交结果：{result["status"]}', 'error')
     
     return redirect(url_for('student.problem_detail', problem_id=problem_id))
+
+
+def _generate_oj_ai_analysis(code, eval_result, problem):
+    """OJ联动：根据评测结果自动生成AI分析提示"""
+    status = eval_result['status']
+    message = eval_result.get('message', '')
+    
+    analysis_parts = {
+        'status': status,
+        'summary': '',
+        'suggestions': [],
+        'related_knowledge': []
+    }
+    
+    if status == 'CE':
+        analysis_parts['summary'] = '编译错误：代码无法通过编译，请检查语法。'
+        error_lines = []
+        for line in message.split('\n'):
+            if 'error' in line.lower() or '错误' in line:
+                error_lines.append(line.strip())
+        
+        import re
+        line_numbers = re.findall(r':(\d+):\d+:', message)
+        if line_numbers:
+            analysis_parts['suggestions'].append(f"错误出现在第 {', '.join(line_numbers[:5])} 行")
+        
+        common_ce_patterns = {
+            "expected ';'": "可能缺少分号，检查语句末尾是否漏写了 ;",
+            "was not declared": "变量或函数未声明，检查是否遗漏了 #include 或变量定义",
+            "no match": "函数调用参数不匹配，检查参数类型和数量",
+            "cannot convert": "类型转换错误，检查赋值或传参时的类型是否一致",
+            "expected": "语法结构不完整，检查括号、花括号是否匹配",
+            "undeclared": "使用了未声明的标识符，检查拼写或是否缺少声明",
+        }
+        
+        for pattern, hint in common_ce_patterns.items():
+            if pattern in message:
+                analysis_parts['suggestions'].append(hint)
+        
+        if not analysis_parts['suggestions']:
+            analysis_parts['suggestions'].append('请仔细阅读编译器的错误信息，从第一个错误开始修复')
+        
+        analysis_parts['related_knowledge'] = ['C++语法基础', '编译错误排查方法']
+    
+    elif status == 'WA':
+        analysis_parts['summary'] = '答案错误：代码能运行但输出结果不正确。'
+        analysis_parts['suggestions'].append('检查逻辑是否正确，特别是边界条件和特殊情况')
+        analysis_parts['suggestions'].append('尝试用手动构造的简单测试用例验证代码')
+        analysis_parts['suggestions'].append('检查变量是否初始化、数据类型是否溢出')
+        
+        if '期望输出' in message and '实际输出' in message:
+            analysis_parts['suggestions'].append('对比期望输出和实际输出的差异，定位逻辑错误')
+        
+        import re as _re
+        if _re.search(r'\bfor\b.*\b<=\b', code) or _re.search(r'\bwhile\b.*\b<=\b', code):
+            analysis_parts['suggestions'].append('注意循环边界：使用 <= 还是 < 可能导致差一错误(off-by-one)')
+        
+        if 'int ' in code and any(x in code for x in ['*', 'factorial', 'pow', 'fib']):
+            analysis_parts['related_knowledge'].append('整数溢出')
+        
+        analysis_parts['related_knowledge'].extend(['边界条件处理', '逻辑错误排查'])
+    
+    elif status == 'TLE':
+        analysis_parts['summary'] = '超时：代码运行时间超过了时间限制。'
+        analysis_parts['suggestions'].append('检查是否存在不必要的嵌套循环')
+        analysis_parts['suggestions'].append('考虑优化算法的时间复杂度')
+        analysis_parts['suggestions'].append('检查是否有死循环或递归没有终止条件')
+        
+        import re as _re2
+        nested_loops = _re2.findall(r'for\s*\(', code)
+        if len(nested_loops) >= 2:
+            analysis_parts['suggestions'].append(f'发现 {len(nested_loops)} 层循环嵌套，考虑使用更高效的算法或数据结构')
+        
+        if 'recursive' in code.lower() or _re2.search(r'\w+\s*\([^)]*\)\s*{[^}]*\w+\s*\(', code):
+            analysis_parts['suggestions'].append('如果是递归，考虑添加记忆化或改为迭代实现')
+        
+        analysis_parts['related_knowledge'] = ['时间复杂度分析', '算法优化', '常见高效算法']
+    
+    elif status == 'RE':
+        analysis_parts['summary'] = '运行时错误：程序在运行过程中异常终止。'
+        analysis_parts['suggestions'].append('检查数组是否越界访问')
+        analysis_parts['suggestions'].append('检查指针是否为空或悬空')
+        analysis_parts['suggestions'].append('检查除法运算中除数是否为零')
+        analysis_parts['suggestions'].append('检查栈溢出（如递归过深或局部变量过大）')
+        
+        import re as _re3
+        if _re3.search(r'\w+\[\w+\]', code) and 'vector' not in code:
+            analysis_parts['suggestions'].append('使用数组访问时，确保下标在有效范围内')
+        
+        if 'new ' in code or 'malloc' in code:
+            analysis_parts['suggestions'].append('检查动态内存分配是否成功，以及是否正确释放')
+        
+        if 'int ' in code:
+            analysis_parts['suggestions'].append('检查除法运算，确保除数不为0')
+        
+        analysis_parts['related_knowledge'] = ['常见运行时错误', '数组越界', '空指针', '栈溢出']
+    
+    return json.dumps(analysis_parts, ensure_ascii=False)
+
+
+@student_bp.route('/practice/submission/<int:submission_id>/ai-analysis')
+@login_required
+def get_submission_ai_analysis(submission_id):
+    from flask import jsonify, current_app
+    from app.models import Submission
+    db = current_app.db
+    
+    submission = Submission.get_by_id(submission_id)
+    if not submission:
+        return jsonify({'error': '提交记录不存在'}), 404
+    
+    if submission.user_id != current_user.id:
+        return jsonify({'error': '无权查看此提交'}), 403
+    
+    if submission.status == 'AC':
+        return jsonify({'success': True, 'analysis': None, 'message': '代码已通过，无需AI分析'})
+    
+    analysis_raw = getattr(submission, 'ai_analysis', None)
+    if not analysis_raw:
+        return jsonify({'success': True, 'analysis': None, 'message': '暂无AI分析'})
+    
+    try:
+        import json
+        analysis = json.loads(analysis_raw) if isinstance(analysis_raw, str) else analysis_raw
+        return jsonify({'success': True, 'analysis': analysis})
+    except (json.JSONDecodeError, TypeError):
+        return jsonify({'success': True, 'analysis': {'summary': analysis_raw}})
 
 @student_bp.route('/practice/submissions')
 @login_required

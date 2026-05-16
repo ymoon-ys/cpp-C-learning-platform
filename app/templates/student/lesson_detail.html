@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+﻿﻿{% extends "base.html" %}
 
 {% block title %}{{ lesson.title }} - C++学习平台{% endblock %}
 
@@ -1007,6 +1007,72 @@
                                 <a href="{{ file.url }}" download
                                    style="display: inline-block; padding: 10px 24px; background: #27ae60; color: white; text-decoration: none; border-radius: 6px;">
                                     <i class="fas fa-download"></i> 下载图片
+                                </a>
+                            </div>
+                        </div>
+
+                        {% elif file and file.type == 'document' %}
+                        <div style="margin: 30px 0; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #E2E8F0;">
+                            <h3 style="color: #1E293B; margin-bottom: 15px;">
+                                {% if file.name and file.name.lower().endswith('.docx') or file.name and file.name.lower().endswith('.doc') %}
+                                <i class="fas fa-file-word" style="color: #2b5797;"></i>
+                                {% elif file.name and file.name.lower().endswith('.pptx') or file.name and file.name.lower().endswith('.ppt') %}
+                                <i class="fas fa-file-powerpoint" style="color: #d24726;"></i>
+                                {% elif file.name and file.name.lower().endswith('.xlsx') or file.name and file.name.lower().endswith('.xls') %}
+                                <i class="fas fa-file-excel" style="color: #217346;"></i>
+                                {% else %}
+                                <i class="fas fa-file-alt" style="color: #6C5CE7;"></i>
+                                {% endif %}
+                                {{ file.name if file.name else '文档文件' }}
+                            </h3>
+                            <div style="background: #fafafa; border-radius: 12px; padding: 40px; text-align: center; border: 2px dashed #e9ecef;">
+                                <div style="width: 80px; height: 80px; border-radius: 16px; background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                    {% if file.name and file.name.lower().endswith('.docx') or file.name and file.name.lower().endswith('.doc') %}
+                                    <i class="fas fa-file-word" style="font-size: 36px; color: white;"></i>
+                                    {% elif file.name and file.name.lower().endswith('.pptx') or file.name and file.name.lower().endswith('.ppt') %}
+                                    <i class="fas fa-file-powerpoint" style="font-size: 36px; color: white;"></i>
+                                    {% elif file.name and file.name.lower().endswith('.xlsx') or file.name and file.name.lower().endswith('.xls') %}
+                                    <i class="fas fa-file-excel" style="font-size: 36px; color: white;"></i>
+                                    {% else %}
+                                    <i class="fas fa-file-alt" style="font-size: 36px; color: white;"></i>
+                                    {% endif %}
+                                </div>
+                                <div style="font-size: 20px; font-weight: 700; color: #1E293B; margin-bottom: 10px;">{{ file.name if file.name else '文档文件' }}</div>
+                                <div style="color: #64748B; margin-bottom: 24px;">该文档格式暂不支持在线预览，请下载后查看</div>
+                                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                                    <a href="{{ file.url }}" download="{{ file.name }}"
+                                       style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 28px; background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: 600; text-decoration: none; transition: all 0.3s;"
+                                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(108,92,231,0.4)'"
+                                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                        <i class="fas fa-download"></i> 下载文档
+                                    </a>
+                                    <a href="{{ file.url }}" target="_blank"
+                                       style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 28px; background: #e9ecef; color: #495057; border: none; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: 600; text-decoration: none; transition: all 0.3s;"
+                                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'"
+                                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                        <i class="fas fa-external-link-alt"></i> 新窗口打开
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% elif file and file.type == 'other' %}
+                        <div style="margin: 30px 0; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #E2E8F0;">
+                            <h3 style="color: #1E293B; margin-bottom: 15px;">
+                                <i class="fas fa-file" style="color: #6C5CE7;"></i>
+                                {{ file.name if file.name else '文件' }}
+                            </h3>
+                            <div style="background: #fafafa; border-radius: 12px; padding: 40px; text-align: center; border: 2px dashed #e9ecef;">
+                                <div style="width: 80px; height: 80px; border-radius: 16px; background: linear-gradient(135deg, #94A3B8 0%, #64748B 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                    <i class="fas fa-file" style="font-size: 36px; color: white;"></i>
+                                </div>
+                                <div style="font-size: 20px; font-weight: 700; color: #1E293B; margin-bottom: 10px;">{{ file.name if file.name else '文件' }}</div>
+                                <div style="color: #64748B; margin-bottom: 24px;">点击下方按钮下载查看</div>
+                                <a href="{{ file.url }}" download="{{ file.name }}"
+                                   style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 28px; background: linear-gradient(135deg, #6C5CE7 0%, #7C3AED 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: 600; text-decoration: none; transition: all 0.3s;"
+                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(108,92,231,0.4)'"
+                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                    <i class="fas fa-download"></i> 下载文件
                                 </a>
                             </div>
                         </div>

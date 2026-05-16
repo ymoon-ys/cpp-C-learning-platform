@@ -371,6 +371,7 @@ class MySQLDatabase:
                     code TEXT NOT NULL,
                     status VARCHAR(50) DEFAULT 'pending',
                     error_message TEXT,
+                    ai_analysis TEXT,
                     submit_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -461,15 +462,178 @@ class MySQLDatabase:
                 CREATE TABLE IF NOT EXISTS caigpt_dialog_history (
                     id INT PRIMARY KEY AUTO_INCREMENT,
                     user_id INT NOT NULL,
+                    session_id INT,
                     role VARCHAR(50) NOT NULL,
                     content TEXT NOT NULL,
                     images JSON,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    KEY idx_user_id (user_id),
-                    KEY idx_role (role),
-                    KEY idx_created_at (created_at),
+                    INDEX idx_user_id (user_id),
+                    INDEX idx_role (role),
+                    INDEX idx_created_at (created_at),
+                    INDEX idx_user_session (user_id, session_id),
                     CONSTRAINT fk_caigpt_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='CaiGPT对话历史表'
+            ''',
+            'caigpt_sessions': '''
+                CREATE TABLE IF NOT EXISTS caigpt_sessions (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    user_id INT NOT NULL,
+                    title VARCHAR(200) DEFAULT '新对话',
+                    model_name VARCHAR(50) DEFAULT 'caigpt',
+                    problem_id INT,
+                    tags JSON,
+                    is_favorite TINYINT DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_user_id (user_id),
+                    CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='CAIgpt会话表'
+            ''',
+            'caigpt_favorites': '''
+                CREATE TABLE IF NOT EXISTS caigpt_favorites (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    user_id INT NOT NULL,
+                    session_id INT NOT NULL,
+                    message_id INT,
+                    content TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_favorite (user_id, session_id, message_id),
+                    INDEX idx_user_id (user_id),
+                    CONSTRAINT fk_favorites_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+                    CONSTRAINT fk_favorites_session FOREIGN KEY (session_id) REFERENCES caigpt_sessions (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='CAIgpt收藏表'
+            ''',
+            'ai_user_preferences': '''
+                CREATE TABLE IF NOT EXISTS ai_user_preferences (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    user_id INT NOT NULL UNIQUE,
+                    theme VARCHAR(20) DEFAULT 'light',
+                    editor_theme VARCHAR(30) DEFAULT 'vs-dark',
+                    editor_font_size INT DEFAULT 14,
+                    editor_font_family VARCHAR(100) DEFAULT "'Consolas', 'Monaco', 'Courier New', monospace",
+                    editor_word_wrap VARCHAR(10) DEFAULT 'on',
+                    minimap_enabled TINYINT DEFAULT 1,
+                    auto_save_enabled TINYINT DEFAULT 1,
+                    last_code LONGTEXT,
+                    last_session_id INT,
+                    language VARCHAR(10) DEFAULT 'cpp',
+                    model_preference VARCHAR(50) DEFAULT 'caigpt',
+                    ui_layout VARCHAR(20) DEFAULT 'split',
+                    console_height INT DEFAULT 200,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_user_id (user_id),
+                    CONSTRAINT fk_preferences_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI用户偏好设置表'
+            ''',
+            'ai_memory': '''
+                CREATE TABLE IF NOT EXISTS ai_memory (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    user_id INT NOT NULL,
+                    memory_type VARCHAR(50) NOT NULL,
+                    content TEXT NOT NULL,
+                    source_session_id INT DEFAULT NULL,
+                    importance TINYINT DEFAULT 5,
+                    access_count INT DEFAULT 0,
+                    tags JSON DEFAULT NULL,
+                    is_active TINYINT DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_user_type (user_id, memory_type),
+                    INDEX idx_user_active (user_id, is_active),
+                    INDEX idx_user_importance (user_id, importance),
+                    INDEX idx_created_at (created_at),
+                    FULLTEXT INDEX ft_content (content),
+                    CONSTRAINT fk_memory_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI助手记忆表'
+            ''',
+            'ai_memory_summary': '''
+                CREATE TABLE IF NOT EXISTS ai_memory_summary (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    user_id INT NOT NULL UNIQUE,
+                    summary TEXT,
+                    last_memory_count INT DEFAULT 0,
+                    last_summary_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_user_id (user_id),
+                    CONSTRAINT fk_memory_summary_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI记忆摘要表'
+            ''',
+            'knowledge_topics': '''
+                CREATE TABLE IF NOT EXISTS knowledge_topics (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    category VARCHAR(100) NOT NULL COMMENT '知识分类',
+                    keyword VARCHAR(100) NOT NULL COMMENT '关键词',
+                    description TEXT COMMENT '分类描述',
+                    estimated_time VARCHAR(50) COMMENT '预计学习时间',
+                    sort_order INT DEFAULT 0 COMMENT '排序',
+                    is_active TINYINT DEFAULT 1 COMMENT '是否启用',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_category (category),
+                    INDEX idx_is_active (is_active)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='知识点分类表'
+            ''',
+            'learning_resources': '''
+                CREATE TABLE IF NOT EXISTS learning_resources (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    category VARCHAR(100) NOT NULL COMMENT '所属知识分类',
+                    resource_type VARCHAR(50) NOT NULL COMMENT '资源类型: course/practice/project',
+                    title VARCHAR(200) NOT NULL COMMENT '资源标题',
+                    description TEXT COMMENT '资源描述',
+                    url VARCHAR(500) DEFAULT NULL COMMENT '资源链接',
+                    sort_order INT DEFAULT 0 COMMENT '排序',
+                    is_active TINYINT DEFAULT 1 COMMENT '是否启用',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_category (category),
+                    INDEX idx_type (resource_type),
+                    INDEX idx_is_active (is_active)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='学习资源表'
+            ''',
+            'common_errors': '''
+                CREATE TABLE IF NOT EXISTS common_errors (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    error_type VARCHAR(100) NOT NULL COMMENT '错误类型标识',
+                    pattern VARCHAR(500) NOT NULL COMMENT '匹配正则表达式',
+                    cause TEXT NOT NULL COMMENT '错误原因',
+                    solutions JSON NOT NULL COMMENT '解决方案列表',
+                    sort_order INT DEFAULT 0 COMMENT '排序',
+                    is_active TINYINT DEFAULT 1 COMMENT '是否启用',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_error_type (error_type),
+                    INDEX idx_is_active (is_active)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='常见错误表'
+            ''',
+            'ai_models': '''
+                CREATE TABLE IF NOT EXISTS ai_models (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    model_key VARCHAR(50) NOT NULL UNIQUE COMMENT '模型标识',
+                    name VARCHAR(200) NOT NULL COMMENT '模型显示名称',
+                    api_url VARCHAR(500) DEFAULT 'local' COMMENT 'API地址',
+                    api_key VARCHAR(500) DEFAULT '' COMMENT 'API密钥',
+                    model VARCHAR(100) DEFAULT '' COMMENT '模型名称',
+                    provider VARCHAR(50) DEFAULT '' COMMENT '提供者',
+                    is_cloud TINYINT DEFAULT 0 COMMENT '是否云端: 0/1',
+                    max_tokens INT DEFAULT 4096 COMMENT '最大token数',
+                    temperature DECIMAL(3,2) DEFAULT 0.70 COMMENT '温度参数',
+                    is_active TINYINT DEFAULT 1 COMMENT '是否启用',
+                    sort_order INT DEFAULT 0 COMMENT '排序',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_model_key (model_key),
+                    INDEX idx_is_active (is_active)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI模型配置表'
+            ''',
+            'site_settings': '''
+                CREATE TABLE IF NOT EXISTS site_settings (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    setting_key VARCHAR(100) NOT NULL UNIQUE,
+                    setting_value TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_setting_key (setting_key)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='站点设置表'
             ''',
         }
         
@@ -522,8 +686,154 @@ class MySQLDatabase:
         except Exception as e:
             print(f'[WARN] Could not check/add/upgrade media_files column: {e}')
 
+        self._init_default_data(cursor, conn)
+
         cursor.close()
     
+    def _init_default_data(self, cursor, conn):
+        try:
+            cursor.execute("SELECT COUNT(*) as cnt FROM knowledge_topics")
+            result = cursor.fetchone()
+            count = result[0] if isinstance(result, tuple) else result.get('cnt', 0)
+            if count == 0:
+                default_topics = [
+                    ('基础语法', 'Hello World', '掌握C++的基本语法，包括变量、数据类型、运算符等', '2-3天', 1),
+                    ('基础语法', '变量', '掌握C++的基本语法，包括变量、数据类型、运算符等', '2-3天', 2),
+                    ('基础语法', '数据类型', '掌握C++的基本语法，包括变量、数据类型、运算符等', '2-3天', 3),
+                    ('基础语法', '运算符', '掌握C++的基本语法，包括变量、数据类型、运算符等', '2-3天', 4),
+                    ('基础语法', '输入输出', '掌握C++的基本语法，包括变量、数据类型、运算符等', '2-3天', 5),
+                    ('控制结构', '循环', '学习条件语句和循环语句，控制程序执行流程', '3-5天', 1),
+                    ('控制结构', '条件语句', '学习条件语句和循环语句，控制程序执行流程', '3-5天', 2),
+                    ('控制结构', 'switch', '学习条件语句和循环语句，控制程序执行流程', '3-5天', 3),
+                    ('控制结构', 'break', '学习条件语句和循环语句，控制程序执行流程', '3-5天', 4),
+                    ('控制结构', 'continue', '学习条件语句和循环语句，控制程序执行流程', '3-5天', 5),
+                    ('函数', '函数定义', '理解函数的定义、调用、参数传递和递归', '5-7天', 1),
+                    ('函数', '参数传递', '理解函数的定义、调用、参数传递和递归', '5-7天', 2),
+                    ('函数', '递归', '理解函数的定义、调用、参数传递和递归', '5-7天', 3),
+                    ('函数', '函数重载', '理解函数的定义、调用、参数传递和递归', '5-7天', 4),
+                    ('数组和指针', '数组', '深入理解数组和指针，掌握内存管理', '7-10天', 1),
+                    ('数组和指针', '指针', '深入理解数组和指针，掌握内存管理', '7-10天', 2),
+                    ('数组和指针', '引用', '深入理解数组和指针，掌握内存管理', '7-10天', 3),
+                    ('数组和指针', '动态内存', '深入理解数组和指针，掌握内存管理', '7-10天', 4),
+                    ('面向对象', '类', '学习类、对象、继承、多态等OOP概念', '10-14天', 1),
+                    ('面向对象', '继承', '学习类、对象、继承、多态等OOP概念', '10-14天', 2),
+                    ('面向对象', '多态', '学习类、对象、继承、多态等OOP概念', '10-14天', 3),
+                    ('面向对象', '封装', '学习类、对象、继承、多态等OOP概念', '10-14天', 4),
+                    ('面向对象', '构造函数', '学习类、对象、继承、多态等OOP概念', '10-14天', 5),
+                    ('面向对象', '析构函数', '学习类、对象、继承、多态等OOP概念', '10-14天', 6),
+                    ('STL', 'vector', '掌握C++标准模板库的使用', '7-10天', 1),
+                    ('STL', 'map', '掌握C++标准模板库的使用', '7-10天', 2),
+                    ('STL', 'set', '掌握C++标准模板库的使用', '7-10天', 3),
+                    ('STL', 'stack', '掌握C++标准模板库的使用', '7-10天', 4),
+                    ('STL', 'queue', '掌握C++标准模板库的使用', '7-10天', 5),
+                    ('STL', '迭代器', '掌握C++标准模板库的使用', '7-10天', 6),
+                    ('高级特性', '模板', '学习模板、异常处理、文件操作等高级特性', '10-14天', 1),
+                    ('高级特性', '异常处理', '学习模板、异常处理、文件操作等高级特性', '10-14天', 2),
+                    ('高级特性', '文件操作', '学习模板、异常处理、文件操作等高级特性', '10-14天', 3),
+                    ('高级特性', '命名空间', '学习模板、异常处理、文件操作等高级特性', '10-14天', 4),
+                    ('高级特性', 'lambda', '学习模板、异常处理、文件操作等高级特性', '10-14天', 5),
+                    ('数据结构', '链表', '掌握常用数据结构的实现和应用', '14-21天', 1),
+                    ('数据结构', '栈和队列', '掌握常用数据结构的实现和应用', '14-21天', 2),
+                    ('数据结构', '二叉树', '掌握常用数据结构的实现和应用', '14-21天', 3),
+                    ('数据结构', '哈希表', '掌握常用数据结构的实现和应用', '14-21天', 4),
+                    ('数据结构', '图', '掌握常用数据结构的实现和应用', '14-21天', 5),
+                    ('算法', '排序', '学习常用算法，提高编程能力', '21-30天', 1),
+                    ('算法', '查找', '学习常用算法，提高编程能力', '21-30天', 2),
+                    ('算法', '递归', '学习常用算法，提高编程能力', '21-30天', 3),
+                    ('算法', '动态规划', '学习常用算法，提高编程能力', '21-30天', 4),
+                    ('算法', '贪心算法', '学习常用算法，提高编程能力', '21-30天', 5),
+                ]
+                cursor.executemany(
+                    'INSERT INTO knowledge_topics (category, keyword, description, estimated_time, sort_order) VALUES (%s, %s, %s, %s, %s)',
+                    default_topics
+                )
+                conn.commit()
+                print(f'[OK] Inserted {len(default_topics)} default knowledge topics')
+        except Exception as e:
+            print(f'[WARN] Could not init knowledge_topics: {e}')
+
+        try:
+            cursor.execute("SELECT COUNT(*) as cnt FROM learning_resources")
+            result = cursor.fetchone()
+            count = result[0] if isinstance(result, tuple) else result.get('cnt', 0)
+            if count == 0:
+                default_resources = [
+                    ('基础语法', 'course', 'C++基础入门', '学习C++基本语法和概念', 1),
+                    ('基础语法', 'practice', '基础练习题', '变量、数据类型和运算符练习', 2),
+                    ('控制结构', 'course', '流程控制', '掌握if、for、while等控制语句', 1),
+                    ('控制结构', 'practice', '循环练习', '各种循环结构的练习题', 2),
+                    ('函数', 'course', '函数与递归', '函数定义、调用和递归思想', 1),
+                    ('函数', 'practice', '函数练习题', '函数定义和递归算法练习', 2),
+                    ('数组和指针', 'course', '指针与内存', '深入理解指针和内存管理', 1),
+                    ('数组和指针', 'practice', '指针练习', '指针操作和动态内存分配', 2),
+                    ('面向对象', 'course', '面向对象编程', '类、对象、继承和多态', 1),
+                    ('面向对象', 'practice', 'OOP练习', '类和对象的实践练习', 2),
+                    ('STL', 'course', 'STL标准库', '掌握vector、map等容器', 1),
+                    ('STL', 'practice', 'STL练习', 'STL容器的使用练习', 2),
+                    ('高级特性', 'course', 'C++高级特性', '模板、异常、文件操作', 1),
+                    ('高级特性', 'practice', '高级练习', '模板和异常处理练习', 2),
+                    ('数据结构', 'course', '数据结构基础', '链表、栈、队列、树', 1),
+                    ('数据结构', 'practice', '数据结构练习', '实现各种数据结构', 2),
+                    ('算法', 'course', '算法基础', '排序、查找、递归、DP', 1),
+                    ('算法', 'practice', '算法练习', '经典算法题目练习', 2),
+                ]
+                cursor.executemany(
+                    'INSERT INTO learning_resources (category, resource_type, title, description, sort_order) VALUES (%s, %s, %s, %s, %s)',
+                    default_resources
+                )
+                conn.commit()
+                print(f'[OK] Inserted {len(default_resources)} default learning resources')
+        except Exception as e:
+            print(f'[WARN] Could not init learning_resources: {e}')
+
+        try:
+            cursor.execute("SELECT COUNT(*) as cnt FROM common_errors")
+            result = cursor.fetchone()
+            count = result[0] if isinstance(result, tuple) else result.get('cnt', 0)
+            if count == 0:
+                import json as _json
+                default_errors = [
+                    ('segmentation fault', r'Segmentation fault|段错误', '访问了非法内存地址',
+                     _json.dumps(['检查指针是否初始化', '确保不要访问已释放的内存', '检查数组下标是否越界', '使用调试器定位问题']), 1),
+                    ('memory leak', r'memory leak|内存泄漏', '动态分配的内存未释放',
+                     _json.dumps(['使用智能指针管理内存', '确保每个new都有对应的delete', '使用RAII模式', '使用valgrind检测内存泄漏']), 2),
+                    ('undefined reference', r'undefined reference|未定义引用', '函数声明但未定义，或缺少库文件',
+                     _json.dumps(['检查函数是否有定义', '确保所有源文件都被编译', '检查链接的库文件', '检查函数签名是否匹配']), 3),
+                    ('array bounds', r'array subscript|数组越界', '访问了数组范围之外的元素',
+                     _json.dumps(['检查数组下标范围', '使用STL容器的at()方法', '添加边界检查', '考虑使用动态数组']), 4),
+                ]
+                cursor.executemany(
+                    'INSERT INTO common_errors (error_type, pattern, cause, solutions, sort_order) VALUES (%s, %s, %s, %s, %s)',
+                    default_errors
+                )
+                conn.commit()
+                print(f'[OK] Inserted {len(default_errors)} default common errors')
+        except Exception as e:
+            print(f'[WARN] Could not init common_errors: {e}')
+
+        try:
+            cursor.execute("SELECT COUNT(*) as cnt FROM ai_models")
+            result = cursor.fetchone()
+            count = result[0] if isinstance(result, tuple) else result.get('cnt', 0)
+            if count == 0:
+                import os as _os
+                default_models = [
+                    ('auto', 'CAIgpt', 'local', '', 'caigpt', 'caigpt', 0, 4096, 0.70, 1, 1),
+                    ('caigpt', 'CAIgpt', 'local', '', 'caigpt', 'caigpt', 0, 4096, 0.70, 1, 2),
+                    ('minimax', 'Minimax M2.7', 'cloud', _os.environ.get('MINIMAX_API_KEY', ''), 'Minimax-Text-01', 'minimax', 1, 4096, 0.70, 1, 3),
+                    ('ollama', 'CAIgpt 本地版 (Ollama)', 'local', '', 'qwen3:8b', 'ollama', 0, 4096, 0.70, 1, 4),
+                    ('qwen', '通义千问', 'cloud', _os.environ.get('DASHSCOPE_API_KEY', ''), 'qwen-plus', 'qwen', 1, 4096, 0.70, 1, 5),
+                    ('local', '本地模拟', 'local', '', 'local', 'local', 0, 4096, 0.70, 0, 6),
+                ]
+                cursor.executemany(
+                    'INSERT INTO ai_models (model_key, name, api_url, api_key, model, provider, is_cloud, max_tokens, temperature, is_active, sort_order) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+                    default_models
+                )
+                conn.commit()
+                print(f'[OK] Inserted {len(default_models)} default AI models')
+        except Exception as e:
+            print(f'[WARN] Could not init ai_models: {e}')
+
     def _convert_datetime_to_string(self, row: Dict[str, Any]) -> Dict[str, Any]:
         if not row:
             return row
@@ -558,11 +868,6 @@ class MySQLDatabase:
             return 0
         
         try:
-            if 'created_at' not in data:
-                data['created_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            if 'updated_at' not in data:
-                data['updated_at'] = data['created_at']
-            
             columns = list(data.keys())
             values = list(data.values())
             placeholders = ','.join(['%s'] * len(values))
